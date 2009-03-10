@@ -1,0 +1,5 @@
+#summary This is a test page of the Google code wiki system
+
+= Foo-plugins =
+
+Lorem ipsum.
