@@ -105,12 +105,22 @@ table.plugin-parameters th {
 	vertical-align: top;
 }
 
-table.news {
+table.plugins {
 	border: 1px solid #000000;
-}
-
-table.news td {
 	font-family: Verdana, Arial, Sans;
 	font-size: 14px;
 	vertical-align: top;
 }
+
+table.plugins th {
+	vertical-align: top;
+	font-weight: normal;
+	font-style: italic;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.experimental {
+	color: #dd0000;
+}
+
