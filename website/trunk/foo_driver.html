@@ -1,0 +1,36 @@
+<html>
+ <head>
+  <title>Foo plugins - Foo Driver</title>
+  <link rel="stylesheet" href="foo.css" type="text/css">
+  <meta http-equiv=content-type content="text/html; charset=utf-8">
+ </head>
+ <body>
+  <div class="header">foo-plugins</div>
+
+  <div class="menu">
+    <a href="index.html">Home</a>
+    <a href="foo_limiter.html">Lookahead Limiter</a>
+    <a href="foo_transients.html">Transient Architect</a>
+    <font class="currentpage">Driver</font>
+    <a href="mailto:v2@iki.spamtrap.fi">Contact the author</a>
+  </div>
+
+  <div class="text">
+     <h2>Foo Driver</h2>
+     <p>This is a simple driver using a hyperbolic tan function. The plugin can also control the offset of the distortion. This plugin was introduced in version 1.0</p>
+
+    <h3>parameters</h3>
+
+    <table class="plugin-parameters">
+     <tr><th>input gain</th><td>Input gain of the signal. The difference between <i>drive</i> and <i>input gain</i> is that input gain is added both to the dry and the wet signal.</td></tr>
+     <tr><th>drive</th><td>Gain control for the part of the signal fed into the distortion function.</td></tr>
+     <tr><th>offset</th><td>DC offset added into the distorted signal to create asymmetric distortion. The offset is attempted to remove from the signal after the distortion, but may not always work, a high-pass filter is recommended in these cases.</td></tr>
+     <tr><th>balance</th><td>Controls the balance between dry and wet signal in the output.</td></tr>
+    </table>
+
+     <p>(unique id 3184)</p>
+ 
+  </div>
+ </body>
+</html>
+

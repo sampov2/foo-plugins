@@ -1,0 +1,35 @@
+<html>
+ <head>
+  <title>Foo plugins - Foo Lookahead Limiter</title>
+  <link rel="stylesheet" href="foo.css" type="text/css">
+  <meta http-equiv=content-type content="text/html; charset=utf-8">
+ </head>
+ <body>
+  <div class="header">foo-plugins</div>
+
+  <div class="menu">
+    <a href="index.html">Home</a>
+    <font class="currentpage">Lookahead Limiter</font>
+    <a href="foo_transients.html">Transient Architect</a>
+    <a href="foo_driver.html">Driver</a>
+    <a href="mailto:v2@iki.spamtrap.fi">Contact the author</a>
+  </div>
+
+  <div class="text">
+    <h2>Foo Lookahead Limiter</h2>
+    <p>This limiter was written to overcome some shortcomings in the limiter used in <a href="http://jamin.sf.net/">Jamin</a>. The limiter in Jamin does not perform optimally when it is pushed hard with material containing high transients.</p>
+    <p>The limiter works by searching for peaks in the signal and triggering attack / release envelopes when such peaks occur in the signal ahead. The attack time of the envelope is constant and as such it can't be parametrized. The envelope is tailored so that the limiter will never allow peaks higher than the parametrized value to pass through it.</p> 
+    <h3>parameters</h3>
+    <table class="plugin-parameters">
+     <tr><th>input gain</th><td>The amount of input gain applied to the signal before limiting</td></tr>
+     <tr><th>release time</th><td>Release time of the envelope</td></tr>
+     <tr><th>max peak</th><td>Maximum peak to be allowed out of the limiter</td></tr>
+     <tr><th>log scale</th><td>Continuous control of the release curve between a steep log curve and a linear curve (since 1.0)</td></tr>
+    </table>
+
+    <p>(unique id 3181)</p>
+
+  </div>
+ </body>
+</html>
+

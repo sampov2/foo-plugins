@@ -1,0 +1,39 @@
+<html>
+ <head>
+  <title>Foo plugins - Foo Transient Architect</title>
+  <link rel="stylesheet" href="foo.css" type="text/css">
+  <meta http-equiv=content-type content="text/html; charset=utf-8">
+ </head>
+ <body>
+  <div class="header">foo-plugins</div>
+
+  <div class="menu">
+    <a href="index.html">Home</a>
+    <a href="foo_limiter.html">Lookahead Limiter</a>
+    <font class="currentpage">Transient Architect</font>
+    <a href="foo_driver.html">Driver</a>
+    <a href="mailto:v2@iki.spamtrap.fi">Contact the author</a>
+  </div>
+
+  <div class="text">
+     <h2>Foo Transient Architect</h2>
+     <p>This plugin is for transient sound design. This is a dynamics control independent of the signals volume level. It gives separate gain controls for the sounds attack and release stages. The plugin is available in a linked stereo version and as a mono version. </p>
+     <p>The plugin works by using two RMS envelopes. The first envelope reacts fast to changes in the signal and the other one more slowly. Attack and release is defined by the difference between the envelopes.</p>
+    <h3>parameters</h3>
+
+    <table class="plugin-parameters">
+     <tr><th>averaging time difference </th><td> This parameter controls how far apart are the envelope averaging times.  The smaller the value, the closer together the envelopes are. With larger values the envelopes drift apart further and produce a less smooth sound. </td></tr>
+     <tr><th>attack gain</th><td rowspan="2"> The gain to apply on equivalent stage.  Note that the gain values are not guarantees. The parametrized gain is scaled according to the envelope difference. Because of this the effectual gain can be a lot less than the user wants. To make the control more meaningful, the plugin scales the gain up. This might and will cause the plugin to sometimes "overshot" the gain.  </td></tr>
+     <tr><th>release gain </th></tr>
+    </table>
+    <h3>envelopes</h3>
+    <center><img src="transient_graph.gif"></center><br clear="all">
+    <p>The picture shows a signal with a single drum hit and how the transient architect calculates the controlling envelopes. The stage where the fast envelope is higher is interpreted as "attack" and "release" when it's the other way around.</p>
+
+    <p>(unique id 3182 and 3183 for the mono version)</p>
+
+
+  </div>
+ </body>
+</html>
+

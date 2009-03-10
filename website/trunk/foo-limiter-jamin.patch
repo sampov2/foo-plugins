@@ -1,0 +1,54 @@
+Index: src/limiter.h
+===================================================================
+RCS file: /cvsroot/jamin/jamin/src/limiter.h,v
+retrieving revision 1.8
+diff -u -r1.8 limiter.h
+--- src/limiter.h	17 Jul 2004 10:38:23 -0000	1.8
++++ src/limiter.h	14 Jan 2007 20:58:35 -0000
+@@ -28,6 +28,7 @@
+ #define LIM_OUT_1         6
+ #define LIM_OUT_2         7
+ #define LIM_LATENCY       8
++#define LIM_LOGSCALE      9
+ 
+ typedef struct {
+ 	float ingain;
+@@ -35,6 +36,7 @@
+ 	float release;
+ 	float attenuation;
+ 	float latency;
++	float logscale;
+ 	LADSPA_Handle handle;
+ } lim_settings;
+ 
+@@ -49,12 +51,14 @@
+ 	plugin_connect_port(p, s->handle, LIM_OUT_1, left);
+ 	plugin_connect_port(p, s->handle, LIM_OUT_2, right);
+ 	plugin_connect_port(p, s->handle, LIM_LATENCY, &(s->latency));
++	plugin_connect_port(p, s->handle, LIM_LOGSCALE, &(s->logscale));
+ 
+ 	/* Make sure that it is set to something */
+ 	s->ingain = 0.0f;
+ 	s->limit = 0.0f;
+ 	s->release = 0.01f;
+ 	s->attenuation = 0.0f;
++	s->logscale = 0.75f;
+ }
+ 
+ #endif
+Index: src/process.c
+===================================================================
+RCS file: /cvsroot/jamin/jamin/src/process.c,v
+retrieving revision 1.65
+diff -u -r1.65 process.c
+--- src/process.c	28 Oct 2004 08:20:33 -0000	1.65
++++ src/process.c	14 Jan 2007 20:58:36 -0000
+@@ -187,7 +187,7 @@
+ 
+     plugin_init();
+     comp_plugin = plugin_load("sc4_1882.so");
+-    lim_plugin = plugin_load("fast_lookahead_limiter_1913.so");
++    lim_plugin = plugin_load("foo_limiter.so");
+     if (comp_plugin == NULL || lim_plugin == NULL)  {
+            fprintf(stderr, "Required plugin missing.\n");
+            exit(1);

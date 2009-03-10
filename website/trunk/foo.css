@@ -1,0 +1,116 @@
+body {
+	background: #d7e0e3;
+	margin: 0px 0px 0px 0px;
+	text-align: center;
+}
+div.header {
+	background: #000833;
+	color: #f9f1ff;
+	margin: 0px 0px 0px 0px;
+	padding: 10px 10px 10px 30px;
+
+	position: relative;
+	top: 0px;
+	left: 0px;
+	height: 36px;
+	
+	text-align: left;
+
+	font-family: Times New Roman;
+	font-size: 30px;
+	font-style: italic;
+
+	z-index: 0;
+}
+
+div.menu {
+	font-family: Verdana, Arial, Sans;
+	font-size: 16px;
+	text-align: left;
+
+	background: #000833;
+	color: #f9f1ff;
+
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	height: 36px;
+	margin: 8px 0px 0px 0px;
+	padding: 10px 30px 2px 10px;
+	z-index: 1;
+	
+}
+
+div.menu a {
+	font-family: Verdana, Arial, Sans;
+	color: #f9f1ff;
+	margin-left: 8px;
+}
+
+div.menu a:hover {
+	color: #a9a1ef;
+}
+
+div.menu font.currentpage {
+	font-family: Verdana, Arial, Sans;
+	color: #f9f1ff;
+	margin-left: 8px;
+}
+
+div.text {
+	position: relative;
+	text-align: left;
+	font-family: Verdana, Arial, Sans;
+	font-size: 14px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 50%;
+
+	z-index: 2;
+}
+
+
+div.text h2 {
+
+}
+
+div.text a.release {
+	margin-left: 10px;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+div.text a {
+	color: #153a49;
+}
+
+div.text a:hover {
+	color: #e4e4fe;
+}
+
+table.plugin-parameters {
+	font-family: Verdana, Arial, Sans;
+	font-size: 14px;
+	border: 1px solid #000000;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+table.plugin-parameters td {
+	vertical-align: top;
+}
+
+table.plugin-parameters th {
+	text-align: left;
+	vertical-align: top;
+}
+
+table.news {
+	border: 1px solid #000000;
+}
+
+table.news td {
+	font-family: Verdana, Arial, Sans;
+	font-size: 14px;
+	vertical-align: top;
+}

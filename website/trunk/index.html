@@ -1,0 +1,51 @@
+<html>
+ <head>
+  <title>Foo plugins</title>
+  <link rel="stylesheet" href="foo.css" type="text/css">
+  <meta http-equiv=content-type content="text/html; charset=utf-8">
+ </head>
+ <body>
+  <div class="header">foo-plugins</div>
+
+  <div class="menu">
+    <font class="currentpage">Home</font>
+    <a href="foo_limiter.html">Lookahead Limiter</a>
+    <a href="foo_transients.html">Transient Architect</a>
+    <a href="foo_driver.html">Driver</a>
+    <a href="mailto:v2@iki.spamtrap.fi">Contact the author</a>
+  </div>
+
+  <div class="text">
+    <p>
+      foo-plugins is a <a href="http://www.ladspa.org/">ladspa</a> plugin package currently consisting of two plugins, a <a href="foo_limiter.html">limiter</a> and a <a href="foo_transients.html">special dynamics processor</a>. The plugins are released under the <a href="http://www.gnu.org/licenses/licenses.html">General Public License</a> which means they are free to use and their source code is available. This site contains the source code for the plugins and short descriptions of the included plugins. 
+    </p>
+    <p><b>Mar 8th 2009</b>, Version 1.2 released. This release contains a lot of stuff I don't even remember if they are finished or not. Let's hope they don't screw up your system</p>
+    <p>New plugins:
+	<table class="news">
+       <tr><td><nobr><i>Foo Chop Liver</i> </nobr></td><td>Distortion inspired by an SSE ordering bug. It chops the signal into smal bits which are mixed in with the dry signal in reverse order.<td></tr>
+       <tr><td><nobr><i>Foo Limiter 2</i> </nobr></td><td> I have no idea how this is different from the original one. Might work, might not.<td></tr>
+       <tr><td><nobr><i>Foo Saturator</i> </nobr></td><td> More distortion. It's based on something. I'm sure I have an irc log somewhere which would tell me what it did .. <td></tr>
+       <tr><td><nobr><i>t00b Limiter</i> </nobr></td><td> Some sort of experimental limiter based more on distortion characteristics than time constants.</td></tr>
+	</table>
+
+    <p>Use at your own caution. Chop Liver should work fine as it's so simple, but I'm not 100% about where I left the others when I stopped working on them. The docs are not up yet, but writing them requires me to actually remember exactly what they do.</p>
+
+       
+    <p><b>Jan 14th 2007</b>, Version 1.0 released. The release contains a new plugin, the <a href="foo_driver.html">Foo Driver</a>. The <a href="foo_limiter.html">Foo Limiter</a> release can be set to a logarithmic curve. Unfortunately, the plugins are not "stable" enough yet to guarantee that the parameters will not change in the future.</p>
+    <p>There is also a patch for <a href="http://jamin.sf.net/">Jamin</a> available. The patch makes Jamin use the Foo Limiter instead of swh's Fast Lookahead Limiter. Note that you might need to use longer release times for the Jamin limiter stage as the patch will set up the limiter to use a logarithmic release curve (parameter value 0.75).</p>
+    <h2>Releases</h2>
+    <p>Currently there is only one release available and the SVN repository is not open for public, at least yet.</p>
+     <a class="release" href="foo-plugins-1.2.tar.bz2">foo-plugins-1.2.tar.bz2</a><br>
+     <a class="release" href="foo-plugins-1.0.tar.bz2">foo-plugins-1.0.tar.bz2</a><br>
+     <a class="release" href="foo-limiter-jamin.patch">foo-limiter-jamin.patch</a>
+
+    <h3>Previous releases</h3>
+     <a class="release" href="foo-plugins-0.9.tar.bz2">foo-plugins-0.9.tar.bz2</a>
+
+    <h2>Credits</h2>
+    <p>foo-plugins is written by Sampo Savolainen and a lot of credit goes to <a href="http://plugin.org.uk/">Steve Harris</a>.</p>
+
+  </div>
+ </body>
+</html>
+
