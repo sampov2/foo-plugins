@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!DOCTYPE ladspa SYSTEM "ladspa-swh.dtd">
+<?xml-stylesheet href="ladspa.css" type="text/css"?>
+<!--
+    Foo Chop Liver - wave chopper distortion
+    Copyright (C) 2009  Sampo Savolainen <v2@iki.fi>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+-->
+
+<ladspa>
+  <global>
+    <meta name="maker" value="Sampo Savolainen &lt;v2@iki.fi&gt;"/>
+    <meta name="copyright" value="GPL"/>
+    <meta name="properties" value="HARD_RT_CAPABLE"/>
+  </global>
+
+  <plugin label="foo_chop_liver" id="3188" class="DistortionPlugin">
+    <name>Foo Chop Liver</name>
+
+
+    <callback event="instantiate"><![CDATA[
+	window = (LADSPA_Data *) malloc(32*sizeof(LADSPA_Data)); 
+	// much match the value in port definitions
+
+	// Nothing to do beautiful
+    ]]></callback>
+
+    <callback event="activate"><![CDATA[
+	*(plugin_data->latency) = 0;
+    ]]></callback>
+
+    <callback event="cleanup"><![CDATA[
+	free(plugin_data->window);
+    ]]></callback>
+
+    <callback event="run"><![CDATA[
+	int i;
+	int window_size = (int)chop_window;
+	//printf("window_size = %d\n",window_size);
+
+	LADSPA_Data * input = input_buffer;
+	LADSPA_Data * output = output_buffer;
+
+	if (window_size < 2) window_size = 2;
+	if (window_size > 32) window_size = 32;
+
+	while (sample_count > 0) {
+		//printf("samples left %d, window %d\n",sample_count, window_size);
+		
+		for (i = 0; i < window_size; ++i) {
+			window[i] = input[window_size - i - 1];
+		}
+
+		for (i = 0; i < window_size; ++i) {
+			buffer_write(output[i], 
+					input [i] * dry_gain +
+					window[i] * wet_gain);
+		}
+
+		output += window_size;
+		input  += window_size;
+
+		sample_count -= window_size;
+
+		// last window will be the size of the samples left over
+		if (window_size > sample_count)
+			window_size = sample_count; 
+	}
+
+
+    ]]></callback>
+
+
+
+    <port label="chop_window" dir="input" type="control" hint="integer,default_minimum">
+      <name>Chop window</name>
+      <p>Chop window size in samples</p>
+      <range min="2" max="32"/> <!-- must match the value in instantiate -->
+    </port>
+
+    <port label="dry_gain" dir="input" type="control" hint="default_0">
+      <name>Dry signal</name>
+      <p>Amount of dry signal to use</p>
+      <range min="0.0" max="+1.0"/>
+    </port>
+
+    <port label="wet_gain" dir="input" type="control" hint="default_1">
+      <name>Wet signal</name>
+      <p>Amount of dry signal to use</p>
+      <range min="0.0" max="+1.0"/>
+    </port>
+
+    <port label="input_buffer" dir="input" type="audio">
+      <name>Input</name>
+    </port>
+
+    <port label="output_buffer" dir="output" type="audio">
+      <name>Output</name>
+    </port>
+
+    <port label="latency" dir="output" type="control">
+      <name>latency</name>
+    </port>
+
+    <instance-data label="window" type="LADSPA_Data *" />
+
+  </plugin>
+</ladspa>
