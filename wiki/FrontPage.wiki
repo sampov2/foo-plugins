@@ -1,4 +1,5 @@
 #summary This is a test page of the Google code wiki system
+#labels Featured
 
 = Foo-plugins =
 
