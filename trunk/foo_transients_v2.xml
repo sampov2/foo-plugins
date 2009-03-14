@@ -32,8 +32,8 @@
     <name>Foo Transient Architect v2</name>
 
     <callback event="instantiate"><![CDATA[
-	slow_rms = rms_new((float)s_rate, 0.06f);
-        fast_rms = rms_new((float)s_rate, 0.01f);
+	slow_rms = rms_new((float)s_rate, 1.0f);
+        fast_rms = rms_new((float)s_rate, 1.0f);
     ]]></callback>
 
     <callback event="cleanup"><![CDATA[
@@ -46,18 +46,19 @@
 	unsigned long i;
 	float tmp, fast, slow;
 
-	float relevant_attack_gain  = 0.0f;
-	float relevant_release_gain = 0.0f;
-
 #define MIN_ENVELOPE_SPEED 0.01f
-#define MAX_ENVELOPE_SPEED 0.1f
+#define MAX_ENVELOPE_SPEED 0.06f
 
-	float average_difference = MIN_ENVELOPE_SPEED + detection_envelope_speed * (MAX_ENVELOPE_SPEED - MIN_ENVELOPE_SPEED);
+	float average_difference = MIN_ENVELOPE_SPEED + smooth_vs_drastic * (MAX_ENVELOPE_SPEED - MIN_ENVELOPE_SPEED);
 
-#define BASELINE 0.05f
-	rms_set_time(slow_rms, BASELINE + average_difference / 2);
-	rms_set_time(fast_rms, BASELINE - average_difference / 2);
-#undef BASELINE
+
+	rms_set_time(slow_rms, 0.05f + average_difference / 2.0f);
+	rms_set_time(fast_rms, 0.05f - average_difference / 2.0f);
+
+	float max_gain = 0.0;
+	float min_gain = 0.0;
+	float current_gain;
+
 
 	for (i = 0; i < sample_count; i++) {
 
@@ -72,54 +73,41 @@
 	    if (fast > slow) {
 		// Attack
 		tmp = (fast - slow) * attack_gain_multiplier;
-	
-		if ( ( attack_gain_multiplier < 0.0f && tmp < relevant_attack_gain) ||
-		     ( attack_gain_multiplier > 0.0f && tmp > relevant_attack_gain) )
-			relevant_attack_gain = tmp;
-			
 	    } else {
 		// Release
 		tmp = (slow - fast) * release_gain_multiplier;
-
-		if ( ( release_gain_multiplier < 0.0f && tmp < relevant_release_gain) ||
-		     ( release_gain_multiplier > 0.0f && tmp > relevant_release_gain) )
-			relevant_release_gain = tmp;
-
-		//printf("Release gain: %f, envelope difference = %f\n", tmp, slow - fast);
 	    }
 
-	    buffer_write(output_left[i],  input_left[i]  * DB_CO(tmp));
-	    buffer_write(output_right[i], input_right[i] * DB_CO(tmp));
+	    //printf("current_gain = %f * (1.0f - %f) + %f * %f\n",current_gain, gain_smoothing, DB_CO(tmp), gain_smoothing);
+
+	    current_gain = DB_CO(tmp);
+
+	    if (tmp > max_gain) max_gain = tmp;
+	    if (tmp < min_gain) min_gain = tmp;
+
+	    buffer_write(output_left[i],  input_left[i]  * current_gain);
+	    buffer_write(output_right[i], input_right[i] * current_gain);
 
 #ifdef FOO_TESTER
-	    //buffer_write(output_right[i], tmp);
-	    //buffer_write(output_right[i], DB_CO(tmp) - 1.0f);
-
 	    // Default tester operations, suitable for architect_graph.sh
 	    buffer_write(output_left[i], fast);
 	    buffer_write(output_right[i], slow);
 #endif 
 	}
 
-	*(plugin_data->actual_attack_gain)  = relevant_attack_gain;
-	*(plugin_data->actual_release_gain) = relevant_release_gain;
+	if (max_gain > -min_gain) 
+		*(plugin_data->actual_gain) = max_gain;
+	else
+		*(plugin_data->actual_gain) = min_gain;
 
     ]]></callback>
 
 
-    <port label="detection_envelope_speed" dir="input" type="control" hint="default_high">
-      <name>Detection speed slow/fast</name>
+    <port label="smooth_vs_drastic" dir="input" type="control" hint="default_high">
+      <name>Smooth vs Drastic</name>
       <p>Controls the averaging time difference between the controlling envelopes</p>
       <range min="0.0" max="1.0"/>
     </port>
-
-<!--
-    <port label="gain_envelope_speed" dir="input" type="control" hint="default_high">
-      <name>Reaction speed slow/fast</name>
-      <p>Controls the averaging time difference between the controlling envelopes</p>
-      <range min="0.0" max="1.0"/>
-    </port>
--->
 
     <port label="attack_gain_multiplier" dir="input" type="control" hint="default_0">
       <name>Attack control</name>
@@ -133,14 +121,8 @@
       <range min="-10.0" max="+10.0"/>
     </port>
 
-    <port label="actual_attack_gain" dir="output" type="control">
-      <name>Current attack gain (dB)</name>
-      <p>The amount of gain applied at the moment</p>
-      <range min="-30.0" max="+30.0"/>
-    </port>
-
-    <port label="actual_release_gain" dir="output" type="control">
-      <name>Current release gain (dB)</name>
+    <port label="actual_gain" dir="output" type="control">
+      <name>Current gain (dB)</name>
       <p>The amount of gain applied at the moment</p>
       <range min="-30.0" max="+30.0"/>
     </port>
