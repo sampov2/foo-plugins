@@ -50,6 +50,7 @@ foo-plugins ladspa identifier range: 3181-3220
 3186: t00b limiter
 3187: Foo Saturator
 3188: Foo Chop Liver
+3189: Foo Transient Architect v2
 
 
 
