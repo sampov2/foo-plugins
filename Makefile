@@ -4,8 +4,8 @@ CFLAGS=-O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-ma
 
 LIBFLAGS=-nostartfiles -shared -Wl,-Bsymbolic
 
-PLUGIN_LIBS    = foo_limiter.so foo_limiter_v2.so foo_transients.so foo_transients_mono.so foo_driver.so t00b_limiter.so foo_saturator.so foo_chop.so
-PLUGIN_SOURCES = foo_limiter.c  foo_limiter_v2.c  foo_transients.c  foo_transients_mono.c  foo_driver.so t00b_limiter.c foo_saturator.c foo_chop.c
+PLUGIN_LIBS    = foo_limiter.so foo_limiter_v2.so foo_transients.so foo_transients_mono.so foo_driver.so t00b_limiter.so foo_saturator.so foo_chop.so foo_transients_v2.so
+PLUGIN_SOURCES = foo_limiter.c  foo_limiter_v2.c  foo_transients.c  foo_transients_mono.c  foo_driver.so t00b_limiter.c foo_saturator.c foo_chop.c foo_transients_v2.c
 
 all: plugins tester
 
