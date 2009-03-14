@@ -10,7 +10,7 @@ PLUGIN_SOURCES = foo_limiter.c  foo_limiter_v2.c  foo_transients.c  foo_transien
 all: plugins tester
 
 %.so : %.o rms.o
-	$(CC) $(LIBFLAGS) rms.o $< -o $@
+	$(CC) $(LIBFLAGS) rms.o $< -o $@ -lm
 
 %.c : %.xml makestub.pl
 	./makestub.pl $< > $@
