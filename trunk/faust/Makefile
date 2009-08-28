@@ -13,3 +13,6 @@ gschmooz-sndfile: foo-comp-mono.dsp compressor-basics.dsp
 	faust -a sndfile.cpp foo-comp-mono.dsp > gen/gschmooz-sndfile.cpp
 	g++ -O3 -mfpmath=sse -msse -msse2 -ffast-math gen/gschmooz-sndfile.cpp `pkg-config --cflags --libs sndfile` -o gschmooz-sndfile
 
+clean:
+	rm -fr gschmooz-jack gschmooz-stereo-jack foo-comp-mono.dsp-svg foo-comp-stereo.dsp-svg gen/*
+
