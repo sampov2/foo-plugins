@@ -59,12 +59,55 @@ makeup_gain 	 = hslider("makeup gain (dB)",           0,      0,   20,   0.5); /
 drywet		 = hslider("dry/wet", 1.0, 0.0, 1.0, 0.1);
 
 
+/*
+rms_speed   = 48;
+threshold   = -10;
+attack      = time_ratio_attack( 0.001 );
+release     = time_ratio_release( 0.300 );
+ratio       = 5;
+makeup_gain = 0;
+drywet      = 1.0;
+*/
+
 import ("compressor-basics.dsp");
 
 DRYWET(ratio) = ( *(1 - ratio),  * (ratio)) : +;
 
+
+
+//maximum_rate = 10.0/SR;
+maximum_rate = 96.0/SR;
+//maximum_rate = 512.0/SR;
+
+RATELIMITER_INTERNAL(pt, ct, prevx, x) = 
+     select2( abs(ct-pt) > maximum_rate, x, 
+              prevx - pt + maximum_rate * select2( (x < prevx), 1.0, -1.0) );
+
+// this corrects overshooting gain. eliminates gain oscillation
+OVERSHOOT_CORRECTION(limited_gain, target_gain, tangent) = 
+	select2( (tangent > 0.0),
+		 select2( (limited_gain > target_gain), limited_gain, target_gain),
+		 select2( (limited_gain > target_gain), target_gain, limited_gain));
+
+RATELIMITER(prevx, x) = 
+	( RATELIMITER_INTERNAL( prevx@1 - prevx, prevx - x, prevx, x), x, (prevx - x) ) :
+	  OVERSHOOT_CORRECTION;
+
+
+
+
+
+COMP = _ <: ( DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF );
+
+//COMP = _ <: ( DETECTOR : RATIO : DB2COEFF );
+
+//process =  _ <: ( _ , *(COMP) ) : DRYWET(drywet);
+
+//process =  DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF;
+
+
 STEREO_SPLITTER(l, r) = ( (l + r) * 0.5 , l, r);
 STEREO_GAIN(gain, l, r)      = (gain * l, gain *r);
 
-process = STEREO_SPLITTER : ( ( DETECTOR : RATIO :  DB2COEFF ), _, _) : STEREO_GAIN;
+process = STEREO_SPLITTER : ( COMP, _, _) : STEREO_GAIN;
 
