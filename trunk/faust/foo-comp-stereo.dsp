@@ -71,9 +71,10 @@ drywet      = 1.0;
 
 import ("compressor-basics.dsp");
 
+
+
 DRYWET(ratio) = ( *(1 - ratio),  * (ratio)) : +;
-
-
+DRYWET_STEREO(l, r, ratio) = ( (DRYWET(l, ratio)), (DRYWET(r, ratio)));
 
 //maximum_rate = 10.0/SR;
 maximum_rate = 96.0/SR;
@@ -97,7 +98,8 @@ RATELIMITER(prevx, x) =
 
 
 
-COMP = _ <: ( DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF );
+//COMP = _ <: ( DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF );
+COMP =  DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF ;
 
 //COMP = _ <: ( DETECTOR : RATIO : DB2COEFF );
 
@@ -107,7 +109,9 @@ COMP = _ <: ( DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF );
 
 
 STEREO_SPLITTER(l, r) = ( (l + r) * 0.5 , l, r);
-STEREO_GAIN(gain, l, r)      = (gain * l, gain *r);
+STEREO_GAIN(drywet, gain, l, r)      = (
+	( l * (1.0 - (1.0 - gain) * drywet) ),
+	( r * (1.0 - (1.0 - gain) * drywet) ));
 
-process = STEREO_SPLITTER : ( COMP, _, _) : STEREO_GAIN;
+process = STEREO_SPLITTER : ( COMP, _, _) : STEREO_GAIN(drywet);
 
