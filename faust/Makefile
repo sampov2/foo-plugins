@@ -10,7 +10,7 @@ gschmooz-stereo-jack: foo-comp-stereo.dsp compressor-basics.dsp
 
 
 gschmooz-sndfile: foo-comp-mono.dsp compressor-basics.dsp
-	faust -a sndfile.cpp foo-comp-mono.dsp > gen/gschmooz-sndfile.cpp
+	faust -svg -a sndfile.cpp foo-comp-mono.dsp > gen/gschmooz-sndfile.cpp
 	g++ -O3 -mfpmath=sse -msse -msse2 -ffast-math gen/gschmooz-sndfile.cpp `pkg-config --cflags --libs sndfile` -o gschmooz-sndfile
 
 clean:
