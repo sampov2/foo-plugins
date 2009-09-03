@@ -26,30 +26,6 @@ DB2COEFF(x) = select2( (x < -318.8) , pow(10, x / 20), 0);
 //DB2COEFF(x) = pow(10, x / 20);
 
 
-/** start of RMS **/
-/*
-// TODO: does this need to be a "real" RMS?
-// Root Mean Square of n consecutive samples
-RMS(n) = square : mean(n) : sqrt ;
-
-// the square of a signal
-square(x) = x * x ;
-
-// the mean of n consecutive samples of a signal
-// uses fixpoint to avoid the accumulation of
-// rounding errors 
-mean(n) = float2fix : integrate(n) : fix2float : /(n); 
-
-// the sliding sum of n consecutive samples of a signal
-integrate(n,x) = x - x@n : +~_ ;
-
-// convertion between float and fix point
-float2fix(x) = int(x*(1<<20));      
-fix2float(x) = float(x)/(1<<20);    
-*/
-/** end of RMS **/
-
-
 // apply a threshold to the value and then normalize it to 0
 THRESH(t,x) = (x-t) * (t < x);
 
