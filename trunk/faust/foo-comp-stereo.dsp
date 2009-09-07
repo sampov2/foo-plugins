@@ -19,8 +19,9 @@ declare copyright "(c)Sampo Savolainen 2009";
 
 import ("compressor-basics.dsp");
 
+import ("hpf.dsp");
 
-COMP =  DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF ;
+COMP = HPF : DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF ;
 
 STEREO_SPLITTER(l, r) = ( (l + r) * 0.5 , l, r);
 STEREO_GAIN(drywet, gain, l, r)      = (

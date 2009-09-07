@@ -37,7 +37,9 @@ b1 = -1.9859269;
 a2 = 0.9821821;
 b2 = 0.9860424;
 
-process = (iir_2nd_order ~ _);
+HPF = (iir_2nd_order ~ _);
+
+//process = (iir_2nd_order ~ _);
 
 // ********* IIR 8th order: (it does not work for some strange reason..)
 iir_8th_order_ff(x) = (a0 * x) + (a1 * x@1) + (a2 * x@2) + (a3 * x@3) + (a4 * x@4) + (a5 * x@5) + (a6 * x@6) + (a7 * x@7) + (a8 * x@8);
