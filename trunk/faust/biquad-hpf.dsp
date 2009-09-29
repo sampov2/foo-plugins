@@ -52,9 +52,9 @@ biquad_run(y, b0, b1, b2, a1, a2, x) =
 
 biquad_hp(cutoff,x) = (biquad_hp_params(SR, 3.0, cutoff), x) : biquad_run ~ _;
 
-hpf_switch = select2( hslider("hpf switch", 0, 0, 1, 1), 1.0, 0.0);
+hpf_switch = select2( hslider("sidechain hpf", 0, 0, 1, 1), 1.0, 0.0);
 
-HPF = _ <: biquad_hp(15.0), biquad_hp(150.0) : *(hpf_switch), *(1.0-hpf_switch) :> _;
+HPF = _ <: biquad_hp(5.0), biquad_hp(150.0) : *(hpf_switch), *(1.0-hpf_switch) :> _;
 
 
 
