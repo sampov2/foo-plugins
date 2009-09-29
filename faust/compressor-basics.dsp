@@ -93,7 +93,7 @@ attack		 = time_ratio_attack( hslider("attack (ms)", 10.0,    0.1,  120.0, 0.1) 
 release		 = time_ratio_release( hslider("release (ms)", 300,     50, 1200.0, 1.0) / 1000 );
 
 ratio		 = hslider("compression ratio",          5,    1.5,   20,   0.5);
-makeup_gain 	 = hslider("makeup gain (dB)",           0,      0,   20,   0.5); // DB
+makeup_gain 	 = hslider("makeup gain (dB)",           0,      0,   40,   0.5); // DB
 
 drywet		 = hslider("dry/wet", 1.0, 0.0, 1.0, 0.1);
 
