@@ -17,9 +17,11 @@ declare author    "Sampo Savolainen";
 declare version   "0.9b";
 declare copyright "(c)Sampo Savolainen 2009";
 
+import ("math.lib");
+
 import ("compressor-basics.dsp");
 
-import ("hpf.dsp");
+import ("biquad-hpf.dsp");
 
 COMP = HPF : DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF ;
 
