@@ -51,6 +51,9 @@ foo-plugins ladspa identifier range: 3181-3220
 3187: Foo Saturator
 3188: Foo Chop Liver
 3189: Foo Transient Architect v2
+3190: - unused -
+3191: Foo Schmooz Mono
+3192: Foo Schmooz Stereo
 
 
 
