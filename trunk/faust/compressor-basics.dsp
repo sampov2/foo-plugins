@@ -19,8 +19,6 @@
 
 import("rms.dsp");
 
-SR = fconstant(int fSamplingFreq, <math.h>);
-
 COEFF2DB(x) = log10(x) * 20;
 DB2COEFF(x) = select2( (x < -318.8) , pow(10, x / 20), 0);
 //DB2COEFF(x) = pow(10, x / 20);
@@ -33,8 +31,6 @@ THRESH(t,x) = (x-t) * (t < x);
 SMOOTH(a, r, prevx, x) = 
 	(x     *      select2( (x < prevx), a, r )) + 
 	(prevx * (1 - select2( (x < prevx), a, r)));
-
-// SR ..
 
 DETECTOR = (	RMS(rms_speed) : 
 		COEFF2DB :
@@ -85,9 +81,10 @@ time_ratio_attack(t) = exp(1) / ( t * SR * time_ratio_target_atk );
 time_ratio_release(t) = exp(1) / ( t * SR * time_ratio_target_rel );
 
 
-// TODO: RMS speed should be relative to SR!
+// RMS at 0.5 ms. It should allow for a smoother peak style compression
+// min(max()) games due to buffer allocation. faust has to know how large this can become.
+rms_speed        = 0.0005 * min(192000.0, max(22050.0, SR));
 
-rms_speed	 = 24; // ceil(SR * 0.003);  // SR...
 threshold	 = hslider("threshold (dB)",         -10.0,  -60.0,   10.0, 1.0);
 attack		 = time_ratio_attack( hslider("attack (ms)", 10.0,    0.1,  120.0, 0.1) / 1000 );
 release		 = time_ratio_release( hslider("release (ms)", 300,     50, 1200.0, 1.0) / 1000 );
