@@ -1,6 +1,9 @@
 CXX=g++
 CFLAGS=-O3 -mfpmath=sse -msse -msse2 -ffast-math
-#CFLAGS=-O3
+
+CFLAGS_LV2=$(CFLAGS) -Wall -fPIC -DPIC `pkg-config --cflags lv2-plugin`
+LDFLAGS_LV2=-shared -Wl,-Bdynamic `pkg-config --libs lv2-plugin`
+
 
 all: gschmooz-jack gschmooz-stereo-jack
 
@@ -40,6 +43,13 @@ ladspaplugs: *.dsp
 		| sed 's/Maker = .*;/Maker = "Sampo Savolainen";/' \
 		> ladspa/foo-schmooz-stereo.cpp
 	$(CXX) -fPIC -shared $(CFLAGS) ladspa/foo-schmooz-stereo.cpp -o ladspa/foo-schmooz-stereo.so
+	
+lv2: minimal lv2-manifest.ttl schmooz_mono_lv2.cpp 
+	mkdir -p schmooz.lv2
+	$(CXX) schmooz_mono_lv2.cpp -o schmooz_mono_lv2.o -c $(CFLAGS_LV2)
+	$(CXX) schmooz_mono_lv2.o -o schmooz.lv2/schmooz.so $(LDFLAGS_LV2)
+	cp lv2-manifest.ttl schmooz.lv2/manifest.ttl
+	
 	
 
 
