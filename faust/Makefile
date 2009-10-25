@@ -1,7 +1,12 @@
 CXX=g++
 CFLAGS=-O3 -mfpmath=sse -msse -msse2 -ffast-math
+#CFLAGS=-O3
 
 all: gschmooz-jack gschmooz-stereo-jack
+
+minimal:
+	faust -a minimal.cpp foo-comp-mono.dsp   > gen/foo-comp-mono-minimal.cpp
+	faust -a minimal.cpp foo-comp-stereo.dsp > gen/foo-comp-stereo-minimal.cpp
 
 gschmooz-jack: foo-comp-mono.dsp compressor-basics.dsp biquad-hpf.dsp
 	faust -svg -a jack-gtk.cpp foo-comp-mono.dsp > gen/foo-comp-mono.cpp
