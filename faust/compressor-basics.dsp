@@ -75,7 +75,8 @@ time_ratio_target = 1.5;
 //time_ratio_target_atk = hslider("attack time ratio", 1.5, 0.2, 10.0, 0.1); 
 //time_ratio_target_rel = hslider("release time ratio", 1.5, 0.2, 5.0, 0.1);
 time_ratio_target_atk = 8.0;
-time_ratio_target_rel = 4.0; // this could be too slow
+//time_ratio_target_rel = 4.0; // this could be too slow
+time_ratio_target_rel = 1.5;
 
 time_ratio_attack(t) = exp(1) / ( t * SR * time_ratio_target_atk );
 time_ratio_release(t) = exp(1) / ( t * SR * time_ratio_target_rel );
@@ -92,7 +93,7 @@ release		 = time_ratio_release( hslider("release (ms)", 300,     50, 1200.0, 1.0
 ratio		 = hslider("compression ratio",          5,    1.5,   20,   0.5);
 makeup_gain 	 = hslider("makeup gain (dB)",           0,      0,   40,   0.5); // DB
 
-drywet		 = hslider("dry/wet", 1.0, 0.0, 1.0, 0.1);
+drywet		 = hslider("dry-wet", 1.0, 0.0, 1.0, 0.1);
 
 
 /*
