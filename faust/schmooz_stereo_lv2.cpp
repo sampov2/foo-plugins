@@ -5,14 +5,14 @@
 inline float max(float a, float b) { return fmax(a, b); }
 inline float min(float a, float b) { return fmin(a, b); }
 
-#include "gen/foo-comp-mono-minimal.cpp"
+#include "gen/foo-comp-stereo-minimal.cpp"
 
 using namespace LV2;
 using namespace std;
 
 // These need to match the indexes in manifest.ttl
-#define PORT_AUDIO_INPUT        0
-#define PORT_AUDIO_OUTPUT       1
+#define PORT_AUDIO_INPUT_L      0
+#define PORT_AUDIO_OUTPUT_L     1
 #define PORT_THRESHOLD          2
 #define PORT_SIDECHAIN          3
 #define PORT_ATTACK             4
@@ -22,16 +22,18 @@ using namespace std;
 #define PORT_DRYWET             8
 
 #define PORT_OUTPUT_ATTENUATION 9
+#define PORT_AUDIO_INPUT_R      10
+#define PORT_AUDIO_OUTPUT_R     11
 
 
-class SchmoozMono : public Plugin<SchmoozMono>, UI {
+class SchmoozStereo : public Plugin<SchmoozStereo>, UI {
 public:
-    SchmoozMono(double rate)
-          : Plugin<SchmoozMono>(10)
+    SchmoozStereo(double rate)
+          : Plugin<SchmoozStereo>(12)
   {
-	schmooz_mono.instanceInit( (int)rate );
+	schmooz_stereo.instanceInit( (int)rate );
 
-	schmooz_mono.buildUserInterface(this);
+	schmooz_stereo.buildUserInterface(this);
   }
 
   void run(uint32_t nframes) 
@@ -48,13 +50,21 @@ public:
 	*dry_wet_balance 	= *p(PORT_DRYWET);
 
 	for (uint32_t x = 0; x < nframes; ++x) {
-		input_avg  += p(PORT_AUDIO_INPUT)[x];
+		input_avg  += p(PORT_AUDIO_INPUT_L)[x];
 	}
 
-	schmooz_mono.compute(nframes, &p(PORT_AUDIO_INPUT), &p(PORT_AUDIO_OUTPUT));
+	float *in[2], *out[2];
+
+	in[0]  = p(PORT_AUDIO_INPUT_L);
+	in[1]  = p(PORT_AUDIO_INPUT_R);
+	out[0] = p(PORT_AUDIO_OUTPUT_L);
+	out[1] = p(PORT_AUDIO_OUTPUT_R);
+	
+
+	schmooz_stereo.compute(nframes, in, out);
 
 	for (uint32_t x = 0; x < nframes; ++x) {
-		output_avg += p(PORT_AUDIO_OUTPUT)[x];
+		output_avg += p(PORT_AUDIO_OUTPUT_L)[x];
 	}
 
 	if (input_avg == 0.0 || output_avg == 0.0) {
@@ -110,17 +120,17 @@ public:
         
 
   private:
-        float   *attack_ms;
-        float   *compression_ratio;
-        float   *dry_wet_balance;
-        float   *makeup_gain_db;
-        float   *release_ms;
-        float   *sidechain_enabled;
-        float   *threshold_db;
+        float *attack_ms;
+        float *compression_ratio;
+        float *dry_wet_balance;
+        float *makeup_gain_db;
+        float *release_ms;
+        float *sidechain_enabled;
+        float *threshold_db;
 
-	mydsp schmooz_mono;
+	mydsp schmooz_stereo;
 
 };
 
-static int _ = SchmoozMono::register_class("http://studionumbersix.com/foo/lv2/schmooz/mono-comp");
+static int _ = SchmoozStereo::register_class("http://studionumbersix.com/foo/lv2/schmooz/stereo-comp");
 

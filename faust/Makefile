@@ -44,10 +44,11 @@ ladspaplugs: *.dsp
 		> ladspa/foo-schmooz-stereo.cpp
 	$(CXX) -fPIC -shared $(CFLAGS) ladspa/foo-schmooz-stereo.cpp -o ladspa/foo-schmooz-stereo.so
 	
-lv2: minimal lv2-manifest.ttl schmooz_mono_lv2.cpp 
+lv2: minimal lv2-manifest.ttl schmooz_mono_lv2.cpp schmooz_stereo_lv2.cpp 
 	mkdir -p schmooz.lv2
-	$(CXX) schmooz_mono_lv2.cpp -o schmooz_mono_lv2.o -c $(CFLAGS_LV2)
-	$(CXX) schmooz_mono_lv2.o -o schmooz.lv2/schmooz.so $(LDFLAGS_LV2)
+	$(CXX) schmooz_mono_lv2.cpp   -o schmooz_mono_lv2.o   -c $(CFLAGS_LV2)
+	$(CXX) schmooz_stereo_lv2.cpp -o schmooz_stereo_lv2.o -c $(CFLAGS_LV2)
+	$(CXX) schmooz_mono_lv2.o schmooz_stereo_lv2.o -o schmooz.lv2/schmooz.so $(LDFLAGS_LV2)
 	cp lv2-manifest.ttl schmooz.lv2/manifest.ttl
 	
 	
