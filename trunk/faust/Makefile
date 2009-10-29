@@ -43,8 +43,10 @@ ladspaplugs: *.dsp
 		| sed 's/Maker = .*;/Maker = "Sampo Savolainen";/' \
 		> ladspa/foo-schmooz-stereo.cpp
 	$(CXX) -fPIC -shared $(CFLAGS) ladspa/foo-schmooz-stereo.cpp -o ladspa/foo-schmooz-stereo.so
-	
-lv2: minimal lv2-manifest.ttl schmooz_mono_lv2.cpp schmooz_stereo_lv2.cpp 
+
+lv2-full: minimal lv2	
+
+lv2: lv2-manifest.ttl schmooz_mono_lv2.cpp schmooz_stereo_lv2.cpp 
 	mkdir -p schmooz.lv2
 	$(CXX) schmooz_mono_lv2.cpp   -o schmooz_mono_lv2.o   -c $(CFLAGS_LV2)
 	$(CXX) schmooz_stereo_lv2.cpp -o schmooz_stereo_lv2.o -c $(CFLAGS_LV2)
