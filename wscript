@@ -30,6 +30,7 @@ def build(bld):
 		src/chop.cpp
 		src/driver.cpp
 		src/limiter.cpp
+		src/limiter_v2.cpp
 		src/saturator.cpp
 	'''
 
@@ -45,6 +46,7 @@ def build(bld):
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/chop.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/driver.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter.ttl")
+	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter-v2.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/saturator.ttl")
 
 	
