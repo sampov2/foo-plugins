@@ -40,7 +40,7 @@ public:
 	double output_avg = 0.0;
 
 	*threshold_db 		= *p(PORT_THRESHOLD);
-	*sidechain_enabled 	= *p(PORT_SIDECHAIN);
+	*sidechain_enabled 	= (*p(PORT_SIDECHAIN) > 0 ? 1 : 0);
 	*attack_ms 		= *p(PORT_ATTACK);
 	*release_ms 		= *p(PORT_RELEASE);
 	*compression_ratio 	= *p(PORT_RATIO);
