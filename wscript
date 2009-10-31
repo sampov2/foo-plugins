@@ -15,7 +15,8 @@ def configure(conf):
 	autowaf.check_pkg(conf, 'lv2-plugin', uselib_store='LV2-PLUGIN', atleast_version='1.0.2')
 	conf.env['shlib_PATTERN'] = '%s.so'
 	# we need to check whether user provides compiler options, otherwise..
-	compiler_options = [ '-Wall', '-O3', '-msse', '-msse2', '-mfpmath=sse', '-ffast-math' ]
+	compiler_options = [ '-Wall', '-O3', '-msse', '-msse2', '-mfpmath=sse', '-ffast-math',
+                             '-funroll-loops', '-fomit-frame-pointer' ]
 	conf.env.append_value('CXXFLAGS', compiler_options)
 
 def set_options(opt):
@@ -29,6 +30,7 @@ def build(bld):
 		src/chop.cpp
 		src/driver.cpp
 		src/limiter.cpp
+		src/saturator.cpp
 	'''
 
 	obj.name   = "schmooz"
@@ -43,6 +45,7 @@ def build(bld):
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/chop.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/driver.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter.ttl")
+	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/saturator.ttl")
 
 	
 	
