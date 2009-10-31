@@ -121,5 +121,5 @@ public:
 
 };
 
-static int _ = SchmoozMono::register_class("http://studionumbersix.com/foo/lv2/schmooz/mono-comp");
+static int _ = SchmoozMono::register_class("http://studionumbersix.com/foo/lv2/schmooz-mono");
 

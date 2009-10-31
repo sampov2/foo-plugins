@@ -131,5 +131,5 @@ public:
 
 };
 
-static int _ = SchmoozStereo::register_class("http://studionumbersix.com/foo/lv2/schmooz/stereo-comp");
+static int _ = SchmoozStereo::register_class("http://studionumbersix.com/foo/lv2/schmooz-stereo");
 
