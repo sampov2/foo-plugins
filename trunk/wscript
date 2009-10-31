@@ -34,20 +34,20 @@ def build(bld):
 		src/saturator.cpp
 	'''
 
-	obj.name   = "schmooz"
+	obj.name   = "foo-plugins"
 	obj.uselib = "LV2-PLUGIN"
 	obj.vnum   = ""
 	obj.target = "foo-plugins"
-	obj.install_path = "/home/v2/.lv2/schmooz.lv2"
+	obj.install_path = "/home/v2/.lv2/foo.lv2"
 
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/manifest.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/schmooz-mono.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/schmooz-stereo.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/chop.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/driver.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter-v2.ttl")
-	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/saturator.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/manifest.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/schmooz-mono.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/schmooz-stereo.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/chop.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/driver.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/limiter.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/limiter-v2.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/saturator.ttl")
 
 	
 	
