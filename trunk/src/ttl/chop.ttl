@@ -1,0 +1,54 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+
+<http://studionumbersix.com/foo/lv2/chop-liver>
+	a		lv2:DistortionPlugin;
+	doap:name	"Foo Chop Liver";
+	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
+	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
+
+
+	lv2:port [
+		a lv2:AudioPort, lv2:InputPort;
+		lv2:index 0;
+		lv2:symbol "input";
+		lv2:name "Input";
+	],
+	[
+		a lv2:AudioPort, lv2:OutputPort;
+		lv2:index 1;
+		lv2:symbol "output";
+		lv2:name "Output";
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 2;
+		lv2:symbol "window";
+		lv2:name "Chop window size";
+		lv2:minimum  2.0;
+		lv2:maximum 32.0;
+		lv2:default  2.0;
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 3;
+		lv2:symbol "dry_amount";
+		lv2:name "Dry mix";
+
+		lv2:minimum 0.0;
+		lv2:maximum 1.0;
+		lv2:default 0.0;
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 4;
+		lv2:symbol "wet_amount";
+		lv2:name "Wet mix";
+
+		lv2:minimum 0.0;
+		lv2:maximum 1.0;
+		lv2:default 1.0;
+	].
+
