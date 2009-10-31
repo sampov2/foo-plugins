@@ -25,8 +25,8 @@ def set_options(opt):
 def build(bld):
 	obj = bld.new_task_gen('cxx', 'shlib')
 	obj.source = '''
-		src/schmooz_mono_lv2.cpp
-		src/schmooz_stereo_lv2.cpp
+		src/schmooz_mono.cpp
+		src/schmooz_stereo.cpp
 		src/chop.cpp
 		src/driver.cpp
 		src/limiter.cpp
