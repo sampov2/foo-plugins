@@ -1,14 +1,14 @@
 @prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
 @prefix doap: <http://usefulinc.com/ns/doap#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
+@prefix dc: <http://dublincore.org/documents/dcmi-namespace/> .
 
 <http://studionumbersix.com/foo/lv2/driver>
 	a		lv2:DistortionPlugin;
 	doap:name	"Foo Driver";
 	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
 	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
-
+	dc:replaces <urn:ladspa:3184> ;
 
 	lv2:port [
 		a lv2:AudioPort, lv2:InputPort;
