@@ -18,6 +18,7 @@
 */
 #include <lv2plugin.hpp>
 #include <cmath>
+#include "utils.h"
 
 using namespace LV2;
 using namespace std;
@@ -28,8 +29,6 @@ using namespace std;
 #define PORT_DRIVE		3
 #define PORT_OFFSET		4
 #define PORT_BALANCE		5
-
-#define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
 
 class Driver : public Plugin<Driver>
 {
