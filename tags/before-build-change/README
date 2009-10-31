@@ -1,0 +1,61 @@
+foo-plugins
+^^^^^^^^^^^
+This is a small set of LADSPA plugins. Currently it consists of two plugins:
+
+ Foo Lookahead Limiter (stereo)
+    A lookahead peak limiter with an attack / release envelope.
+    Parameters:
+     - Input gain (dB)
+     - Maximum peak level (dB)
+     - Release time (seconds)
+
+ Foo Transient Architect (stereo and mono version)
+    Transient sound design. This is a dynamics control independent of the
+    volume level. It gives separate control for transient attack and release
+    gain.
+    The plugin works by using two RMS envelopes. The first envelope reacts
+    fast to changes in the signal and the other one more slowly. Attack and
+    release is defined by the difference between the envelopes.
+    Parameters:
+     - Averaging time difference (seconds)
+       This parameter controls how far apart are the envelope averaging times.
+       The smaller the value, the closer together the envelopes are. With
+       larger values the envelopes drift apart further and produce a less
+       smooth sound.
+     - Attack gain (dB)
+     - Release gain (dB)
+       Note that the gain values are not guarantees. The parametrized gain
+       is scaled according to the envelope difference. Because of this the
+       effectual gain would be a lot less than the user wants. To make the 
+       control more meaningful, the plugin scales the gain up. This might
+       and will cause the plugin to sometimes "overshot" the gain.
+
+Note that these plugins are not finished products yet and the effect of the
+parameters might change with new versions. This is especially true for the
+transient designer as it hasn't been tuned yet.
+
+
+Thanks to Steve Harris for providing the tools to generate LADSPA plugins out
+of XML definitions and the RMS envelope code.
+
+
+-----------------------------------------------------------------------------
+foo-plugins ladspa identifier range: 3181-3220
+
+3181: Foo Lookahead Limiter
+3182: Foo Transient Architect
+3183: Foo Transient Architect (mono)
+3184: Foo Driver
+3185: Foo Lookahead Limiter v2
+3186: t00b limiter
+3187: Foo Saturator
+3188: Foo Chop Liver
+3189: Foo Transient Architect v2
+3190: - unused -
+3191: Foo Schmooz Mono
+3192: Foo Schmooz Stereo
+
+
+
+
+
