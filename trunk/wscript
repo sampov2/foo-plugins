@@ -28,6 +28,7 @@ def build(bld):
 		src/schmooz_stereo_lv2.cpp
 		src/chop.cpp
 		src/driver.cpp
+		src/limiter.cpp
 	'''
 
 	obj.name   = "schmooz"
@@ -41,6 +42,7 @@ def build(bld):
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/schmooz-stereo.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/chop.ttl")
 	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/driver.ttl")
+	bld.install_files("/home/v2/.lv2/schmooz.lv2", "src/ttl/limiter.ttl")
 
 	
 	
