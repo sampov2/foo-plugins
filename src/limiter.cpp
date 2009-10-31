@@ -33,6 +33,7 @@ using namespace std;
 #define PORT_RELEASE_SCALE	7
 
 #define PORT_ATTENUATION	8
+#define PORT_LATENCY		9
 
 
 
@@ -66,7 +67,7 @@ class Limiter : public Plugin<Limiter>
 {
 public:
 	Limiter(double rate)
-		: Plugin<Limiter>(9)
+		: Plugin<Limiter>(10)
 	{
 		samplerate = rate;
 		ramp_up_time_samples = (uint32_t)floor(rate * (float)FOO_LIMITER_RAMP_UP_MILLISECONDS / 1000.0f);
@@ -132,10 +133,6 @@ public:
 		env->release_delta   = (1.0f - env->limit_gain)/(float)env->release_samples;
 
 		env->logscale        = 1 / expf(1.0f) + logscale * (FOO_LIMITER_MAX_LOGSCALE - 1/expf(1.0f));
-#ifdef FOO_TESTER
-		printf("envelope logscale = %f (parameter %f)\n",env->logscale, logscale);
-
-#endif 
 
 		env->at_sample       = 0;
 	}
@@ -240,6 +237,7 @@ public:
 		}
 
 		*p(PORT_ATTENUATION) = -CO_DB(min_gain);
+		*p(PORT_LATENCY) = ramp_up_time_samples;
 		//*(plugin_data->latency)     = ramp_up_time_samples;
 
 		//plugin_data->current_gain   = current_gain;
@@ -248,6 +246,7 @@ public:
 
 	}
 
+private:
 	uint32_t ramp_up_time_samples;
 	uint32_t samplerate;
 
