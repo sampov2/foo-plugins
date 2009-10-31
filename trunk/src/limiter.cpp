@@ -1,6 +1,6 @@
 /*
     Foo Lookahead Limiter - Lookahead limiter to keep peaks below a set threshold
-    Copyright (C) 2006  Sampo Savolainen <v2@iki.fi>
+    Copyright (C) 2006-2009  Sampo Savolainen <v2@iki.fi>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
