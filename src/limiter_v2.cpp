@@ -19,6 +19,7 @@
 */
 #include <lv2plugin.hpp>
 #include <cmath>
+#include <cstdlib>
 #include "utils.h"
 
 using namespace LV2;
