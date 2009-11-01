@@ -55,6 +55,7 @@ public:
 
 	void run(uint32_t nframes)
 	{
+		// TODO: make it work, add input gain, etc. etc.
 		float max_peak   = DB_CO(*p(PORT_MAX_PEAK_DB));
 
 		float attack  = (float)samplerate * *p(PORT_ATTACK_SECONDS);
