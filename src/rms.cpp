@@ -33,22 +33,28 @@ RMS::RMS(float _fs, float _time)
 float
 RMS::run(float x)
 {
-    if (rm < NEAR_ZERO) rm = NEAR_ZERO;
+	if (rm < NEAR_ZERO) rm = NEAR_ZERO;
 
-    rm += coef * (( (x * x) / rm) - rm);
+	rm += coef * (( (x * x) / rm) - rm);
 
-    return rm;
+	return rm;
 }
 
 float 
 RMS::run_buffer(float *x, uint32_t nframes)
 {
-    for (uint32_t i=0; i<nframes; ++i) {
-        if (rm < NEAR_ZERO) rm = NEAR_ZERO;
-        rm += coef * ((x[i] * x[i] / rm) - rm);
-    }
+	for (uint32_t i=0; i<nframes; ++i) {
+		if (rm < NEAR_ZERO) rm = NEAR_ZERO;
+		rm += coef * ((x[i] * x[i] / rm) - rm);
+	}
 
-    return rm;
+	return rm;
+}
+
+void
+RMS::set_time(float time)
+{
+	coef = 0.5 * (1.0 - exp(-1.0 / (fs * time)));
 }
 
 };
