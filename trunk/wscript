@@ -33,6 +33,7 @@ def build(bld):
 		src/limiter_v2.cpp
 		src/saturator.cpp
 		src/transients_v2.cpp
+		src/transients_mono_v2.cpp
 		src/t00b_limiter.cpp
 
 		src/rms.cpp
@@ -53,6 +54,7 @@ def build(bld):
 	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/limiter-v2.ttl")
 	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/saturator.ttl")
 	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/transients-v2.ttl")
+	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/transients-mono-v2.ttl")
 	bld.install_files("/home/v2/.lv2/foo.lv2", "src/ttl/t00b-limiter.ttl")
 
 	
