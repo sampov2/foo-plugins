@@ -5,7 +5,7 @@
 
 <http://studionumbersix.com/foo/lv2/t00b-limiter>
 	a		lv2:LimiterPlugin;
-	doap:name	"t00b Limiter";
+	doap:name	"t00b Limiter (Experimental, not finished)";
 	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
 	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
 	dc:replaces <urn:ladspa:3181> ;
