@@ -72,7 +72,7 @@ public:
 
 		for (uint32_t n = 0; n < nframes; ++n) {
 
-			float rms  = run_RMS (rms_l, rms_r, input_left[n], input_right[n]);
+			//float rms  = run_RMS (rms_l, rms_r, input_left[n], input_right[n]);
 			float peak = run_peak(input_left[n], input_right[n]);
 
 			saturation = optoSaturator(attack, release, saturation, peak);
