@@ -3,6 +3,8 @@ foo-plugins
 This is a set of LV2 plugins. This readme should really be updated..
 
 
+t00bLimiter = is clearly a work in progress
+
 -----------------------------------------------------------------------------
 The old Ladspa versions used the following identifiers
 
