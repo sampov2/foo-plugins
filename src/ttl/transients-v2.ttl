@@ -1,0 +1,77 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://dublincore.org/documents/dcmi-namespace/> .
+
+<http://studionumbersix.com/foo/lv2/transients-v2>
+	a		lv2:LimiterPlugin;
+	doap:name	"Foo Transient Architect v2";
+	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
+	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
+	dc:replaces <urn:ladspa:3189> ;
+
+
+	lv2:port [
+		a lv2:AudioPort, lv2:InputPort;
+		lv2:index 0;
+		lv2:symbol "input_l";
+		lv2:name "Input L";
+	],
+	[
+		a lv2:AudioPort, lv2:InputPort;
+		lv2:index 1;
+		lv2:symbol "input_r";
+		lv2:name "Input R";
+	],
+	[
+		a lv2:AudioPort, lv2:OutputPort;
+		lv2:index 2;
+		lv2:symbol "output_l";
+		lv2:name "Output L";
+	],
+	[
+		a lv2:AudioPort, lv2:OutputPort;
+		lv2:index 3;
+		lv2:symbol "output_r";
+		lv2:name "Output R";
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 4;
+		lv2:symbol "smooth_drastic";
+		lv2:name "Smooth vs Drastic";
+
+		lv2:minimum 0.0;
+		lv2:maximum 1.0;
+		lv2:default 0.75;
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 5;
+		lv2:symbol "attack_emphasis";
+		lv2:name "Attack emphasis";
+
+		lv2:minimum -10.0;
+		lv2:maximum  10.0;
+		lv2:default   0.0;
+	],
+  	[
+		a lv2:ControlPort, lv2:InputPort;
+		lv2:index 6;
+		lv2:symbol "release_emphasis";
+		lv2:name "Release emphasis";
+
+		lv2:minimum -10.0;
+		lv2:maximum  10.0;
+		lv2:default   0.0;
+	],
+  	[
+		a lv2:ControlPort, lv2:OutputPort;
+		lv2:index 7;
+		lv2:symbol "actual_gain";
+		lv2:name "Current gain (dB)";
+
+		lv2:minimum -30.0;
+		lv2:maximum  30.0;
+	].
+
