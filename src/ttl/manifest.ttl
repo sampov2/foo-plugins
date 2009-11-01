@@ -42,6 +42,11 @@
 	lv2:binary	<foo-plugins.so>;
 	rdfs:seeAlso <transients-v2.ttl> .
 
+<http://studionumbersix.com/foo/lv2/transients-mono-v2>
+	a lv2:Plugin;
+	lv2:binary	<foo-plugins.so>;
+	rdfs:seeAlso <transients-mono-v2.ttl> .
+
 #<http://studionumbersix.com/foo/lv2/t00b-limiter>
 #	a lv2:Plugin;
 #	lv2:binary	<foo-plugins.so>;
