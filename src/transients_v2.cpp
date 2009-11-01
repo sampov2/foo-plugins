@@ -37,16 +37,10 @@ class TransientsV2 : public Plugin<TransientsV2>
 {
 public:
 	TransientsV2(double rate)
-		: Plugin<TransientsV2>(8)
+		: Plugin<TransientsV2>(8),
+		  slow_rms(rate, 1.0f),
+		  fast_rms(rate, 1.0f)
 	{
-		slow_rms = rms_new((float)rate, 1.0f);
-	        fast_rms = rms_new((float)rate, 1.0f);
-	}
-
-	~TransientsV2()
-	{
-		rms_free (fast_rms);
-		rms_free (slow_rms);
 	}
 	
 	void run(uint32_t nframes)
@@ -66,8 +60,8 @@ public:
 		float average_difference = MIN_ENVELOPE_SPEED + smooth_vs_drastic * (MAX_ENVELOPE_SPEED - MIN_ENVELOPE_SPEED);
 
 
-		rms_set_time(slow_rms, 0.05f + average_difference / 2.0f);
-		rms_set_time(fast_rms, 0.05f - average_difference / 2.0f);
+		slow_rms.set_time(0.05f + average_difference / 2.0f);
+		fast_rms.set_time(0.05f - average_difference / 2.0f);
 
 		float max_gain = 0.0;
 		float min_gain = 0.0;
@@ -81,8 +75,8 @@ public:
 			else
 				tmp = input_right[i];
 
-			slow = CO_DB(rms_run(slow_rms, tmp));
-			fast = CO_DB(rms_run(fast_rms, tmp));
+			slow = CO_DB(slow_rms.run(tmp));
+			fast = CO_DB(fast_rms.run(tmp));
 
 			if (fast > slow) {
 				// Attack
@@ -118,8 +112,8 @@ public:
 	}
 
 private:
-    	rms *slow_rms;
-	rms *fast_rms;
+    	Foo::RMS slow_rms;
+	Foo::RMS fast_rms;
 };
 
 static int _ = TransientsV2::register_class("http://studionumbersix.com/foo/lv2/transients-v2");

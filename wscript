@@ -33,6 +33,8 @@ def build(bld):
 		src/limiter_v2.cpp
 		src/saturator.cpp
 		src/transients_v2.cpp
+
+		src/rms.cpp
 	'''
 
 	obj.name   = "foo-plugins"
