@@ -37,3 +37,9 @@
 	lv2:binary	<foo-plugins.so>;
 	rdfs:seeAlso <saturator.ttl> .
 
+<http://studionumbersix.com/foo/lv2/transients-v2>
+	a lv2:Plugin;
+	lv2:binary	<foo-plugins.so>;
+	rdfs:seeAlso <transients-v2.ttl> .
+
+
