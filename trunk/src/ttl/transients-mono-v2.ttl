@@ -4,7 +4,7 @@
 @prefix dc: <http://dublincore.org/documents/dcmi-namespace/> .
 
 <http://studionumbersix.com/foo/lv2/transients-mono-v2>
-	a		lv2:LimiterPlugin;
+	a		lv2:DynamicsPlugin;
 	doap:name	"Foo Transient Architect 2 (mono)";
 	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
 	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
