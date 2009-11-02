@@ -2,12 +2,12 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 
-<http://studionumbersix.com/foo/lv2/schmooz/mono-comp>
+<http://studionumbersix.com/foo/lv2/schmooz-mono>
 	a lv2:Plugin;
 	lv2:binary	<foo-plugins.so>; 
 	rdfs:seeAlso <schmooz-mono.ttl> .
 
-<http://studionumbersix.com/foo/lv2/schmooz/stereo-comp>
+<http://studionumbersix.com/foo/lv2/schmooz-stereo>
 	a lv2:Plugin;
 	lv2:binary	<foo-plugins.so>;
 	rdfs:seeAlso <schmooz-stereo.ttl> .
