@@ -1,6 +1,7 @@
 /*
     El Maxim - maximizer / saturator
     Copyright (C) 2009  Sampo Savolainen <v2@iki.fi>
+    Thanks to naptastic (http://naptastic.com) for the idea
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
