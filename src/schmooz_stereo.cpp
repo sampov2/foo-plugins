@@ -18,6 +18,7 @@
 */
 #include <lv2plugin.hpp>
 #include <cmath>
+#include "utils.h"
 
 inline float max(float a, float b) { return fmax(a, b); }
 inline float min(float a, float b) { return fmin(a, b); }
@@ -55,9 +56,6 @@ public:
 
   void run(uint32_t nframes) 
   {
-	double input_avg  = 0.0;
-	double output_avg = 0.0;
-
 	*threshold_db 		= *p(PORT_THRESHOLD);
 	*sidechain_enabled 	= (*p(PORT_SIDECHAIN) > 0 ? 1 : 0);
 	*attack_ms 		= *p(PORT_ATTACK);
@@ -66,29 +64,16 @@ public:
 	*makeup_gain_db 	= *p(PORT_MAKEUP);
 	*dry_wet_balance 	= *p(PORT_DRYWET);
 
-	for (uint32_t x = 0; x < nframes; ++x) {
-		input_avg  += p(PORT_AUDIO_INPUT_L)[x];
-	}
-
-	float *in[2], *out[2];
-
 	in[0]  = p(PORT_AUDIO_INPUT_L);
 	in[1]  = p(PORT_AUDIO_INPUT_R);
 	out[0] = p(PORT_AUDIO_OUTPUT_L);
 	out[1] = p(PORT_AUDIO_OUTPUT_R);
 	
+	float gain;
 
-	schmooz_stereo.compute(nframes, in, out);
+	schmooz_stereo.compute(nframes, in, out, &gain);
 
-	for (uint32_t x = 0; x < nframes; ++x) {
-		output_avg += p(PORT_AUDIO_OUTPUT_L)[x];
-	}
-
-	if (input_avg == 0.0 || output_avg == 0.0) {
-		*p(PORT_OUTPUT_ATTENUATION) = 0.0;
-	} else {
-		*p(PORT_OUTPUT_ATTENUATION) = log10f(output_avg / input_avg) * 20.0;
-	}
+	*p(PORT_OUTPUT_ATTENUATION) = CO_DB(gain);
   }
 
   // Unused UI-functions        
@@ -147,6 +132,7 @@ public:
 
 	mydsp schmooz_stereo;
 
+	float *in[2], *out[2];
 };
 
 static int _ = SchmoozStereo::register_class("http://studionumbersix.com/foo/lv2/schmooz-stereo");

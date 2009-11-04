@@ -97,7 +97,7 @@ class dsp {
 	virtual int getNumOutputs() 					= 0;
 	virtual void buildUserInterface(UI* interface) 	= 0;
 	virtual void init(int samplingRate) 			= 0;
- 	virtual void compute(int len, float** inputs, float** outputs) 	= 0;
+ 	virtual void compute(int len, float** inputs, float** outputs, float *gain) 	= 0;
 };
 		
 
@@ -234,7 +234,7 @@ class mydsp : public dsp {
 		interface->addHorizontalSlider("threshold (dB)", &fslider2, -10.0f, -60.0f, 10.0f, 1.0f);
 		interface->closeBox();
 	}
-	virtual void compute (int count, FAUSTFLOAT** input, FAUSTFLOAT** output) {
+	virtual void compute (int count, FAUSTFLOAT** input, FAUSTFLOAT** output, float *gain) {
 		float 	S4[2];
 		float 	fSlow0 = (fConst0 / fslider0);
 		float 	fSlow1 = (fConst1 / fslider1);
@@ -250,6 +250,8 @@ class mydsp : public dsp {
 		FAUSTFLOAT* input1 = input[1];
 		FAUSTFLOAT* output0 = output[0];
 		FAUSTFLOAT* output1 = output[1];
+		float	tmp;
+		float   attenuation = 0.0;
 		for (int i=0; i<count; i++) {
 			float 	S1[2];
 			float 	S2[2];
@@ -285,6 +287,10 @@ class mydsp : public dsp {
 			fRec0[0] = S1[int((((fRec0[1] + fTemp8) - fSlow6) > 0.0f))];
 			S0[0] = powf(10,(5.000000e-02f * fRec0[0]));
 			float fTemp13 = (1.0f - (fSlow7 * (1.0f - S0[int((fRec0[0] < -318.8f))])));
+			tmp = fTemp13;
+			if (i == 0 || tmp < attenuation) {
+				attenuation = tmp;
+			}
 			output0[i] = (FAUSTFLOAT)(fTemp1 * fTemp13);
 			output1[i] = (FAUSTFLOAT)(fTemp0 * fTemp13);
 			// post processing
@@ -296,6 +302,7 @@ class mydsp : public dsp {
 			fRec3[2] = fRec3[1]; fRec3[1] = fRec3[0];
 			fVec0[2] = fVec0[1]; fVec0[1] = fVec0[0];
 		}
+		*gain = attenuation;
 	}
 };
 
