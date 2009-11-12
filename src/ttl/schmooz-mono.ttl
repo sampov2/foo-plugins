@@ -1,13 +1,14 @@
 @prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
 @prefix doap: <http://usefulinc.com/ns/doap#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
+@prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
 
 <http://studionumbersix.com/foo/lv2/schmooz-mono>
 	a		lv2:CompressorPlugin;
 	doap:name	"Schmooz Compressor (mono)";
 	doap:license	<http://usefulinc.com/doap/licenses/gpl>;
 	doap:maintainer [ foaf:name "Sampo Savolainen" ; ] ;
+	ui:ui		<http://studionumbersix.com/foo/lv2/schmooz-mono/ui>;
 
 
 	lv2:port [
@@ -95,4 +96,9 @@
 		lv2:minimum -70.0;
 		lv2:maximum  20.0;
 	].
+
+<http://studionumbersix.com/foo/lv2/schmooz-mono/ui>
+	a		ui:GtkUI;
+	ui:binary	<schmooz_ui.so> .
+
 
