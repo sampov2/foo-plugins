@@ -85,7 +85,7 @@
 		lv2:maximum +70.0;
 	],
 	[
-		a lv2:ControlPort, lv2:OutputPort;
+		a lv2:ControlPort, lv2:Port;
 		lv2:index 9;
 		lv2:symbol "latency";
 		lv2:name "Latency";
