@@ -1,3 +1,21 @@
+/*
+    GUI for the schmooz mono compressor. Work in progress.
+    Copyright (C) 2009  Sampo Savolainen <v2@iki.fi>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
 #include <gtkmm.h>
 #include <ui.h>
 #include <cassert>
@@ -28,6 +46,7 @@ private:
 	void attack_changed();
 	void release_changed();
 	void redraw_attenuation();
+	bool expose_attenuation(GdkEventExpose *);
 
 	LV2UI_Write_Function _write_function;
 	LV2UI_Controller _controller;
@@ -81,7 +100,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_attenuation_height = 16.0;
         _attenuation->set_size_request(_attenuation_width, _attenuation_height);
 
-        //_attenuation->signal_expose_event()
+        _attenuation->signal_expose_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::expose_attenuation));
         //_attenuation->signal_size_allocate()
 
 
@@ -132,6 +151,14 @@ SchmoozMonoUI::release_changed()
 	// TODO: port macros need to be put in a common header
 	float release = (float)_release_ms->get_value();
 	_write_function(_controller, 5, sizeof(float), 4, &release);
+}
+
+bool
+SchmoozMonoUI::expose_attenuation(GdkEventExpose *expose)
+{
+	redraw_attenuation();
+
+	return true;
 }
 
 void
