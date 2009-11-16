@@ -21,6 +21,20 @@
 #include <cassert>
 #include <iostream>
 
+// These need to match the indexes in manifest.ttl
+// TODO: port macros need to be put in a common header
+#define PORT_AUDIO_INPUT        0
+#define PORT_AUDIO_OUTPUT       1
+#define PORT_THRESHOLD          2
+#define PORT_SIDECHAIN_HPF      3
+#define PORT_ATTACK             4
+#define PORT_RELEASE            5
+#define PORT_RATIO              6
+#define PORT_MAKEUP             7
+#define PORT_DRYWET             8
+
+#define PORT_OUTPUT_ATTENUATION 9
+
 #define SCHMOOZ_UI_URI "http://studionumbersix.com/foo/lv2/schmooz-mono/ui"
 
 class SchmoozMonoUI
@@ -28,11 +42,11 @@ class SchmoozMonoUI
 public:
 
 	SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
-			    const char *bundle_path, 
-			    LV2UI_Write_Function write_function, 
-			    LV2UI_Controller controller, 
-			    LV2UI_Widget *widget, 
-			    const LV2_Feature *const *features);
+		      const char *bundle_path, 
+		      LV2UI_Write_Function write_function, 
+		      LV2UI_Controller controller, 
+		      LV2UI_Widget *widget, 
+		      const LV2_Feature *const *features);
 
 	~SchmoozMonoUI();
 
@@ -43,8 +57,12 @@ private:
 
 	void hpf_toggled();
 	void threshold_changed();
+	void ratio_changed();
 	void attack_changed();
 	void release_changed();
+	void makeup_changed();
+	void drywet_changed();
+
 	void redraw_attenuation();
 	bool expose_attenuation(GdkEventExpose *);
 
@@ -56,9 +74,13 @@ private:
 
 	Gtk::ToggleButton 	*_hpf_toggle;
 	Gtk::HScale		*_threshold;
+	Gtk::HScale		*_ratio;
 
 	Gtk::HScale 		*_attack_ms;
 	Gtk::HScale 		*_release_ms;
+
+	Gtk::HScale		*_makeup;
+	Gtk::HScale		*_drywet;
 
 	Gtk::DrawingArea	*_attenuation;
 	float			_current_attenuation;
@@ -86,12 +108,24 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_threshold = Gtk::manage( new Gtk::HScale(-60.0, 10.0, 1.0) );
 	_threshold->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::threshold_changed) );
 
+	// Ratio
+	_ratio = Gtk::manage( new Gtk::HScale(1.5, 20.0, 0.5) );
+	_ratio->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::ratio_changed) );
+
 	// Attack and release widgets
 	_attack_ms = Gtk::manage( new Gtk::HScale(0.1, 120.0, 1.0) );
 	_attack_ms->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::attack_changed) );
 
 	_release_ms = Gtk::manage( new Gtk::HScale(50, 1200.0, 10.0) );
 	_release_ms->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::release_changed) );
+
+	// Makeup gain
+	_makeup = Gtk::manage( new Gtk::HScale(0.0, 20.0, 0.5) );
+	_makeup->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::makeup_changed) );
+
+	// Dry/wet balance
+	_drywet = Gtk::manage( new Gtk::HScale(0.0, 1.0, 0.05));
+	_drywet->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::drywet_changed) );
 
 	// Attenuation widget
 	_attenuation = Gtk::manage( new Gtk::DrawingArea() );
@@ -103,20 +137,36 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
         _attenuation->signal_expose_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::expose_attenuation));
         //_attenuation->signal_size_allocate()
 
+	int row = 0;
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Threshold")), 0, 1, 0, 1);
-	_table.attach( *_hpf_toggle, 2, 3, 0, 1);
-	_table.attach( *_threshold,  1, 2, 0, 1);
+	_table.attach( *Gtk::manage( new Gtk::Label("Threshold (dB)")), 0, 1, row, row+1);
+	_table.attach( *_hpf_toggle, 2, 3, row, row+1);
+	_table.attach( *_threshold,  1, 2, row, row+1);
+	++row;
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Attack (ms)")), 0, 1, 1, 2);
-	_table.attach( *_attack_ms,  1, 2, 1, 2);
+	_table.attach( *Gtk::manage( new Gtk::Label("Ratio (x:1)")), 0, 1, row, row+1);
+	_table.attach( *_ratio, 1, 2, row, row+1);
+	++row;
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Release (ms)")), 0, 1, 2, 3);
-	_table.attach( *_release_ms, 1, 2, 2, 3);
+	_table.attach( *Gtk::manage( new Gtk::Label("Attack (ms)")), 0, 1, row, row+1);
+	_table.attach( *_attack_ms,  1, 2, row, row+1);
+	++row;
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Attenuation")), 0, 1, 3, 4);
-	_table.attach( *_attenuation,   1, 2, 3, 4);
+	_table.attach( *Gtk::manage( new Gtk::Label("Release (ms)")), 0, 1, row, row+1);
+	_table.attach( *_release_ms, 1, 2, row, row+1);
+	++row;
 
+	_table.attach( *Gtk::manage( new Gtk::Label("Makeup gain (dB)")), 0, 1, row, row+1);
+	_table.attach( *_makeup, 1, 2, row, row+1);
+	++row;
+
+	_table.attach( *Gtk::manage( new Gtk::Label("Dry/wet")), 0, 1, row, row+1);
+	_table.attach( *_drywet, 1, 2, row, row+1);
+	++row;
+
+	_table.attach( *Gtk::manage( new Gtk::Label("Attenuation")), 0, 1, row, row+1);
+	_table.attach( *_attenuation,   1, 2, row, row+1);
+	++row;
 
 	 *(GtkWidget **)(widget) = GTK_WIDGET(_table.gobj());
 }
@@ -124,33 +174,50 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 void
 SchmoozMonoUI::hpf_toggled()
 {
-	// TODO: port macros need to be put in a common header
 	float hpf_value = (_hpf_toggle->property_active() ? 1.0 : 0.0);
-	_write_function(_controller, 3, sizeof(float), 0, &hpf_value);
+	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
 }
 
 void
 SchmoozMonoUI::threshold_changed()
 {
-	// TODO: port macros need to be put in a common header
 	float threshold = (float)_threshold->get_value();
-	_write_function(_controller, 2, sizeof(float), 4, &threshold);
+	_write_function(_controller, PORT_THRESHOLD, sizeof(float), 4, &threshold);
+}
+
+void
+SchmoozMonoUI::ratio_changed()
+{
+	float ratio = (float)_ratio->get_value();
+	_write_function(_controller, PORT_RATIO, sizeof(float), 4, &ratio);
 }
 
 void
 SchmoozMonoUI::attack_changed()
 {
-	// TODO: port macros need to be put in a common header
 	float attack = (float)_attack_ms->get_value();
-	_write_function(_controller, 4, sizeof(float), 4, &attack);
+	_write_function(_controller, PORT_ATTACK, sizeof(float), 4, &attack);
 }
 
 void
 SchmoozMonoUI::release_changed()
 {
-	// TODO: port macros need to be put in a common header
 	float release = (float)_release_ms->get_value();
-	_write_function(_controller, 5, sizeof(float), 4, &release);
+	_write_function(_controller, PORT_RELEASE, sizeof(float), 4, &release);
+}
+
+void
+SchmoozMonoUI::makeup_changed()
+{
+	float makeup = (float)_makeup->get_value();
+	_write_function(_controller, PORT_MAKEUP, sizeof(float), 4, &makeup);
+}
+
+void
+SchmoozMonoUI::drywet_changed()
+{
+	float drywet = (float)_drywet->get_value();
+	_write_function(_controller, PORT_DRYWET, sizeof(float), 4, &drywet);
 }
 
 bool
@@ -195,25 +262,36 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
                         uint32_t format, const void *buffer)
 {
 
-	// TODO: port macros need to be put in a common header
 	switch(port_index) {
-	case 2: // threshold
+	case PORT_THRESHOLD:
 		_threshold->set_value( (double) *(float *)buffer);
 		break;
 
-	case 3:	// HPF
+	case PORT_RATIO:
+		_ratio->set_value( (double) *(float *)buffer);
+		break;
+
+	case PORT_SIDECHAIN_HPF:
 		_hpf_toggle->set_active( (*(float *)buffer > 0.5 ? TRUE : FALSE));
 		break;
 
-	case 4: // attack
+	case PORT_ATTACK:
 		_attack_ms->set_value( (double) *(float *)buffer);
 		break;
 
-	case 5: // release
+	case PORT_RELEASE:
 		_release_ms->set_value( (double) *(float *)buffer);
 		break;
 
-	case 9: // attenuation
+	case PORT_MAKEUP:
+		_makeup->set_value( (double) *(float *)buffer);
+		break;
+	
+	case PORT_DRYWET:
+		_drywet->set_value( (double) *(float *)buffer);
+		break;	
+
+	case PORT_OUTPUT_ATTENUATION:
 		_current_attenuation = *(float *)buffer;
 		redraw_attenuation();
 		break;
