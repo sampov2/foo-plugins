@@ -32,7 +32,7 @@ using namespace std;
 #define PORT_AUDIO_INPUT_L      0
 #define PORT_AUDIO_OUTPUT_L     1
 #define PORT_THRESHOLD          2
-#define PORT_SIDECHAIN          3
+#define PORT_SIDECHAIN_HPF      3
 #define PORT_ATTACK             4
 #define PORT_RELEASE            5
 #define PORT_RATIO              6
@@ -57,7 +57,7 @@ public:
   void run(uint32_t nframes) 
   {
 	*threshold_db 		= *p(PORT_THRESHOLD);
-	*sidechain_enabled 	= (*p(PORT_SIDECHAIN) > 0 ? 1 : 0);
+	*sidechain_hpf_enabled 	= (*p(PORT_SIDECHAIN_HPF) > 0 ? 1 : 0);
 	*attack_ms 		= *p(PORT_ATTACK);
 	*release_ms 		= *p(PORT_RELEASE);
 	*compression_ratio 	= *p(PORT_RATIO);
@@ -110,7 +110,7 @@ public:
 		release_ms = zone;
 
 	} else if (label == "sidechain hpf") {
-        	sidechain_enabled = zone;
+        	sidechain_hpf_enabled = zone;
 
 	} else if (label == "threshold (dB)") {
 		threshold_db = zone;
@@ -127,7 +127,7 @@ public:
         float *dry_wet_balance;
         float *makeup_gain_db;
         float *release_ms;
-        float *sidechain_enabled;
+        float *sidechain_hpf_enabled;
         float *threshold_db;
 
 	mydsp schmooz_stereo;
