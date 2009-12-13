@@ -2,3 +2,10 @@ Schmooz Mono UI
 ^^^^^^^^^^^^^^^
 compressor.svg (c)Thorsten Wilms 2009, licensed under GPL
 
+To create the bitmaps from the SVG:
+ 1) open compressor.svg in inkscape
+ 2) make sure all layers except export_target is locked
+ 3) select export_target layer
+ 4) ctrl-a to select all
+ 5) select bitmap export and choose batch export
+
