@@ -30,7 +30,8 @@ def build(bld):
 	'''
 
 	guiobj.name   = 'schmooz_ui'
-	guiobj.uselib = 'GTKMM'
+	#guiobj.uselib = 'GTKMM'
+	guiobj.uselib = [ 'GTKMM', 'm' ]
 	guiobj.vnum   = ''
 	guiobj.target = 'schmooz_ui'
 	guiobj.install_path = '${LV2DIR}/foo.lv2'
