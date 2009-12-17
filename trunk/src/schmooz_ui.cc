@@ -35,7 +35,15 @@
 
 #define PORT_OUTPUT_ATTENUATION 9
 
+#define NUM_PORTS 10
+
 #define SCHMOOZ_UI_URI "http://studionumbersix.com/foo/lv2/schmooz-mono/ui"
+
+
+#define WDGT_HPF_X 23
+#define WDGT_HPF_Y 206
+#define WDGT_HPF_W 34
+#define WDGT_HPF_H 73
 
 class SchmoozMonoUI
 {
@@ -55,7 +63,9 @@ public:
 
 private:
 
+	bool _hpf_status;
 	void hpf_toggled();
+/*
 	void threshold_changed();
 	void ratio_changed();
 	void attack_changed();
@@ -65,28 +75,40 @@ private:
 
 	void redraw_attenuation();
 	bool expose_attenuation(GdkEventExpose *);
+*/
+
+	float _current_attenuation;
 
 	LV2UI_Write_Function _write_function;
 	LV2UI_Controller _controller;
 
-	Gtk::Table _table;
+	// cairo primitives
+	cairo_surface_t *_image_background;
+	cairo_surface_t *_image_hpf_on;
+	cairo_surface_t *_image_hpf_on_hover;
+	cairo_surface_t *_image_hpf_off;
+	cairo_surface_t *_image_hpf_off_hover;
 
+	// Gtk essentials
+	void size_request(Gtk::Requisition *);
+	bool expose(GdkEventExpose *);
 
-	Gtk::ToggleButton 	*_hpf_toggle;
-	Gtk::HScale		*_threshold;
-	Gtk::HScale		*_ratio;
+	// Widget and eventhandlers
+	Gtk::DrawingArea _drawingArea;
+	bool motion_notify_event(GdkEventMotion *);
+	bool button_press_event(GdkEventButton *);
+	bool button_release_event(GdkEventButton *);
 
-	Gtk::HScale 		*_attack_ms;
-	Gtk::HScale 		*_release_ms;
+	int identifyWdgt(GdkEventMotion *);
 
-	Gtk::HScale		*_makeup;
-	Gtk::HScale		*_drywet;
+	int _hoverWdgt;
+	int _buttonPressWdgt;
+	gdouble **_wdgtPositions;
 
-	Gtk::DrawingArea	*_attenuation;
-	float			_current_attenuation;
-	float			_attenuation_width;
-	float			_attenuation_height;
+	
 };
+
+#define PNG_DIR "/home/v2/dev/foo/foo-plugins/graphics/"
 
 SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
 			     const char *bundle_path, 
@@ -96,88 +118,169 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 			     const LV2_Feature *const *features)
 	: _write_function(write_function)
 	, _controller(controller)
-	, _table(3, 3)
+	, _drawingArea()
+	, _hoverWdgt(-1)
+	, _buttonPressWdgt(-1)
 {
 	std::cerr << "SchmoozMonoUI::SchmoozMonoUI()" << std::endl;
+	_image_background    = cairo_image_surface_create_from_png (PNG_DIR "background.png");
 
-	// HPF sidechain
-	_hpf_toggle = Gtk::manage( new Gtk::ToggleButton("HPF"));
-	_hpf_toggle->signal_toggled().connect( sigc::mem_fun(*this, &SchmoozMonoUI::hpf_toggled));
+	_image_hpf_on        = cairo_image_surface_create_from_png (PNG_DIR "high-pass_on.png");
+	_image_hpf_on_hover  = cairo_image_surface_create_from_png (PNG_DIR "high-pass_on_prelight.png");
+	_image_hpf_off       = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off.png");
+	_image_hpf_off_hover = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off_prelight.png");
 
-	// Threshold
-	_threshold = Gtk::manage( new Gtk::HScale(-60.0, 10.0, 1.0) );
-	_threshold->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::threshold_changed) );
 
-	// Ratio
-	_ratio = Gtk::manage( new Gtk::HScale(1.5, 20.0, 0.5) );
-	_ratio->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::ratio_changed) );
+	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &SchmoozMonoUI::size_request));
+        _drawingArea.signal_expose_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::expose));
 
-	// Attack and release widgets
-	_attack_ms = Gtk::manage( new Gtk::HScale(0.1, 120.0, 1.0) );
-	_attack_ms->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::attack_changed) );
+ 	_drawingArea.signal_motion_notify_event().connect ( sigc::mem_fun (*this, &SchmoozMonoUI::motion_notify_event) );
+	_drawingArea.signal_button_press_event().connect  ( sigc::mem_fun (*this, &SchmoozMonoUI::button_press_event));
+	_drawingArea.signal_button_release_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::button_release_event));
 
-	_release_ms = Gtk::manage( new Gtk::HScale(50, 1200.0, 10.0) );
-	_release_ms->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::release_changed) );
+	Gdk::EventMask mask = _drawingArea.get_events();
 
-	// Makeup gain
-	_makeup = Gtk::manage( new Gtk::HScale(0.0, 20.0, 0.5) );
-	_makeup->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::makeup_changed) );
+	mask |= Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK;
 
-	// Dry/wet balance
-	_drywet = Gtk::manage( new Gtk::HScale(0.0, 1.0, 0.05));
-	_drywet->signal_value_changed().connect( sigc::mem_fun(*this, &SchmoozMonoUI::drywet_changed) );
+	_drawingArea.set_events(mask);
 
-	// Attenuation widget
-	_attenuation = Gtk::manage( new Gtk::DrawingArea() );
-	_current_attenuation = 0.0;
-	_attenuation_width = 220.0;
-	_attenuation_height = 16.0;
-        _attenuation->set_size_request(_attenuation_width, _attenuation_height);
 
-        _attenuation->signal_expose_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::expose_attenuation));
-        //_attenuation->signal_size_allocate()
+	_wdgtPositions = new gdouble*[NUM_PORTS];
+	for (int i = 0; i<NUM_PORTS; ++i) {
+		_wdgtPositions[i] = new gdouble[4];
 
-	int row = 0;
+		switch (i) {
+		case PORT_SIDECHAIN_HPF:
+			_wdgtPositions[i][0] = WDGT_HPF_X;
+			_wdgtPositions[i][1] = WDGT_HPF_Y;
+			_wdgtPositions[i][2] = WDGT_HPF_W+WDGT_HPF_X;
+			_wdgtPositions[i][3] = WDGT_HPF_H+WDGT_HPF_Y;
+			break;
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Threshold (dB)")), 0, 1, row, row+1);
-	_table.attach( *_hpf_toggle, 2, 3, row, row+1);
-	_table.attach( *_threshold,  1, 2, row, row+1);
-	++row;
+		default:
+			_wdgtPositions[i][0] = -1;
+			_wdgtPositions[i][1] = -1;
+			_wdgtPositions[i][2] = 0;
+			_wdgtPositions[i][3] = 0;
+		}
+	}
 
-	_table.attach( *Gtk::manage( new Gtk::Label("Ratio (x:1)")), 0, 1, row, row+1);
-	_table.attach( *_ratio, 1, 2, row, row+1);
-	++row;
-
-	_table.attach( *Gtk::manage( new Gtk::Label("Attack (ms)")), 0, 1, row, row+1);
-	_table.attach( *_attack_ms,  1, 2, row, row+1);
-	++row;
-
-	_table.attach( *Gtk::manage( new Gtk::Label("Release (ms)")), 0, 1, row, row+1);
-	_table.attach( *_release_ms, 1, 2, row, row+1);
-	++row;
-
-	_table.attach( *Gtk::manage( new Gtk::Label("Makeup gain (dB)")), 0, 1, row, row+1);
-	_table.attach( *_makeup, 1, 2, row, row+1);
-	++row;
-
-	_table.attach( *Gtk::manage( new Gtk::Label("Dry/wet")), 0, 1, row, row+1);
-	_table.attach( *_drywet, 1, 2, row, row+1);
-	++row;
-
-	_table.attach( *Gtk::manage( new Gtk::Label("Attenuation")), 0, 1, row, row+1);
-	_table.attach( *_attenuation,   1, 2, row, row+1);
-	++row;
-
-	 *(GtkWidget **)(widget) = GTK_WIDGET(_table.gobj());
+	// Set widget for host
+	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
 }
+
+void
+SchmoozMonoUI::size_request(Gtk::Requisition *req)
+{
+	req->width  = 355;
+	req->height = 465;
+}
+
+bool 
+SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
+{
+	int newHover = identifyWdgt(evt);
+	if (newHover == _hoverWdgt) {
+		return true;
+	}
+
+	_hoverWdgt = newHover;
+	expose(NULL);
+
+	return true;
+}
+
+bool
+SchmoozMonoUI::button_press_event(GdkEventButton *evt)
+{
+	std::cerr << "button press" << std::endl;
+	_buttonPressWdgt = _hoverWdgt;
+	return true;
+}
+
+bool 
+SchmoozMonoUI::button_release_event(GdkEventButton *evt)
+{
+	std::cerr << "button release" << std::endl;
+
+	if (_hoverWdgt == _buttonPressWdgt) {
+		switch(_buttonPressWdgt) {
+		case PORT_SIDECHAIN_HPF:
+			_hpf_status = !_hpf_status;
+			hpf_toggled();
+			break;
+		
+		}
+	
+	}
+
+	_buttonPressWdgt = -1;
+	expose(NULL);
+
+	return true;
+}
+
+bool 
+SchmoozMonoUI::expose(GdkEventExpose *)
+{
+	cairo_t *cr;
+
+	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
+
+	cairo_copy_page(cr);
+
+	cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
+	cairo_paint(cr);
+
+
+	cairo_surface_t *hpf_surface = NULL;
+	switch( (_hoverWdgt == PORT_SIDECHAIN_HPF ? 1 : 0) | (_hpf_status ? 2: 0)) {
+	case 0: hpf_surface = _image_hpf_off;
+		break;
+	case 1: hpf_surface = _image_hpf_off_hover;
+		break;
+	case 2: hpf_surface = _image_hpf_on;
+		break;
+	case 3: hpf_surface = _image_hpf_on_hover;
+		break;
+	}
+	
+	cairo_set_source_surface(cr, hpf_surface, 
+                                 _wdgtPositions[PORT_SIDECHAIN_HPF][0], 
+                                 _wdgtPositions[PORT_SIDECHAIN_HPF][1]);
+	cairo_paint(cr);
+
+
+	// TODO: hover label
+/*
+	cairo_rectangle(cr, 
+			22.0,  206.0, 
+			34.0, 73.0);
+	cairo_set_fill_rule(cr,CAIRO_FILL_RULE_EVEN_ODD);
+*/
+/*
+	cairo_set_source_rgb(cr, 0.2, 9.0, 0.0);
+
+	cairo_rectangle(cr, 
+			0.0, 0.0, 
+			_attenuation_width * ( ( _current_attenuation + 70.0) / 90.0 ), 
+			_attenuation_height);
+	cairo_fill(cr);
+*/
+        cairo_destroy(cr);
+
+	return true;
+}
+
 
 void
 SchmoozMonoUI::hpf_toggled()
 {
-	float hpf_value = (_hpf_toggle->property_active() ? 1.0 : 0.0);
+	float hpf_value = (_hpf_status ? 1.0 : 0.0);
 	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
 }
 
+/*
 void
 SchmoozMonoUI::threshold_changed()
 {
@@ -251,10 +354,29 @@ SchmoozMonoUI::redraw_attenuation()
         cairo_destroy(cr);
 
 }
+*/
+
+int
+SchmoozMonoUI::identifyWdgt(GdkEventMotion *evt)
+{
+	for (int i = 0; i < NUM_PORTS; ++i) {
+		if ( evt->x >= _wdgtPositions[i][0] &&
+		     evt->x <  _wdgtPositions[i][2] &&
+		     evt->y >= _wdgtPositions[i][1] &&
+		     evt->y <  _wdgtPositions[i][3]) {
+			return i;
+		}
+	}
+
+	return -1;
+}
 
 SchmoozMonoUI::~SchmoozMonoUI()
 {
 	std::cerr << "SchmoozMonoUI::~SchmoozMonoUI()" << std::endl;
+
+	// TODO: lots'n'lots of unallocation
+	// cairo, wdgt stuff
 }
 
 void
@@ -263,16 +385,19 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 {
 
 	switch(port_index) {
+	case PORT_SIDECHAIN_HPF:
+
+		//_hpf_toggle->set_active( (*(float *)buffer > 0.5 ? TRUE : FALSE));
+		_hpf_status = ((*(float *)buffer > 0.5 ? TRUE : FALSE));
+		break;
+
+/*
 	case PORT_THRESHOLD:
 		_threshold->set_value( (double) *(float *)buffer);
 		break;
 
 	case PORT_RATIO:
 		_ratio->set_value( (double) *(float *)buffer);
-		break;
-
-	case PORT_SIDECHAIN_HPF:
-		_hpf_toggle->set_active( (*(float *)buffer > 0.5 ? TRUE : FALSE));
 		break;
 
 	case PORT_ATTACK:
@@ -295,6 +420,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		_current_attenuation = *(float *)buffer;
 		redraw_attenuation();
 		break;
+*/
 
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << (int)buffer << ")" << std::endl;
