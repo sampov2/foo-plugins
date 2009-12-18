@@ -35,19 +35,33 @@
 
 #define PORT_OUTPUT_ATTENUATION 9
 
-#define NUM_PORTS 10
-
 #define SCHMOOZ_UI_URI "http://studionumbersix.com/foo/lv2/schmooz-mono/ui"
-
 
 #define WDGT_HPF_X 23
 #define WDGT_HPF_Y 206
 #define WDGT_HPF_W 34
 #define WDGT_HPF_H 73
 
+#define WDGT_GRAPH_X 93
+#define WDGT_GRAPH_Y 31
+#define WDGT_GRAPH_W 200
+#define WDGT_GRAPH_H 200
+
+#define WDGT_THRESH_CONTROL_W 15
+
 class SchmoozMonoUI
 {
 public:
+	// This controls the Z-order, so overlapping and superimposed wdgts must be in
+	// the correct order
+	enum Wdgt
+	{
+		SIDECHAIN_HPF,
+		THRESHOLD_CONTROL,
+		THRESHOLD_GRAPH,
+		
+		NUM_WDGTS
+	};
 
 	SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
 		      const char *bundle_path, 
@@ -79,6 +93,11 @@ private:
 
 	float _current_attenuation;
 
+	float _current_threshold;
+	float _predrag_threshold;
+
+	void set_threshold(float newvalue);
+
 	LV2UI_Write_Function _write_function;
 	LV2UI_Controller _controller;
 
@@ -88,6 +107,12 @@ private:
 	cairo_surface_t *_image_hpf_on_hover;
 	cairo_surface_t *_image_hpf_off;
 	cairo_surface_t *_image_hpf_off_hover;
+
+	cairo_surface_t *_image_graph_bg;
+	cairo_surface_t *_image_threshold;
+	cairo_surface_t *_image_thr_cntrl;
+	cairo_surface_t *_image_thr_cntrl_hover;
+
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -102,7 +127,12 @@ private:
 	int identifyWdgt(GdkEventMotion *);
 
 	int _hoverWdgt;
+	int _dragWdgt;
 	int _buttonPressWdgt;
+
+	int _dragStartX;
+	int _dragStartY;
+
 	gdouble **_wdgtPositions;
 
 	
@@ -120,6 +150,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	, _controller(controller)
 	, _drawingArea()
 	, _hoverWdgt(-1)
+	, _dragWdgt(-1)
 	, _buttonPressWdgt(-1)
 {
 	std::cerr << "SchmoozMonoUI::SchmoozMonoUI()" << std::endl;
@@ -129,6 +160,11 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_image_hpf_on_hover  = cairo_image_surface_create_from_png (PNG_DIR "high-pass_on_prelight.png");
 	_image_hpf_off       = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off.png");
 	_image_hpf_off_hover = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off_prelight.png");
+
+	_image_graph_bg      = cairo_image_surface_create_from_png (PNG_DIR "graph_bg.png");
+	_image_threshold     = cairo_image_surface_create_from_png (PNG_DIR "graph_bg_threshold.png");
+	_image_thr_cntrl       = cairo_image_surface_create_from_png (PNG_DIR "threshold.png");
+	_image_thr_cntrl_hover = cairo_image_surface_create_from_png (PNG_DIR "threshold_prelight.png");
 
 
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &SchmoozMonoUI::size_request));
@@ -145,16 +181,30 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_drawingArea.set_events(mask);
 
 
-	_wdgtPositions = new gdouble*[NUM_PORTS];
-	for (int i = 0; i<NUM_PORTS; ++i) {
+	_wdgtPositions = new gdouble*[NUM_WDGTS];
+	for (int i = 0; i<NUM_WDGTS; ++i) {
 		_wdgtPositions[i] = new gdouble[4];
 
 		switch (i) {
-		case PORT_SIDECHAIN_HPF:
+		case SIDECHAIN_HPF:
 			_wdgtPositions[i][0] = WDGT_HPF_X;
 			_wdgtPositions[i][1] = WDGT_HPF_Y;
 			_wdgtPositions[i][2] = WDGT_HPF_W+WDGT_HPF_X;
 			_wdgtPositions[i][3] = WDGT_HPF_H+WDGT_HPF_Y;
+			break;
+
+		case THRESHOLD_CONTROL:
+			_wdgtPositions[i][0] = WDGT_GRAPH_X;
+			_wdgtPositions[i][1] = WDGT_GRAPH_Y;
+			_wdgtPositions[i][2] = WDGT_GRAPH_X+WDGT_THRESH_CONTROL_W;
+			_wdgtPositions[i][3] = WDGT_GRAPH_H+WDGT_GRAPH_Y;
+			break;
+
+		case THRESHOLD_GRAPH:
+			_wdgtPositions[i][0] = WDGT_GRAPH_X;
+			_wdgtPositions[i][1] = WDGT_GRAPH_Y;
+			_wdgtPositions[i][2] = WDGT_GRAPH_W+WDGT_GRAPH_X;
+			_wdgtPositions[i][3] = WDGT_GRAPH_H+WDGT_GRAPH_Y;
 			break;
 
 		default:
@@ -179,6 +229,21 @@ SchmoozMonoUI::size_request(Gtk::Requisition *req)
 bool 
 SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
+	if (_dragWdgt != -1) {
+		switch(_dragWdgt) {
+		case THRESHOLD_CONTROL:
+			float thr = 70.0 * (float)(evt->x - _dragStartX) / (float)WDGT_GRAPH_W + _predrag_threshold;
+
+			if (thr >= -60 && thr <= 10) {
+				set_threshold(thr);
+				expose(NULL);
+			}
+			break;
+		}
+
+		return true;
+	}
+
 	int newHover = identifyWdgt(evt);
 	if (newHover == _hoverWdgt) {
 		return true;
@@ -195,6 +260,13 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 {
 	std::cerr << "button press" << std::endl;
 	_buttonPressWdgt = _hoverWdgt;
+
+	if (_buttonPressWdgt == THRESHOLD_CONTROL) {
+		_predrag_threshold = _current_threshold;
+		_dragWdgt = _buttonPressWdgt;
+		_dragStartX = evt->x;
+		_dragStartY = evt->y;
+	}
 	return true;
 }
 
@@ -205,7 +277,7 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 
 	if (_hoverWdgt == _buttonPressWdgt) {
 		switch(_buttonPressWdgt) {
-		case PORT_SIDECHAIN_HPF:
+		case SIDECHAIN_HPF:
 			_hpf_status = !_hpf_status;
 			hpf_toggled();
 			break;
@@ -215,6 +287,8 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 	}
 
 	_buttonPressWdgt = -1;
+	_dragWdgt = -1;
+
 	expose(NULL);
 
 	return true;
@@ -227,46 +301,61 @@ SchmoozMonoUI::expose(GdkEventExpose *)
 
 	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
 
-	cairo_copy_page(cr);
+	// double-buffer
+	cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
 
 	cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
 	cairo_paint(cr);
 
 
-	cairo_surface_t *hpf_surface = NULL;
-	switch( (_hoverWdgt == PORT_SIDECHAIN_HPF ? 1 : 0) | (_hpf_status ? 2: 0)) {
-	case 0: hpf_surface = _image_hpf_off;
+	cairo_surface_t *tmp = NULL;
+	switch( (_hoverWdgt == SIDECHAIN_HPF ? 1 : 0) | (_hpf_status ? 2: 0)) {
+	case 0: tmp = _image_hpf_off;
 		break;
-	case 1: hpf_surface = _image_hpf_off_hover;
+	case 1: tmp = _image_hpf_off_hover;
 		break;
-	case 2: hpf_surface = _image_hpf_on;
+	case 2: tmp = _image_hpf_on;
 		break;
-	case 3: hpf_surface = _image_hpf_on_hover;
+	case 3: tmp = _image_hpf_on_hover;
 		break;
 	}
 	
-	cairo_set_source_surface(cr, hpf_surface, 
-                                 _wdgtPositions[PORT_SIDECHAIN_HPF][0], 
-                                 _wdgtPositions[PORT_SIDECHAIN_HPF][1]);
+	cairo_set_source_surface(cr, tmp, 
+                                 _wdgtPositions[SIDECHAIN_HPF][0], 
+                                 _wdgtPositions[SIDECHAIN_HPF][1]);
+	cairo_paint(cr);
+
+	// Threshold & compressor curve
+	tmp = _image_threshold;
+
+	cairo_set_source_surface(cr, tmp, 
+                                 _wdgtPositions[THRESHOLD_GRAPH][0], 
+                                 _wdgtPositions[THRESHOLD_GRAPH][1]);
+	cairo_paint(cr);
+
+	// Threshold control
+	if (_hoverWdgt == THRESHOLD_CONTROL) {
+		tmp = _image_thr_cntrl_hover;
+	} else {
+		tmp = _image_thr_cntrl;
+	}
+
+	cairo_set_source_surface(cr, tmp, 
+				 _wdgtPositions[THRESHOLD_CONTROL][0],
+				 _wdgtPositions[THRESHOLD_CONTROL][1]);
+	cairo_paint(cr);
+
+	// finish drawing (retrieve double-buffer & draw it)
+	cairo_pattern_t *bg = cairo_pop_group(cr);
+
+	cairo_copy_page(cr);
+	cairo_set_source(cr,bg);
 	cairo_paint(cr);
 
 
-	// TODO: hover label
-/*
-	cairo_rectangle(cr, 
-			22.0,  206.0, 
-			34.0, 73.0);
-	cairo_set_fill_rule(cr,CAIRO_FILL_RULE_EVEN_ODD);
-*/
-/*
-	cairo_set_source_rgb(cr, 0.2, 9.0, 0.0);
+	cairo_pattern_destroy(bg);
 
-	cairo_rectangle(cr, 
-			0.0, 0.0, 
-			_attenuation_width * ( ( _current_attenuation + 70.0) / 90.0 ), 
-			_attenuation_height);
-	cairo_fill(cr);
-*/
+
         cairo_destroy(cr);
 
 	return true;
@@ -278,6 +367,15 @@ SchmoozMonoUI::hpf_toggled()
 {
 	float hpf_value = (_hpf_status ? 1.0 : 0.0);
 	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
+}
+
+void
+SchmoozMonoUI::set_threshold(float newvalue)
+{
+	_current_threshold = newvalue;
+	float x = WDGT_GRAPH_X + WDGT_GRAPH_W * (_current_threshold+60.0)/70.0 - WDGT_THRESH_CONTROL_W/2.0;
+	_wdgtPositions[THRESHOLD_CONTROL][0] = x;
+	_wdgtPositions[THRESHOLD_CONTROL][2] = x+WDGT_THRESH_CONTROL_W;
 }
 
 /*
@@ -359,7 +457,7 @@ SchmoozMonoUI::redraw_attenuation()
 int
 SchmoozMonoUI::identifyWdgt(GdkEventMotion *evt)
 {
-	for (int i = 0; i < NUM_PORTS; ++i) {
+	for (int i = 0; i < NUM_WDGTS; ++i) {
 		if ( evt->x >= _wdgtPositions[i][0] &&
 		     evt->x <  _wdgtPositions[i][2] &&
 		     evt->y >= _wdgtPositions[i][1] &&
@@ -391,11 +489,11 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		_hpf_status = ((*(float *)buffer > 0.5 ? TRUE : FALSE));
 		break;
 
-/*
 	case PORT_THRESHOLD:
-		_threshold->set_value( (double) *(float *)buffer);
+		set_threshold(*(float *)buffer);
 		break;
 
+/*
 	case PORT_RATIO:
 		_ratio->set_value( (double) *(float *)buffer);
 		break;
@@ -424,7 +522,11 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << (int)buffer << ")" << std::endl;
+		return;
 	}
+
+	// TODO: this is needed, but the UI is not ready in the beginning
+	//expose(NULL);
 }
 
 
@@ -461,7 +563,7 @@ schmooz_mono_ui_instantiate(const struct _LV2UI_Descriptor *descriptor,
 			    LV2UI_Widget *widget, 
 			    const LV2_Feature *const *features)
 {
-	assert(strcmp(SCHMOOZ_UI_URI,plugin_uri)==0);
+	//assert(strcmp(SCHMOOZ_UI_URI,plugin_uri)==0);
 
 	return new SchmoozMonoUI(descriptor, bundle_path, write_function, controller, widget, features);
 }
