@@ -89,9 +89,7 @@ private:
 
 //	float _current_attenuation;
 
-	//float _current_threshold;
-	float _predrag_threshold;
-	float _predrag_ratio;
+	float _predrag_value;
 
 	LV2UI_Write_Function _write_function;
 	LV2UI_Controller _controller;
@@ -170,14 +168,15 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	wdgts.push_back(hpf);
 
 
-	threshold_control = new ThresholdControl(WDGT_THRESH_CONTROL_CLIP_X1,
+	threshold_control = new ThresholdControl(-60.0, 10.0,
+						 WDGT_THRESH_CONTROL_CLIP_X1,
 						 WDGT_THRESH_CONTROL_CLIP_X2);
 	wdgts.push_back(threshold_control);
 
 	threshold = new ThresholdGraph();
 	wdgts.push_back(threshold);
 
-	ratio_control = new RatioControl();
+	ratio_control = new RatioControl(1.5,20.0);
 	wdgts.push_back(ratio_control);
 
 	ratio_bg = new RatioBackground();
@@ -190,7 +189,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 	threshold->setPosition( WDGT_GRAPH_X, WDGT_GRAPH_Y, WDGT_GRAPH_W, WDGT_GRAPH_H );
 
-	ratio_control->setPosition(300,33, 12, 196);
+	ratio_control->setPosition(300, 33, 12, 196 - 12);
 	ratio_bg->setPosition(298, 31, 16, 200);
 
 	// Set widget for host
@@ -209,11 +208,11 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
 	if (_dragWdgt != NULL) {
 		if (_dragWdgt == threshold_control) {
-			threshold_control->set_threshold_from_drag(_predrag_threshold, _dragStartX, evt->x);
+			threshold_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
 			threshold_changed();
 			expose(NULL);
 		} else if (_dragWdgt == ratio_control) {
-			ratio_control->set_ratio_from_drag(_predrag_ratio, _dragStartY, evt->y);
+			ratio_control->set_value_from_vertical_drag(_predrag_value, _dragStartY, evt->y);
 			ratio_changed();
 			expose(NULL);
 		}
@@ -239,9 +238,9 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 	_buttonPressWdgt = _hoverWdgt;
 
 	if (_buttonPressWdgt == threshold_control) {
-		_predrag_threshold = threshold_control->get_threshold();
+		_predrag_value = threshold_control->get_value();
 	} else if (_buttonPressWdgt == ratio_control) {
-		_predrag_ratio = ratio_control->get_ratio();
+		_predrag_value = ratio_control->get_value();
 	} else {
 		return true;
 	}
@@ -325,14 +324,14 @@ SchmoozMonoUI::hpf_toggled()
 void
 SchmoozMonoUI::threshold_changed()
 {
-	float threshold = (float)threshold_control->get_threshold();
+	float threshold = (float)threshold_control->get_value();
 	_write_function(_controller, PORT_THRESHOLD, sizeof(float), 0, &threshold);
 }
 
 void
 SchmoozMonoUI::ratio_changed()
 {
-	float ratio = (float)ratio_control->get_ratio();
+	float ratio = (float)ratio_control->get_value();
 	_write_function(_controller, PORT_RATIO, sizeof(float), 0, &ratio);
 }
 
@@ -451,10 +450,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		// by not calling set_threshold() when dragging on said control
 		new_value = *(float *)buffer;
 
-		if (new_value != threshold_control->get_threshold() &&
+		if (new_value != threshold_control->get_value() &&
 		    _dragWdgt != threshold_control) {
 			redraw = true;
-			threshold_control->set_threshold(new_value);
+			threshold_control->set_value(new_value);
 		}
 
 		break;
@@ -462,10 +461,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	case PORT_RATIO:
 		new_value = *(float *)buffer;
 
-		if (new_value != ratio_control->get_ratio() &&
+		if (new_value != ratio_control->get_value() &&
 		    _dragWdgt != ratio_control) {
 			redraw = true;
-			ratio_control->set_ratio(new_value);
+			ratio_control->set_value(new_value);
 		}
 
 		break;
