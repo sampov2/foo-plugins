@@ -141,7 +141,6 @@ public:
 		uint32_t at = env->at_sample + offset;
 
 		if (at >= env->length_samples) return 1.0f;
-		if (at <  0) return env->start_gain;
 
 		// RAMP
 		if (at <  env->ramp_samples) {
