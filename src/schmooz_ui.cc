@@ -20,6 +20,9 @@
 #include <ui.h>
 #include <cassert>
 #include <iostream>
+#include <list>
+
+#include "schmooz_ui_wdgts.h"
 
 // These need to match the indexes in manifest.ttl
 // TODO: port macros need to be put in a common header
@@ -48,6 +51,8 @@
 #define WDGT_GRAPH_H 200
 
 #define WDGT_THRESH_CONTROL_W 15
+#define WDGT_THRESH_CONTROL_CLIP_X1 94
+#define WDGT_THRESH_CONTROL_CLIP_X2 292
 
 class SchmoozMonoUI
 {
@@ -62,7 +67,7 @@ public:
 		
 		NUM_WDGTS
 	};
-
+	
 	SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
 		      const char *bundle_path, 
 		      LV2UI_Write_Function write_function, 
@@ -77,7 +82,7 @@ public:
 
 private:
 
-	bool _hpf_status;
+	//bool _hpf_status;
 	void hpf_toggled();
 /*
 	void threshold_changed();
@@ -93,7 +98,7 @@ private:
 
 	float _current_attenuation;
 
-	float _current_threshold;
+	//float _current_threshold;
 	float _predrag_threshold;
 
 	void set_threshold(float newvalue);
@@ -103,16 +108,10 @@ private:
 
 	// cairo primitives
 	cairo_surface_t *_image_background;
-	cairo_surface_t *_image_hpf_on;
-	cairo_surface_t *_image_hpf_on_hover;
-	cairo_surface_t *_image_hpf_off;
-	cairo_surface_t *_image_hpf_off_hover;
 
-	cairo_surface_t *_image_graph_bg;
-	cairo_surface_t *_image_threshold;
-	cairo_surface_t *_image_thr_cntrl;
-	cairo_surface_t *_image_thr_cntrl_hover;
-
+	HPFButton *hpf;
+	ThresholdGraph *threshold;
+	ThresholdControl *threshold_control;
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -124,16 +123,16 @@ private:
 	bool button_press_event(GdkEventButton *);
 	bool button_release_event(GdkEventButton *);
 
-	int identifyWdgt(GdkEventMotion *);
+	Wdgt::Object *identifyWdgt(GdkEventMotion *);
 
-	int _hoverWdgt;
-	int _dragWdgt;
-	int _buttonPressWdgt;
+	Wdgt::Object *_hoverWdgt;
+	Wdgt::Object *_dragWdgt;
+	Wdgt::Object *_buttonPressWdgt;
 
 	int _dragStartX;
 	int _dragStartY;
 
-	gdouble **_wdgtPositions;
+	std::list<Wdgt::Object *> wdgts;
 
 	
 };
@@ -149,22 +148,12 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	: _write_function(write_function)
 	, _controller(controller)
 	, _drawingArea()
-	, _hoverWdgt(-1)
-	, _dragWdgt(-1)
-	, _buttonPressWdgt(-1)
+	, _hoverWdgt(NULL)
+	, _dragWdgt(NULL)
+	, _buttonPressWdgt(NULL)
 {
 	std::cerr << "SchmoozMonoUI::SchmoozMonoUI()" << std::endl;
 	_image_background    = cairo_image_surface_create_from_png (PNG_DIR "background.png");
-
-	_image_hpf_on        = cairo_image_surface_create_from_png (PNG_DIR "high-pass_on.png");
-	_image_hpf_on_hover  = cairo_image_surface_create_from_png (PNG_DIR "high-pass_on_prelight.png");
-	_image_hpf_off       = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off.png");
-	_image_hpf_off_hover = cairo_image_surface_create_from_png (PNG_DIR "high-pass_off_prelight.png");
-
-	_image_graph_bg      = cairo_image_surface_create_from_png (PNG_DIR "graph_bg.png");
-	_image_threshold     = cairo_image_surface_create_from_png (PNG_DIR "graph_bg_threshold.png");
-	_image_thr_cntrl       = cairo_image_surface_create_from_png (PNG_DIR "threshold.png");
-	_image_thr_cntrl_hover = cairo_image_surface_create_from_png (PNG_DIR "threshold_prelight.png");
 
 
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &SchmoozMonoUI::size_request));
@@ -181,39 +170,24 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_drawingArea.set_events(mask);
 
 
-	_wdgtPositions = new gdouble*[NUM_WDGTS];
-	for (int i = 0; i<NUM_WDGTS; ++i) {
-		_wdgtPositions[i] = new gdouble[4];
+	hpf = new HPFButton();
+	wdgts.push_back(hpf);
 
-		switch (i) {
-		case SIDECHAIN_HPF:
-			_wdgtPositions[i][0] = WDGT_HPF_X;
-			_wdgtPositions[i][1] = WDGT_HPF_Y;
-			_wdgtPositions[i][2] = WDGT_HPF_W+WDGT_HPF_X;
-			_wdgtPositions[i][3] = WDGT_HPF_H+WDGT_HPF_Y;
-			break;
 
-		case THRESHOLD_CONTROL:
-			_wdgtPositions[i][0] = WDGT_GRAPH_X;
-			_wdgtPositions[i][1] = WDGT_GRAPH_Y;
-			_wdgtPositions[i][2] = WDGT_GRAPH_X+WDGT_THRESH_CONTROL_W;
-			_wdgtPositions[i][3] = WDGT_GRAPH_H+WDGT_GRAPH_Y;
-			break;
+	threshold_control = new ThresholdControl(WDGT_THRESH_CONTROL_CLIP_X1,
+						 WDGT_THRESH_CONTROL_CLIP_X2);
+	wdgts.push_back(threshold_control);
 
-		case THRESHOLD_GRAPH:
-			_wdgtPositions[i][0] = WDGT_GRAPH_X;
-			_wdgtPositions[i][1] = WDGT_GRAPH_Y;
-			_wdgtPositions[i][2] = WDGT_GRAPH_W+WDGT_GRAPH_X;
-			_wdgtPositions[i][3] = WDGT_GRAPH_H+WDGT_GRAPH_Y;
-			break;
+	threshold = new ThresholdGraph();
+	wdgts.push_back(threshold);
 
-		default:
-			_wdgtPositions[i][0] = -1;
-			_wdgtPositions[i][1] = -1;
-			_wdgtPositions[i][2] = 0;
-			_wdgtPositions[i][3] = 0;
-		}
-	}
+
+	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
+
+	threshold_control->setPosition(WDGT_GRAPH_X,     WDGT_GRAPH_Y - 1, 
+				       WDGT_GRAPH_W - 2, WDGT_GRAPH_H );
+
+	threshold->setPosition( WDGT_GRAPH_X, WDGT_GRAPH_Y, WDGT_GRAPH_W, WDGT_GRAPH_H );
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -229,22 +203,20 @@ SchmoozMonoUI::size_request(Gtk::Requisition *req)
 bool 
 SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
-	if (_dragWdgt != -1) {
-		switch(_dragWdgt) {
-		case THRESHOLD_CONTROL:
+	if (_dragWdgt != NULL) {
+		if (_dragWdgt == threshold_control) {
 			float thr = 70.0 * (float)(evt->x - _dragStartX) / (float)WDGT_GRAPH_W + _predrag_threshold;
 
 			if (thr >= -60 && thr <= 10) {
 				set_threshold(thr);
 				expose(NULL);
 			}
-			break;
 		}
 
 		return true;
 	}
 
-	int newHover = identifyWdgt(evt);
+	Wdgt::Object *newHover = identifyWdgt(evt);
 	if (newHover == _hoverWdgt) {
 		return true;
 	}
@@ -261,8 +233,8 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 	std::cerr << "button press" << std::endl;
 	_buttonPressWdgt = _hoverWdgt;
 
-	if (_buttonPressWdgt == THRESHOLD_CONTROL) {
-		_predrag_threshold = _current_threshold;
+	if (_buttonPressWdgt == threshold_control) {
+		_predrag_threshold = threshold_control->get_threshold();
 		_dragWdgt = _buttonPressWdgt;
 		_dragStartX = evt->x;
 		_dragStartY = evt->y;
@@ -276,18 +248,15 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 	std::cerr << "button release" << std::endl;
 
 	if (_hoverWdgt == _buttonPressWdgt) {
-		switch(_buttonPressWdgt) {
-		case SIDECHAIN_HPF:
-			_hpf_status = !_hpf_status;
+		if (_buttonPressWdgt == hpf) {
+			hpf->toggle_status();
 			hpf_toggled();
-			break;
-		
 		}
 	
 	}
 
-	_buttonPressWdgt = -1;
-	_dragWdgt = -1;
+	_buttonPressWdgt = NULL;
+	_dragWdgt = NULL;
 
 	expose(NULL);
 
@@ -307,43 +276,13 @@ SchmoozMonoUI::expose(GdkEventExpose *)
 	cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
 	cairo_paint(cr);
 
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.end(); i != wdgts.begin(); ) {
+		--i;
 
-	cairo_surface_t *tmp = NULL;
-	switch( (_hoverWdgt == SIDECHAIN_HPF ? 1 : 0) | (_hpf_status ? 2: 0)) {
-	case 0: tmp = _image_hpf_off;
-		break;
-	case 1: tmp = _image_hpf_off_hover;
-		break;
-	case 2: tmp = _image_hpf_on;
-		break;
-	case 3: tmp = _image_hpf_on_hover;
-		break;
+		Wdgt::Object *obj = *i;
+
+		obj->drawWidget( (_hoverWdgt == obj), cr);
 	}
-	
-	cairo_set_source_surface(cr, tmp, 
-                                 _wdgtPositions[SIDECHAIN_HPF][0], 
-                                 _wdgtPositions[SIDECHAIN_HPF][1]);
-	cairo_paint(cr);
-
-	// Threshold & compressor curve
-	tmp = _image_threshold;
-
-	cairo_set_source_surface(cr, tmp, 
-                                 _wdgtPositions[THRESHOLD_GRAPH][0], 
-                                 _wdgtPositions[THRESHOLD_GRAPH][1]);
-	cairo_paint(cr);
-
-	// Threshold control
-	if (_hoverWdgt == THRESHOLD_CONTROL) {
-		tmp = _image_thr_cntrl_hover;
-	} else {
-		tmp = _image_thr_cntrl;
-	}
-
-	cairo_set_source_surface(cr, tmp, 
-				 _wdgtPositions[THRESHOLD_CONTROL][0],
-				 _wdgtPositions[THRESHOLD_CONTROL][1]);
-	cairo_paint(cr);
 
 	// finish drawing (retrieve double-buffer & draw it)
 	cairo_pattern_t *bg = cairo_pop_group(cr);
@@ -365,17 +304,14 @@ SchmoozMonoUI::expose(GdkEventExpose *)
 void
 SchmoozMonoUI::hpf_toggled()
 {
-	float hpf_value = (_hpf_status ? 1.0 : 0.0);
+	float hpf_value = (hpf->get_status() ? 1.0 : 0.0);
 	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
 }
 
 void
 SchmoozMonoUI::set_threshold(float newvalue)
 {
-	_current_threshold = newvalue;
-	float x = WDGT_GRAPH_X + WDGT_GRAPH_W * (_current_threshold+60.0)/70.0 - WDGT_THRESH_CONTROL_W/2.0;
-	_wdgtPositions[THRESHOLD_CONTROL][0] = x;
-	_wdgtPositions[THRESHOLD_CONTROL][2] = x+WDGT_THRESH_CONTROL_W;
+	threshold_control->set_threshold(newvalue);
 }
 
 /*
@@ -454,19 +390,19 @@ SchmoozMonoUI::redraw_attenuation()
 }
 */
 
-int
+Wdgt::Object *
 SchmoozMonoUI::identifyWdgt(GdkEventMotion *evt)
 {
-	for (int i = 0; i < NUM_WDGTS; ++i) {
-		if ( evt->x >= _wdgtPositions[i][0] &&
-		     evt->x <  _wdgtPositions[i][2] &&
-		     evt->y >= _wdgtPositions[i][1] &&
-		     evt->y <  _wdgtPositions[i][3]) {
-			return i;
-		}
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
+		Wdgt::Object *obj = *i;
+
+		if (obj->intersectsPoint(evt->x, evt->y))
+			return obj;
+	
+		++i;
 	}
 
-	return -1;
+	return NULL;
 }
 
 SchmoozMonoUI::~SchmoozMonoUI()
@@ -486,7 +422,8 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	case PORT_SIDECHAIN_HPF:
 
 		//_hpf_toggle->set_active( (*(float *)buffer > 0.5 ? TRUE : FALSE));
-		_hpf_status = ((*(float *)buffer > 0.5 ? TRUE : FALSE));
+		hpf->set_status((*(float *)buffer > 0.5 ? TRUE : FALSE));
+		// TODO: expose, whatever
 		break;
 
 	case PORT_THRESHOLD:
