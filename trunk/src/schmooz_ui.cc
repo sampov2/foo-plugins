@@ -57,16 +57,6 @@
 class SchmoozMonoUI
 {
 public:
-	// This controls the Z-order, so overlapping and superimposed wdgts must be in
-	// the correct order
-	enum Wdgt
-	{
-		SIDECHAIN_HPF,
-		THRESHOLD_CONTROL,
-		THRESHOLD_GRAPH,
-		
-		NUM_WDGTS
-	};
 	
 	SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
 		      const char *bundle_path, 
@@ -82,11 +72,12 @@ public:
 
 private:
 
-	//bool _hpf_status;
+	bool _ready_to_draw;
+
 	void hpf_toggled();
-/*
 	void threshold_changed();
 	void ratio_changed();
+/*
 	void attack_changed();
 	void release_changed();
 	void makeup_changed();
@@ -96,12 +87,11 @@ private:
 	bool expose_attenuation(GdkEventExpose *);
 */
 
-	float _current_attenuation;
+//	float _current_attenuation;
 
 	//float _current_threshold;
 	float _predrag_threshold;
-
-	void set_threshold(float newvalue);
+	float _predrag_ratio;
 
 	LV2UI_Write_Function _write_function;
 	LV2UI_Controller _controller;
@@ -109,15 +99,20 @@ private:
 	// cairo primitives
 	cairo_surface_t *_image_background;
 
+	// Wdgts
 	HPFButton *hpf;
+
 	ThresholdGraph *threshold;
 	ThresholdControl *threshold_control;
+
+	RatioBackground *ratio_bg;
+	RatioControl *ratio_control;
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
 	bool expose(GdkEventExpose *);
 
-	// Widget and eventhandlers
+	// Eventhandlers
 	Gtk::DrawingArea _drawingArea;
 	bool motion_notify_event(GdkEventMotion *);
 	bool button_press_event(GdkEventButton *);
@@ -145,7 +140,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 			     LV2UI_Controller controller, 
 			     LV2UI_Widget *widget, 
 			     const LV2_Feature *const *features)
-	: _write_function(write_function)
+	: _ready_to_draw(false)
+	, _write_function(write_function)
 	, _controller(controller)
 	, _drawingArea()
 	, _hoverWdgt(NULL)
@@ -181,13 +177,21 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	threshold = new ThresholdGraph();
 	wdgts.push_back(threshold);
 
+	ratio_control = new RatioControl();
+	wdgts.push_back(ratio_control);
+
+	ratio_bg = new RatioBackground();
+	wdgts.push_back(ratio_bg);
 
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
-	threshold_control->setPosition(WDGT_GRAPH_X,     WDGT_GRAPH_Y - 1, 
-				       WDGT_GRAPH_W - 2, WDGT_GRAPH_H );
+	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
+				       WDGT_GRAPH_W - 3, WDGT_GRAPH_H );
 
 	threshold->setPosition( WDGT_GRAPH_X, WDGT_GRAPH_Y, WDGT_GRAPH_W, WDGT_GRAPH_H );
+
+	ratio_control->setPosition(300,33, 12, 196);
+	ratio_bg->setPosition(298, 31, 16, 200);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -205,12 +209,13 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
 	if (_dragWdgt != NULL) {
 		if (_dragWdgt == threshold_control) {
-			float thr = 70.0 * (float)(evt->x - _dragStartX) / (float)WDGT_GRAPH_W + _predrag_threshold;
-
-			if (thr >= -60 && thr <= 10) {
-				set_threshold(thr);
-				expose(NULL);
-			}
+			threshold_control->set_threshold_from_drag(_predrag_threshold, _dragStartX, evt->x);
+			threshold_changed();
+			expose(NULL);
+		} else if (_dragWdgt == ratio_control) {
+			ratio_control->set_ratio_from_drag(_predrag_ratio, _dragStartY, evt->y);
+			ratio_changed();
+			expose(NULL);
 		}
 
 		return true;
@@ -235,10 +240,15 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 
 	if (_buttonPressWdgt == threshold_control) {
 		_predrag_threshold = threshold_control->get_threshold();
-		_dragWdgt = _buttonPressWdgt;
-		_dragStartX = evt->x;
-		_dragStartY = evt->y;
+	} else if (_buttonPressWdgt == ratio_control) {
+		_predrag_ratio = ratio_control->get_ratio();
+	} else {
+		return true;
 	}
+
+	_dragWdgt = _buttonPressWdgt;
+	_dragStartX = evt->x;
+	_dragStartY = evt->y;
 	return true;
 }
 
@@ -266,6 +276,8 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 bool 
 SchmoozMonoUI::expose(GdkEventExpose *)
 {
+	_ready_to_draw = true;
+
 	cairo_t *cr;
 
 	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
@@ -273,9 +285,11 @@ SchmoozMonoUI::expose(GdkEventExpose *)
 	// double-buffer
 	cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
 
+	// background
 	cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
 	cairo_paint(cr);
 
+	// wdgts
 	for (std::list<Wdgt::Object *>::iterator i = wdgts.end(); i != wdgts.begin(); ) {
 		--i;
 
@@ -309,52 +323,46 @@ SchmoozMonoUI::hpf_toggled()
 }
 
 void
-SchmoozMonoUI::set_threshold(float newvalue)
-{
-	threshold_control->set_threshold(newvalue);
-}
-
-/*
-void
 SchmoozMonoUI::threshold_changed()
 {
-	float threshold = (float)_threshold->get_value();
-	_write_function(_controller, PORT_THRESHOLD, sizeof(float), 4, &threshold);
+	float threshold = (float)threshold_control->get_threshold();
+	_write_function(_controller, PORT_THRESHOLD, sizeof(float), 0, &threshold);
 }
 
 void
 SchmoozMonoUI::ratio_changed()
 {
-	float ratio = (float)_ratio->get_value();
-	_write_function(_controller, PORT_RATIO, sizeof(float), 4, &ratio);
+	float ratio = (float)ratio_control->get_ratio();
+	_write_function(_controller, PORT_RATIO, sizeof(float), 0, &ratio);
 }
 
+/*
 void
 SchmoozMonoUI::attack_changed()
 {
 	float attack = (float)_attack_ms->get_value();
-	_write_function(_controller, PORT_ATTACK, sizeof(float), 4, &attack);
+	_write_function(_controller, PORT_ATTACK, sizeof(float), 0, &attack);
 }
 
 void
 SchmoozMonoUI::release_changed()
 {
 	float release = (float)_release_ms->get_value();
-	_write_function(_controller, PORT_RELEASE, sizeof(float), 4, &release);
+	_write_function(_controller, PORT_RELEASE, sizeof(float), 0, &release);
 }
 
 void
 SchmoozMonoUI::makeup_changed()
 {
 	float makeup = (float)_makeup->get_value();
-	_write_function(_controller, PORT_MAKEUP, sizeof(float), 4, &makeup);
+	_write_function(_controller, PORT_MAKEUP, sizeof(float), 0, &makeup);
 }
 
 void
 SchmoozMonoUI::drywet_changed()
 {
 	float drywet = (float)_drywet->get_value();
-	_write_function(_controller, PORT_DRYWET, sizeof(float), 4, &drywet);
+	_write_function(_controller, PORT_DRYWET, sizeof(float), 0, &drywet);
 }
 
 bool
@@ -409,6 +417,12 @@ SchmoozMonoUI::~SchmoozMonoUI()
 {
 	std::cerr << "SchmoozMonoUI::~SchmoozMonoUI()" << std::endl;
 
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
+		Wdgt::Object *obj = *i;
+		delete obj;
+
+		++i;
+	}
 	// TODO: lots'n'lots of unallocation
 	// cairo, wdgt stuff
 }
@@ -417,24 +431,46 @@ void
 SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size, 
                         uint32_t format, const void *buffer)
 {
+	bool redraw = false;
+
+
+	bool new_status;
+	float new_value;
 
 	switch(port_index) {
 	case PORT_SIDECHAIN_HPF:
-
-		//_hpf_toggle->set_active( (*(float *)buffer > 0.5 ? TRUE : FALSE));
-		hpf->set_status((*(float *)buffer > 0.5 ? TRUE : FALSE));
-		// TODO: expose, whatever
+		new_status = (*(float *)buffer > 0.5 ? TRUE : FALSE);
+		if (new_status != hpf->get_status()) {
+			redraw = true;
+			hpf->set_status((*(float *)buffer > 0.5 ? TRUE : FALSE));
+		}
 		break;
 
 	case PORT_THRESHOLD:
-		set_threshold(*(float *)buffer);
+		// note that we prevent event feedback from screwing with drag "smoothness"
+		// by not calling set_threshold() when dragging on said control
+		new_value = *(float *)buffer;
+
+		if (new_value != threshold_control->get_threshold() &&
+		    _dragWdgt != threshold_control) {
+			redraw = true;
+			threshold_control->set_threshold(new_value);
+		}
+
+		break;
+
+	case PORT_RATIO:
+		new_value = *(float *)buffer;
+
+		if (new_value != ratio_control->get_ratio() &&
+		    _dragWdgt != ratio_control) {
+			redraw = true;
+			ratio_control->set_ratio(new_value);
+		}
+
 		break;
 
 /*
-	case PORT_RATIO:
-		_ratio->set_value( (double) *(float *)buffer);
-		break;
-
 	case PORT_ATTACK:
 		_attack_ms->set_value( (double) *(float *)buffer);
 		break;
@@ -462,8 +498,9 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		return;
 	}
 
-	// TODO: this is needed, but the UI is not ready in the beginning
-	//expose(NULL);
+	if (_ready_to_draw && redraw) {
+		expose(NULL);
+	}
 }
 
 
