@@ -97,14 +97,74 @@ private:
 	cairo_surface_t *image_threshold;
 };
 
-class ThresholdControl : public Wdgt::Object
+
+// A "sliding control" which contains a single value for the widget
+// value setters make sure the member float relative_value is between 0 and 1
+// represeting the current value on a linear scale from the set minimum and
+// maximum value. offset_x and offset_y are also computed. use as you wish
+class SlidingControl : public Wdgt::Object
 {
 public:
-	ThresholdControl(double _clip_x1, double _clip_x2)
+	SlidingControl(float _min_value, float _max_value)
+	{
+		min_value = _min_value;
+		max_value = _max_value;
+	}
+
+	float get_value() const { return value; }
+	float get_relative_value() const { return relative_value; }
+
+	void set_value(float newvalue) 
+	{ 
+		value = newvalue;
+
+		relative_value = (value - min_value) / (max_value - min_value);
+		offset_x = (x2-x1) * relative_value;
+		offset_y = (y2-y1) * relative_value;
+	}
+
+
+	void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
+	{
+		float tmp = (max_value - min_value) * (float)(y - dragStart) / (y2-y1) + valueAtStart;
+		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << y << " => value = " << tmp << std::endl;
+	
+		if (tmp >= min_value && tmp <= max_value) {
+			set_value(tmp);
+		}
+	}
+
+	void set_value_from_horizontal_drag(float valueAtStart, int dragStart, int x)
+	{
+		float tmp = (max_value - min_value) * (float)(x - dragStart) / (x2-x1) + valueAtStart;
+	
+		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << x << " => value = " << tmp << std::endl;
+
+		if (tmp >= min_value && tmp <= max_value) {
+			set_value(tmp);
+		}
+	}
+protected:
+	float offset_x;
+	float offset_y;
+
+private:
+	float value;
+	float relative_value;
+
+	float max_value;
+	float min_value;
+};
+
+class ThresholdControl : public SlidingControl
+{
+public:
+	ThresholdControl(float _min_value, float _max_value, double _clip_x1, double _clip_x2)
+		: SlidingControl(_min_value, _max_value)
 	{
 		image_thr_cntrl          = cairo_image_surface_create_from_png (PNG_DIR "threshold.png");
 		image_thr_cntrl_prelight = cairo_image_surface_create_from_png (PNG_DIR "threshold_prelight.png");
-		control_w = 15.0; // TODO: read from the images
+		control_w = 15.0;
 
 		clip_x1 = _clip_x1;
 		clip_x2 = _clip_x2;
@@ -116,8 +176,6 @@ public:
 		cairo_surface_destroy(image_thr_cntrl_prelight);
 	}
 
-	// The rectangle x1,y1,x2,y2 is the space into which the control must be drawn onto
-	// the actual offset is deduced from the internal threshold_value variable
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
 		cairo_surface_t *tmp = NULL;
@@ -128,13 +186,11 @@ public:
 			tmp = image_thr_cntrl;
 		}
 
-		double _tx1, _tx2, _ty1, _ty2;
-		_tx1 = x1 + offset_x;
-		_tx2 = x1 + offset_x + control_w;
-		_ty1 = y1;
-		_ty2 = y2; //y1 + WDGT_GRAPH_H;
+		double _tx1, _tx2;
+		_tx1 = x1 + offset_x - control_w/2;
+		_tx2 = x1 + offset_x + control_w/2;
 
-		cairo_set_source_surface(cr, tmp, _tx1, _ty1);
+		cairo_set_source_surface(cr, tmp, _tx1, y1);
 
 		if (_tx1 < clip_x1) {
 			_tx1 = clip_x1;
@@ -142,39 +198,16 @@ public:
 			_tx2 = clip_x2;
 		}
 
-		cairo_rectangle(cr, _tx1, _ty1, _tx2 - _tx1, _ty2 - _ty1);
+		cairo_rectangle(cr, _tx1, y1, _tx2 - _tx1, y2 - y1);
 		cairo_fill(cr);
 	}
 
-	float get_threshold() const { return threshold_value; }
-
-	void set_threshold_from_drag(float thresholdAtStart, int dragStart, int x)
-	{
-		float thr = 70.0 * (float)(x - dragStart) / (x2-x1) + thresholdAtStart;
-	
-		if (thr >= -60 && thr <= 10) {
-			set_threshold(thr);
-		}
-	}	
-
-	void set_threshold(float value)
-	{
-		threshold_value = value;
-		
-		offset_x = (x2-x1) * (threshold_value + 60.0)/70.0 - control_w/2.0;
-	}
-
-	// The offset value must be taken into account
-	// For some reason this isn't called!!
 	bool intersectsPoint(double x, double y) {
-		return 	(x >= (x1+offset_x) && 
-			 x <  (x1+offset_x + control_w) &&
+		return 	(x >= (x1+offset_x - control_w/2.0) && 
+			 x <  (x1+offset_x + control_w/2.0) &&
                          y >= y1 && y < y2);
 	};
 private:
-	float threshold_value;
-
-	double offset_x;
 	double control_w;
 
 	double clip_x1;
@@ -209,10 +242,11 @@ private:
 };
 
 
-class RatioControl : public Wdgt::Object
+class RatioControl : public SlidingControl
 {
 public:
-	RatioControl()
+	RatioControl(float _min_value, float _max_value)
+		: SlidingControl(_min_value, _max_value)
 	{
 		image_ratio_cntrl          = cairo_image_surface_create_from_png (PNG_DIR "ratio_thumb.png");
 		image_ratio_cntrl_prelight = cairo_image_surface_create_from_png (PNG_DIR "ratio_thumb_prelight.png");
@@ -225,8 +259,6 @@ public:
 		cairo_surface_destroy(image_ratio_cntrl_prelight);
 	}
 
-	// The rectangle x1,y1,x2,y2 is the space into which the control must be drawn onto
-	// the actual offset is deduced from the internal ratio_value variable
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
 		cairo_surface_t *tmp = NULL;
@@ -237,47 +269,23 @@ public:
 			tmp = image_ratio_cntrl;
 		}
 
-		double _tx1, _tx2, _ty1, _ty2;
-		_tx1 = x1;
-		_tx2 = x2;
+		double _ty1, _ty2;
 		_ty1 = y1 + offset_y;
 		_ty2 = y1 + offset_y + control_h;
 
-		cairo_set_source_surface(cr, tmp, _tx1, _ty1);
+		cairo_set_source_surface(cr, tmp, x1, _ty1);
 
-		cairo_rectangle(cr, _tx1, _ty1, _tx2 - _tx1, _ty2 - _ty1);
+		cairo_rectangle(cr, x1, _ty1, x2 - x1, _ty2 - _ty1);
 		cairo_fill(cr);
 	}
 
-	float get_ratio() const { return ratio_value; }
-
-	void set_ratio_from_drag(float ratioAtStart, int dragStart, int y)
-	{
-		float thr = 18.5 * (float)(y - dragStart) / (y2-y1) + ratioAtStart;
-	
-		if (thr >= 1.5 && thr <= 20) {
-			set_ratio(thr);
-		}
-	}	
-
-	void set_ratio(float value)
-	{
-		ratio_value = value;
-		
-		offset_y = (y2-y1-control_h) * (ratio_value - 1.5)/18.5;
-	}
-
-	// The offset value must be taken into account
-	// For some reason this isn't called!!
 	bool intersectsPoint(double x, double y) {
 		return 	(x >= x1 && x < x2 &&
-			 y >= y1 &&
-			 y < (y1 + offset_y + control_h));
+			 y >= (y1 + offset_y) &&
+			 y <  (y1 + offset_y + control_h));
 	};
-private:
-	float ratio_value;
 
-	double offset_y;
+private:
 	double control_h;
 
 	cairo_surface_t *image_ratio_cntrl;
