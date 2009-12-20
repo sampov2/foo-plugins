@@ -111,6 +111,8 @@ private:
 
 	HorizontalColorSlider *makeup_control;
 
+	TimingGraph *timing_graph;
+
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
 	bool expose(GdkEventExpose *);
@@ -195,6 +197,9 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	makeup_control = new HorizontalColorSlider(0.0, 40.0, "make-up");
 	wdgts.push_back(makeup_control);
 
+	timing_graph = new TimingGraph(attack_control, release_control, ratio_control);
+	wdgts.push_back(timing_graph);
+
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
 	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
@@ -209,6 +214,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	release_control->setPosition(93, 287, 200, 16);
 
 	makeup_control ->setPosition(93, 375, 200, 16);
+
+	timing_graph   ->setPosition(94, 310, 198, 46);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());

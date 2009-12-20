@@ -366,3 +366,124 @@ private:
 	cairo_surface_t *slider_color_prelight;
 };
 
+class TimingGraph : public Wdgt::Object
+{
+public:
+	TimingGraph(HorizontalColorSlider *_attack, HorizontalColorSlider *_release, 
+		    SlidingControl *_ratio)
+		: attack (_attack)
+		, release(_release)
+		, ratio  (_ratio)
+	{ 
+		relative_attack_point  = 0.06;
+		relative_release_point = 0.6; // TODO: this could be dropped to 0.4 ..
+	}
+
+
+	~TimingGraph()
+	{
+	}
+
+	
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		cairo_rectangle(cr, x1, y1, x2-x1, y2-y1);
+		cairo_clip(cr);
+
+		// draw center line
+		cairo_set_source_rgb(cr, 0.525, 0.843, 0.0);
+		cairo_set_line_width(cr, 1.0);
+
+		double w = x2-x1;
+		double h = y2-y1;
+
+		cairo_move_to(cr, x1, y1 + h/2.0);
+		cairo_line_to(cr, x2, y1 + h/2.0);
+		cairo_stroke(cr);
+
+		// draw black "input" strength
+		cairo_set_source_rgb(cr, 0.553, 0.533, 0.502);
+		cairo_move_to(cr, x1, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*1.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*1.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x2, y1 + h*3.0/4.0);
+		cairo_stroke(cr);
+
+		// draw blue "compressed" strength
+		cairo_set_source_rgb(cr, 0.243, 0.745, 0.945);
+		cairo_move_to(cr, x1, y1 + h*3.0/4.0);	
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*1.0/4.0);
+		// attack curve
+		// note that attack relative value is scaled to 0.1 .. 1.0 so that release will
+		// never appear to be 0
+		double attack_w = w * (relative_release_point - relative_attack_point) * (0.05 + attack->get_relative_value() * 0.95);
+		double attack_h = h/2.0 * (ratio->get_value() / 20.0);
+
+		cairo_line_to(cr, x1 + w * relative_attack_point + attack_w, y1 + h*1.0/4.0+attack_h);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*1.0/4.0+attack_h);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*3.0/4.0+attack_h);
+
+		// note that release relative value is scaled to 0.1 .. 1.0 so that release will
+		// never appear to be 0
+		double release_w = w * (1.0 - relative_release_point) * (0.1 + release->get_relative_value() * 0.9);
+		cairo_line_to(cr, x1 + w * relative_release_point + release_w, y1 + h*3.0/4.0);
+
+		cairo_line_to(cr, x2, y1 + h*3.0/4.0);
+		cairo_stroke(cr);
+
+		// draw dashed black "input" strength to make blue/black overlapping parts dashed
+		double dash_length = 2.0;
+		cairo_set_dash(cr, &dash_length, 1, 0);
+		cairo_set_source_rgb(cr, 0.553, 0.533, 0.502);
+		cairo_move_to(cr, x1, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_attack_point, y1 + h*1.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*1.0/4.0);
+		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*3.0/4.0);
+		cairo_line_to(cr, x2, y1 + h*3.0/4.0);
+		cairo_stroke(cr);
+
+		// attack gradient
+		cairo_pattern_t *attack_gradient = cairo_pattern_create_linear(
+			x1 + w * relative_attack_point,            y1,
+			x1 + w * relative_attack_point + attack_w, y2);
+		cairo_pattern_add_color_stop_rgba (attack_gradient, 0, 1.0, 0.875, 0.298, 0.8);
+		cairo_pattern_add_color_stop_rgba (attack_gradient, h, 1.0, 0.875, 0.298, 0.1);
+
+		cairo_set_source(cr, attack_gradient);
+		cairo_rectangle(cr, 
+                                x1 + w * relative_attack_point,            y1, 
+                                attack_w, h);
+		cairo_fill(cr);
+
+		cairo_pattern_destroy(attack_gradient);
+
+		// release gradient
+		cairo_pattern_t *release_gradient = cairo_pattern_create_linear(
+			x1 + w * relative_release_point,             y1,
+			x1 + w * relative_release_point + release_w, y2);
+		cairo_pattern_add_color_stop_rgba (release_gradient, 0, 0.882, 0.523, 1.0, 0.8);
+		cairo_pattern_add_color_stop_rgba (release_gradient, h, 0.882, 0.523, 1.0, 0.1);
+
+		cairo_set_source(cr, release_gradient);
+		cairo_rectangle(cr, 
+                                x1 + w * relative_release_point,            y1, 
+                                release_w, h);
+		cairo_fill(cr);
+
+		cairo_pattern_destroy(release_gradient);
+		
+		cairo_reset_clip(cr);
+	}
+
+private:
+	HorizontalColorSlider *attack;
+	HorizontalColorSlider *release;
+	SlidingControl        *ratio;
+
+	float relative_attack_point;
+	float relative_release_point;
+};
