@@ -71,32 +71,6 @@ private:
 	cairo_surface_t *image_hpf_off_prelight;
 };
 
-class ThresholdGraph : public Wdgt::Object
-{
-public:
-	ThresholdGraph()
-	{
-		image_graph_bg      = cairo_image_surface_create_from_png (PNG_DIR "graph_bg.png");
-		image_threshold     = cairo_image_surface_create_from_png (PNG_DIR "graph_bg_threshold.png");
-	}
-	
-	~ThresholdGraph()
-	{
-		cairo_surface_destroy(image_graph_bg);
-		cairo_surface_destroy(image_threshold);
-	}
-
-	virtual void drawWidget(bool hover, cairo_t *cr) const
-	{
-		cairo_set_source_surface(cr, image_threshold, x1, y1);
-		cairo_paint(cr);
-	}
-
-private:
-	cairo_surface_t *image_graph_bg;
-	cairo_surface_t *image_threshold;
-};
-
 
 // A "sliding control" which contains a single value for the widget
 // value setters make sure the member float relative_value is between 0 and 1
@@ -155,6 +129,49 @@ private:
 
 	float max_value;
 	float min_value;
+};
+
+class ThresholdGraph : public Wdgt::Object
+{
+public:
+	ThresholdGraph(SlidingControl *_threshold_control, SlidingControl *_ratio_control)
+		: threshold_control(_threshold_control)
+		, ratio_control(_ratio_control)
+	{
+		image_graph_bg      = cairo_image_surface_create_from_png (PNG_DIR "graph_bg.png");
+		image_threshold     = cairo_image_surface_create_from_png (PNG_DIR "graph_bg_threshold.png");
+		
+	}
+	
+	~ThresholdGraph()
+	{
+		cairo_surface_destroy(image_graph_bg);
+		cairo_surface_destroy(image_threshold);
+	}
+
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		float cutoff_y = (y2-y1) * (1.0 - threshold_control->get_relative_value());
+		cairo_set_source_surface(cr, image_threshold, x1, y1);
+		cairo_rectangle(cr, x1, y1, (x2-x1), cutoff_y);
+		cairo_fill(cr);
+
+		cairo_set_source_surface(cr, image_graph_bg, x1, y1);
+		cairo_rectangle(cr, x1, y1+cutoff_y, (x2-x1), y2-y1-cutoff_y);
+		cairo_fill(cr);
+		
+
+		// draw a line from the lower left hand corner to the point where it reaches
+		// the threshold control and then 
+
+	}
+
+private:
+	cairo_surface_t *image_graph_bg;
+	cairo_surface_t *image_threshold;
+
+	SlidingControl *threshold_control;
+	SlidingControl *ratio_control;
 };
 
 class ThresholdControl : public SlidingControl

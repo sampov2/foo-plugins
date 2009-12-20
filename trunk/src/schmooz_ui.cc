@@ -178,12 +178,12 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	threshold_control = new ThresholdControl(-60.0, 10.0,
 						 WDGT_THRESH_CONTROL_CLIP_X1,
 						 WDGT_THRESH_CONTROL_CLIP_X2);
-	wdgts.push_back(threshold_control);
+	ratio_control = new RatioControl(1.5,20.0);
+	threshold = new ThresholdGraph(threshold_control, ratio_control);
 
-	threshold = new ThresholdGraph();
+	wdgts.push_back(threshold_control);
 	wdgts.push_back(threshold);
 
-	ratio_control = new RatioControl(1.5,20.0);
 	wdgts.push_back(ratio_control);
 
 	ratio_bg = new RatioBackground();
