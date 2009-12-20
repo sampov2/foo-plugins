@@ -77,10 +77,10 @@ private:
 	void hpf_toggled();
 	void threshold_changed();
 	void ratio_changed();
-/*
 	void attack_changed();
 	void release_changed();
 	void makeup_changed();
+/*
 	void drywet_changed();
 
 	void redraw_attenuation();
@@ -105,6 +105,11 @@ private:
 
 	RatioBackground *ratio_bg;
 	RatioControl *ratio_control;
+
+	HorizontalColorSlider *attack_control;
+	HorizontalColorSlider *release_control;
+
+	HorizontalColorSlider *makeup_control;
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -182,6 +187,14 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	ratio_bg = new RatioBackground();
 	wdgts.push_back(ratio_bg);
 
+	attack_control  = new HorizontalColorSlider( 0.1,  120.0, "attack");
+	wdgts.push_back(attack_control);
+	release_control = new HorizontalColorSlider(50.0, 1200.0, "release");
+	wdgts.push_back(release_control);
+
+	makeup_control = new HorizontalColorSlider(0.0, 40.0, "make-up");
+	wdgts.push_back(makeup_control);
+
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
 	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
@@ -191,6 +204,11 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 	ratio_control->setPosition(300, 33, 12, 196 - 12);
 	ratio_bg->setPosition(298, 31, 16, 200);
+
+	attack_control ->setPosition(93, 265, 200, 16);
+	release_control->setPosition(93, 287, 200, 16);
+
+	makeup_control ->setPosition(93, 375, 200, 16);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -210,12 +228,23 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 		if (_dragWdgt == threshold_control) {
 			threshold_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
 			threshold_changed();
-			expose(NULL);
 		} else if (_dragWdgt == ratio_control) {
 			ratio_control->set_value_from_vertical_drag(_predrag_value, _dragStartY, evt->y);
 			ratio_changed();
-			expose(NULL);
+		} else if (_dragWdgt == attack_control) {
+			attack_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			attack_changed();
+		} else if (_dragWdgt == release_control) {
+			release_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			release_changed();
+		} else if (_dragWdgt == makeup_control) {
+			makeup_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			makeup_changed();
+		} else {
+			// don't expose
+			return true;
 		}
+		expose(NULL);
 
 		return true;
 	}
@@ -241,6 +270,12 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 		_predrag_value = threshold_control->get_value();
 	} else if (_buttonPressWdgt == ratio_control) {
 		_predrag_value = ratio_control->get_value();
+	} else if (_buttonPressWdgt == attack_control) {
+		_predrag_value = attack_control->get_value();
+	} else if (_buttonPressWdgt == release_control) {
+		_predrag_value = release_control->get_value();
+	} else if (_buttonPressWdgt == makeup_control) {
+		_predrag_value = makeup_control->get_value();
 	} else {
 		return true;
 	}
@@ -335,28 +370,28 @@ SchmoozMonoUI::ratio_changed()
 	_write_function(_controller, PORT_RATIO, sizeof(float), 0, &ratio);
 }
 
-/*
 void
 SchmoozMonoUI::attack_changed()
 {
-	float attack = (float)_attack_ms->get_value();
+	float attack = (float)attack_control->get_value();
 	_write_function(_controller, PORT_ATTACK, sizeof(float), 0, &attack);
 }
 
 void
 SchmoozMonoUI::release_changed()
 {
-	float release = (float)_release_ms->get_value();
+	float release = (float)release_control->get_value();
 	_write_function(_controller, PORT_RELEASE, sizeof(float), 0, &release);
 }
 
 void
 SchmoozMonoUI::makeup_changed()
 {
-	float makeup = (float)_makeup->get_value();
+	float makeup = (float)makeup_control->get_value();
 	_write_function(_controller, PORT_MAKEUP, sizeof(float), 0, &makeup);
 }
 
+/*
 void
 SchmoozMonoUI::drywet_changed()
 {
@@ -469,19 +504,37 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		break;
 
-/*
 	case PORT_ATTACK:
-		_attack_ms->set_value( (double) *(float *)buffer);
+		new_value = *(float *)buffer;
+
+		if (new_value != attack_control->get_value() &&
+		    _dragWdgt != attack_control) {
+			redraw = true;
+			attack_control->set_value(new_value);
+		}
 		break;
 
 	case PORT_RELEASE:
-		_release_ms->set_value( (double) *(float *)buffer);
+		new_value = *(float *)buffer;
+
+		if (new_value != release_control->get_value() &&
+		    _dragWdgt != release_control) {
+			redraw = true;
+			release_control->set_value(new_value);
+		}
 		break;
 
 	case PORT_MAKEUP:
-		_makeup->set_value( (double) *(float *)buffer);
+		new_value = *(float *)buffer;
+
+		if (new_value != makeup_control->get_value() &&
+		    _dragWdgt != makeup_control) {
+			redraw = true;
+			makeup_control->set_value(new_value);
+		}
 		break;
-	
+
+/*
 	case PORT_DRYWET:
 		_drywet->set_value( (double) *(float *)buffer);
 		break;	

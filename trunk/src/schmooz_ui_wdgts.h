@@ -121,6 +121,7 @@ public:
 		relative_value = (value - min_value) / (max_value - min_value);
 		offset_x = (x2-x1) * relative_value;
 		offset_y = (y2-y1) * relative_value;
+		//std::cerr << "new value = " << value << ", offsets: " << offset_x << " or " << offset_y << std::endl;
 	}
 
 
@@ -292,4 +293,76 @@ private:
 	cairo_surface_t *image_ratio_cntrl_prelight;
 };
 
+
+class HorizontalColorSlider : public SlidingControl
+{
+public:
+	HorizontalColorSlider(float _min_value, float _max_value, std::string pngBase)
+		: SlidingControl(_min_value, _max_value)
+	{
+		std::string png(PNG_DIR);
+		png += "slider_";
+
+		std::string zero = png + "zero.png";
+		std::string zero_prelight = png + "zero_prelight.png";
+
+		//std::cerr << "opening: '" << zero << "'" << std::endl;
+		//std::cerr << "opening: '" << zero_prelight << "'" << std::endl;
+		
+		slider_background          
+			= cairo_image_surface_create_from_png( zero.c_str() );
+		slider_background_prelight
+			= cairo_image_surface_create_from_png( zero_prelight.c_str() );
+
+		png += pngBase;
+
+		std::string color = png + ".png";
+		std::string color_prelight = png + "_prelight.png";
+
+		//std::cerr << "opening: '" << color << "'" << std::endl;
+		//std::cerr << "opening: '" << color_prelight << "'" << std::endl;
+
+		slider_color
+			= cairo_image_surface_create_from_png ( color.c_str() );
+		slider_color_prelight
+			= cairo_image_surface_create_from_png ( color_prelight.c_str() );
+	}
+
+	~HorizontalColorSlider()
+	{
+		cairo_surface_destroy(slider_background);
+		cairo_surface_destroy(slider_background_prelight);
+		cairo_surface_destroy(slider_color);
+		cairo_surface_destroy(slider_color_prelight);
+		
+	}
+
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		cairo_surface_t *tmp1 = NULL;
+		cairo_surface_t *tmp2 = NULL;
+
+		if (hover) {
+			tmp1 = slider_background_prelight;
+			tmp2 = slider_color_prelight;
+		} else {
+			tmp1 = slider_background;
+			tmp2 = slider_color;
+		}
+
+		cairo_set_source_surface(cr, tmp1, x1, y1);
+		cairo_paint(cr);
+
+		cairo_set_source_surface(cr, tmp2, x1, y1);
+
+		cairo_rectangle(cr, x1, y1, offset_x, y2-y1);
+		cairo_fill(cr);
+	}
+
+private:
+	cairo_surface_t *slider_background;
+	cairo_surface_t *slider_background_prelight;
+	cairo_surface_t *slider_color;
+	cairo_surface_t *slider_color_prelight;
+};
 
