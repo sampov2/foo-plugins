@@ -140,7 +140,6 @@ public:
 	{
 		image_graph_bg      = cairo_image_surface_create_from_png (PNG_DIR "graph_bg.png");
 		image_threshold     = cairo_image_surface_create_from_png (PNG_DIR "graph_bg_threshold.png");
-		
 	}
 	
 	~ThresholdGraph()
@@ -151,19 +150,30 @@ public:
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
+		float cutoff_x = (x2-x1) * (threshold_control->get_relative_value());
 		float cutoff_y = (y2-y1) * (1.0 - threshold_control->get_relative_value());
+
+		// The graph above the threshold
 		cairo_set_source_surface(cr, image_threshold, x1, y1);
 		cairo_rectangle(cr, x1, y1, (x2-x1), cutoff_y);
 		cairo_fill(cr);
 
+		// .. below the threshold
 		cairo_set_source_surface(cr, image_graph_bg, x1, y1);
 		cairo_rectangle(cr, x1, y1+cutoff_y, (x2-x1), y2-y1-cutoff_y);
 		cairo_fill(cr);
 		
+		// the line from the bottom left corner up to the threshold
+		cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
+		cairo_move_to(cr, x1, y2);
+		cairo_line_to(cr, x1 + cutoff_x, y1 + cutoff_y);
+		cairo_stroke(cr);
 
-		// draw a line from the lower left hand corner to the point where it reaches
-		// the threshold control and then 
-
+		// the line from the threshold point to the right side, as affected by ratio
+		cairo_set_source_rgb(cr, 0.412, 0.820, 0.976);
+		cairo_move_to(cr, x1 + cutoff_x, y1 + cutoff_y);
+		cairo_line_to(cr, x2, y1 + cutoff_y - cutoff_y / ratio_control->get_value());
+		cairo_stroke(cr);
 	}
 
 private:
@@ -462,6 +472,8 @@ public:
 		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*3.0/4.0);
 		cairo_line_to(cr, x2, y1 + h*3.0/4.0);
 		cairo_stroke(cr);
+
+		cairo_set_dash(cr, NULL, 0, 0);
 
 		// attack gradient
 		cairo_pattern_t *attack_gradient = cairo_pattern_create_linear(
