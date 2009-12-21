@@ -87,8 +87,6 @@ private:
 	bool expose_attenuation(GdkEventExpose *);
 */
 
-//	float _current_attenuation;
-
 	float _predrag_value;
 
 	LV2UI_Write_Function _write_function;
@@ -115,6 +113,7 @@ private:
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
+	bool exposeWdgt(Wdgt::Object *);
 	bool expose(GdkEventExpose *);
 
 	// Eventhandlers
@@ -251,7 +250,7 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 			// don't expose
 			return true;
 		}
-		expose(NULL);
+		exposeWdgt(_dragWdgt);
 
 		return true;
 	}
@@ -298,10 +297,13 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 {
 	std::cerr << "button release" << std::endl;
 
+	Wdgt::Object *exposeObj = NULL;
+
 	if (_hoverWdgt == _buttonPressWdgt) {
 		if (_buttonPressWdgt == hpf) {
 			hpf->toggle_status();
 			hpf_toggled();
+			exposeObj = hpf;
 		}
 	
 	}
@@ -309,19 +311,36 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 	_buttonPressWdgt = NULL;
 	_dragWdgt = NULL;
 
-	expose(NULL);
+	if (exposeObj != NULL) {
+		exposeWdgt(exposeObj);
+	}
 
 	return true;
 }
 
 bool 
-SchmoozMonoUI::expose(GdkEventExpose *)
+SchmoozMonoUI::exposeWdgt(Wdgt::Object *obj)
 {
+	GdkEventExpose evt;
+	evt.area.x = obj->x1;
+	evt.area.y = obj->y1;
+	evt.area.width = obj->x2 - evt.area.x;
+	evt.area.height = obj->y2 - evt.area.y;
+
+	return expose(&evt);
+}
+
+bool 
+SchmoozMonoUI::expose(GdkEventExpose *evt)
+{
+	bool clip = (evt != NULL);
+
 	_ready_to_draw = true;
 
 	cairo_t *cr;
 
 	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
+
 
 	// double-buffer
 	cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
@@ -335,17 +354,31 @@ SchmoozMonoUI::expose(GdkEventExpose *)
 		--i;
 
 		Wdgt::Object *obj = *i;
-
-		obj->drawWidget( (_hoverWdgt == obj), cr);
+	
+		if (evt == NULL || obj->intersectsEvent(evt)) {
+			obj->drawWidget( (_hoverWdgt == obj), cr);
+		}
 	}
 
 	// finish drawing (retrieve double-buffer & draw it)
 	cairo_pattern_t *bg = cairo_pop_group(cr);
 
 	cairo_copy_page(cr);
+
+	if (clip) {
+		cairo_rectangle(cr,
+				evt->area.x, evt->area.y, 
+				evt->area.width, evt->area.height);
+		cairo_clip(cr);
+	}
+
+
 	cairo_set_source(cr,bg);
 	cairo_paint(cr);
 
+	if (clip) {
+		cairo_reset_clip(cr);
+	}
 
 	cairo_pattern_destroy(bg);
 
@@ -472,7 +505,7 @@ void
 SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size, 
                         uint32_t format, const void *buffer)
 {
-	bool redraw = false;
+	Wdgt::Object *exposeObj = false;
 
 
 	bool new_status;
@@ -482,7 +515,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	case PORT_SIDECHAIN_HPF:
 		new_status = (*(float *)buffer > 0.5 ? TRUE : FALSE);
 		if (new_status != hpf->get_status()) {
-			redraw = true;
+			exposeObj = hpf;
 			hpf->set_status((*(float *)buffer > 0.5 ? TRUE : FALSE));
 		}
 		break;
@@ -494,7 +527,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		if (new_value != threshold_control->get_value() &&
 		    _dragWdgt != threshold_control) {
-			redraw = true;
+			exposeObj = threshold_control;
 			threshold_control->set_value(new_value);
 		}
 
@@ -505,7 +538,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		if (new_value != ratio_control->get_value() &&
 		    _dragWdgt != ratio_control) {
-			redraw = true;
+			exposeObj = ratio_control;
 			ratio_control->set_value(new_value);
 		}
 
@@ -516,7 +549,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		if (new_value != attack_control->get_value() &&
 		    _dragWdgt != attack_control) {
-			redraw = true;
+			exposeObj = attack_control;
 			attack_control->set_value(new_value);
 		}
 		break;
@@ -526,7 +559,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		if (new_value != release_control->get_value() &&
 		    _dragWdgt != release_control) {
-			redraw = true;
+			exposeObj = release_control;
 			release_control->set_value(new_value);
 		}
 		break;
@@ -536,7 +569,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 		if (new_value != makeup_control->get_value() &&
 		    _dragWdgt != makeup_control) {
-			redraw = true;
+			exposeObj = makeup_control;
 			makeup_control->set_value(new_value);
 		}
 		break;
@@ -557,8 +590,8 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		return;
 	}
 
-	if (_ready_to_draw && redraw) {
-		expose(NULL);
+	if (_ready_to_draw && exposeObj != NULL) {
+		exposeWdgt(exposeObj);
 	}
 }
 
