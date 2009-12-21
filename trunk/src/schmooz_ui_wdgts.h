@@ -230,10 +230,11 @@ public:
 		cairo_fill(cr);
 	}
 
-	bool intersectsPoint(double x, double y) {
-		return 	(x >= (x1+offset_x - control_w/2.0) && 
-			 x <  (x1+offset_x + control_w/2.0) &&
-                         y >= y1 && y < y2);
+	bool intersectsRectangle(double x, double y, double w, double h) {
+		return 	((x+w) >= (x1+offset_x - control_w/2.0) && 
+			  x    <  (x1+offset_x + control_w/2.0) &&
+                         (y+h) >= y1 && 
+                          y    < y2);
 	};
 private:
 	double control_w;
@@ -307,10 +308,11 @@ public:
 		cairo_fill(cr);
 	}
 
-	bool intersectsPoint(double x, double y) {
-		return 	(x >= x1 && x < x2 &&
-			 y >= (y1 + offset_y) &&
-			 y <  (y1 + offset_y + control_h));
+	bool intersectsRectangle(double x, double y, double w, double h) {
+		return 	((x+w) >= x1 && 
+			  x    < x2 &&
+			 (y+h) >= (y1 + offset_y) &&
+			  y    <  (y1 + offset_y + control_h));
 	};
 
 private:
