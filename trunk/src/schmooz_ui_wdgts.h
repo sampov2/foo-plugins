@@ -230,7 +230,8 @@ public:
 		cairo_fill(cr);
 	}
 
-	bool intersectsRectangle(double x, double y, double w, double h) {
+	bool intersectsRectangle(double x, double y, double w, double h) const
+	{
 		return 	((x+w) >= (x1+offset_x - control_w/2.0) && 
 			  x    <  (x1+offset_x + control_w/2.0) &&
                          (y+h) >= y1 && 
@@ -308,7 +309,8 @@ public:
 		cairo_fill(cr);
 	}
 
-	bool intersectsRectangle(double x, double y, double w, double h) {
+	bool intersectsRectangle(double x, double y, double w, double h) const
+	{
 		return 	((x+w) >= x1 && 
 			  x    < x2 &&
 			 (y+h) >= (y1 + offset_y) &&

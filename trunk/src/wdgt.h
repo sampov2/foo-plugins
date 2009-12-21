@@ -28,12 +28,13 @@ public:
 	double x2;
 	double y2;
 
-	virtual bool intersectsRectangle(double x, double y, double w, double h) {
+	virtual bool intersectsRectangle(double x, double y, double w, double h) const
+	{
 		return (x < x2 && (x+w) >= x1 &&
                         y < y2 && (y+h) >= y1);
 	};
 
-	bool intersectsPoint(double x, double y) {
+	bool intersectsPoint(double x, double y) const {
 		return intersectsRectangle(x, y, 1, 1);
 	};
 
