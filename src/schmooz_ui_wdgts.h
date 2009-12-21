@@ -164,6 +164,7 @@ public:
 		cairo_fill(cr);
 		
 		// the line from the bottom left corner up to the threshold
+		cairo_set_line_width(cr, 1.0);
 		cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
 		cairo_move_to(cr, x1, y2);
 		cairo_line_to(cr, x1 + cutoff_x, y1 + cutoff_y);
