@@ -34,7 +34,13 @@ public:
                         y < y2 && (y+h) >= y1);
 	};
 
-	bool intersectsPoint(double x, double y) const {
+	inline bool intersectsEvent(GdkEventExpose *evt) const
+	{
+		return intersectsRectangle(evt->area.x,     evt->area.y, 
+					   evt->area.width, evt->area.height);
+	};
+
+	inline bool intersectsPoint(double x, double y) const {
 		return intersectsRectangle(x, y, 1, 1);
 	};
 
