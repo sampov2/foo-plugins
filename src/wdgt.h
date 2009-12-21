@@ -28,9 +28,13 @@ public:
 	double x2;
 	double y2;
 
-	virtual bool intersectsPoint(double x, double y) {
-		return 	(x >= x1 && x < x2 &&
-                         y >= y1 && y < y2);
+	virtual bool intersectsRectangle(double x, double y, double w, double h) {
+		return (x < x2 && (x+w) >= x1 &&
+                        y < y2 && (y+h) >= y1);
+	};
+
+	bool intersectsPoint(double x, double y) {
+		return intersectsRectangle(x, y, 1, 1);
 	};
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const {};
