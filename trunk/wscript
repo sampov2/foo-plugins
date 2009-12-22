@@ -34,6 +34,7 @@ def build(bld):
 	guiobj.uselib = [ 'GTKMM', 'm' ]
 	guiobj.vnum   = ''
 	guiobj.target = 'schmooz_ui'
+        guiobj.cxxflags = [ '-DSCHMOOZ_PNG_DIR="' + bld.env['LV2DIR'] + '/foo.lv2/schmooz_ui/"' ];
 	guiobj.install_path = '${LV2DIR}/foo.lv2'
 	guiobj.includes = 'extra-include'
 
@@ -72,6 +73,31 @@ def build(bld):
 	bld.install_files('${LV2DIR}/foo.lv2', 'src/ttl/transients-mono-v2.ttl')
 	bld.install_files('${LV2DIR}/foo.lv2', 'src/ttl/el-maxim.ttl')
 	bld.install_files('${LV2DIR}/foo.lv2', 'src/ttl/t00b-limiter.ttl')
+
+	pngs = '''
+		graphics/background.png
+		graphics/high-pass_on.png
+		graphics/high-pass_on_prelight.png
+		graphics/high-pass_off.png
+		graphics/high-pass_off_prelight.png
+		graphics/graph_bg.png
+		graphics/graph_bg_threshold.png
+		graphics/threshold.png
+		graphics/threshold_prelight.png
+		graphics/ratio_trough.png
+		graphics/ratio_thumb.png
+		graphics/ratio_thumb_prelight.png
+		graphics/slider_zero.png
+		graphics/slider_zero_prelight.png
+		graphics/slider_attack.png
+		graphics/slider_attack_prelight.png
+		graphics/slider_release.png
+		graphics/slider_release_prelight.png
+		graphics/slider_make-up.png
+		graphics/slider_make-up_prelight.png
+	'''
+
+	bld.install_files('${LV2DIR}/foo.lv2/schmooz_ui', pngs)
 
 	
 	

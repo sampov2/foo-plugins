@@ -22,7 +22,6 @@
 #include <iostream>
 #include <list>
 
-#include "schmooz_ui_wdgts.h"
 
 // These need to match the indexes in manifest.ttl
 // TODO: port macros need to be put in a common header
@@ -53,6 +52,18 @@
 #define WDGT_THRESH_CONTROL_W 15
 #define WDGT_THRESH_CONTROL_CLIP_X1 94
 #define WDGT_THRESH_CONTROL_CLIP_X2 292
+
+bool
+check_cairo_png(cairo_surface_t *s)
+{
+	cairo_status_t _stat = cairo_surface_status(s);
+	return !(_stat == CAIRO_STATUS_NO_MEMORY ||
+		 _stat == CAIRO_STATUS_FILE_NOT_FOUND ||
+		 _stat == CAIRO_STATUS_READ_ERROR);
+	
+}
+
+#include "schmooz_ui_wdgts.h"
 
 class SchmoozMonoUI
 {
@@ -136,8 +147,6 @@ private:
 	
 };
 
-#define PNG_DIR "/home/v2/dev/foo/foo-plugins/graphics/"
-
 SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
 			     const char *bundle_path, 
 			     LV2UI_Write_Function write_function, 
@@ -153,7 +162,10 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	, _buttonPressWdgt(NULL)
 {
 	std::cerr << "SchmoozMonoUI::SchmoozMonoUI()" << std::endl;
-	_image_background    = cairo_image_surface_create_from_png (PNG_DIR "background.png");
+	_image_background    = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "background.png");
+	if (!check_cairo_png(_image_background)) {
+		std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "background.png" << std::endl;
+	}
 
 
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &SchmoozMonoUI::size_request));
@@ -497,6 +509,7 @@ SchmoozMonoUI::~SchmoozMonoUI()
 
 		++i;
 	}
+	cairo_surface_destroy(_image_background);
 	// TODO: lots'n'lots of unallocation
 	// cairo, wdgt stuff
 }
