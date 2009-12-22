@@ -599,7 +599,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 */
 
 	default:
-		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << (int)buffer << ")" << std::endl;
+		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << *(float *)buffer << ")" << std::endl;
 		return;
 	}
 
