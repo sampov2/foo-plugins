@@ -339,7 +339,18 @@ SchmoozMonoUI::exposeWdgt(Wdgt::Object *obj)
 	evt.area.width = obj->x2 - evt.area.x;
 	evt.area.height = obj->y2 - evt.area.y;
 
-	return expose(&evt);
+	expose(&evt);
+
+	for (std::list<Wdgt::Object *>::iterator i = obj->dependents.begin(); i != obj->dependents.end(); ) {
+		Wdgt::Object *dep = *i;
+
+		exposeWdgt(dep);
+
+		++i;
+	}
+
+
+	return true;
 }
 
 bool 

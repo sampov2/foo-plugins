@@ -155,6 +155,12 @@ public:
 		if (!check_cairo_png(image_threshold)) {
 			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "graph_bg_threshold.png" << std::endl;
 		}
+		
+		// This is unnecessary as the graph is always redrawn when
+		// the threshold control is. I'll keep it here to document the relationship
+		// for future reference.
+		//_threshold_control->dependents.push_back(this);
+		_ratio_control    ->dependents.push_back(this);
 	}
 	
 	~ThresholdGraph()
@@ -451,6 +457,10 @@ public:
 	{ 
 		relative_attack_point  = 0.06;
 		relative_release_point = 0.6; // TODO: this could be dropped to 0.4 ..
+
+		_attack ->dependents.push_back(this);
+		_release->dependents.push_back(this);
+		_ratio  ->dependents.push_back(this);
 	}
 
 

@@ -52,6 +52,8 @@ public:
 		x2 = _x1 + _w;
 		y2 = _y1 + _h;
 	};
+
+	std::list<Wdgt::Object *> dependents;
 };
 
 
