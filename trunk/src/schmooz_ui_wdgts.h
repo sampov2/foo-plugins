@@ -97,7 +97,7 @@ public:
 	float get_value() const { return value; }
 	float get_relative_value() const { return relative_value; }
 
-	void set_value(float newvalue) 
+	virtual void set_value(float newvalue) 
 	{ 
 		value = newvalue;
 
@@ -108,7 +108,7 @@ public:
 	}
 
 
-	void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
+	virtual void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
 	{
 		float tmp = (max_value - min_value) * (float)(y - dragStart) / (y2-y1) + valueAtStart;
 		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << y << " => value = " << tmp << std::endl;
@@ -132,12 +132,12 @@ protected:
 	float offset_x;
 	float offset_y;
 
-private:
+	float max_value;
+	float min_value;
+
 	float value;
 	float relative_value;
 
-	float max_value;
-	float min_value;
 };
 
 class ThresholdGraph : public Wdgt::Object
@@ -324,6 +324,25 @@ public:
 	{
 		cairo_surface_destroy(image_ratio_cntrl);
 		cairo_surface_destroy(image_ratio_cntrl_prelight);
+	}
+
+	virtual void set_value(float newvalue) 
+	{ 
+		value = newvalue;
+
+		relative_value = (value - min_value) / (max_value - min_value);
+		offset_x = (x2-x1) * relative_value;
+		offset_y = (y2-control_h-y1) * relative_value; // -control_h is extra over the standard version
+	}
+
+	virtual void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
+	{
+		float tmp = (max_value - min_value) * (float)(y - dragStart) / (y2-control_h-y1) + valueAtStart; // -control_h is extra over the standard version
+		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << y << " => value = " << tmp << std::endl;
+	
+		if (tmp >= min_value && tmp <= max_value) {
+			set_value(tmp);
+		}
 	}
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const

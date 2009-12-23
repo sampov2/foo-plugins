@@ -218,7 +218,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 	threshold->setPosition( WDGT_GRAPH_X, WDGT_GRAPH_Y, WDGT_GRAPH_W, WDGT_GRAPH_H );
 
-	ratio_control->setPosition(300, 33, 12, 196 - 12);
+	ratio_control->setPosition(300, 33, 12, 196);
 	ratio_bg->setPosition(298, 31, 16, 200);
 
 	attack_control ->setPosition(93, 265, 200, 16);
