@@ -244,19 +244,19 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
 	if (_dragWdgt != NULL) {
 		if (_dragWdgt == threshold_control) {
-			threshold_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			threshold_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
 			threshold_changed();
 		} else if (_dragWdgt == ratio_control) {
-			ratio_control->set_value_from_vertical_drag(_predrag_value, _dragStartY, evt->y);
+			ratio_control->setValueFromVerticalDrag(_predrag_value, _dragStartY, evt->y);
 			ratio_changed();
 		} else if (_dragWdgt == attack_control) {
-			attack_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			attack_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
 			attack_changed();
 		} else if (_dragWdgt == release_control) {
-			release_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			release_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
 			release_changed();
 		} else if (_dragWdgt == makeup_control) {
-			makeup_control->set_value_from_horizontal_drag(_predrag_value, _dragStartX, evt->x);
+			makeup_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
 			makeup_changed();
 		} else {
 			// don't expose
@@ -285,15 +285,15 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 	_buttonPressWdgt = _hoverWdgt;
 
 	if (_buttonPressWdgt == threshold_control) {
-		_predrag_value = threshold_control->get_value();
+		_predrag_value = threshold_control->getValue();
 	} else if (_buttonPressWdgt == ratio_control) {
-		_predrag_value = ratio_control->get_value();
+		_predrag_value = ratio_control->getValue();
 	} else if (_buttonPressWdgt == attack_control) {
-		_predrag_value = attack_control->get_value();
+		_predrag_value = attack_control->getValue();
 	} else if (_buttonPressWdgt == release_control) {
-		_predrag_value = release_control->get_value();
+		_predrag_value = release_control->getValue();
 	} else if (_buttonPressWdgt == makeup_control) {
-		_predrag_value = makeup_control->get_value();
+		_predrag_value = makeup_control->getValue();
 	} else {
 		return true;
 	}
@@ -313,7 +313,7 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 
 	if (_hoverWdgt == _buttonPressWdgt) {
 		if (_buttonPressWdgt == hpf) {
-			hpf->toggle_status();
+			hpf->toggleStatus();
 			hpf_toggled();
 			exposeObj = hpf;
 		}
@@ -415,42 +415,42 @@ SchmoozMonoUI::expose(GdkEventExpose *evt)
 void
 SchmoozMonoUI::hpf_toggled()
 {
-	float hpf_value = (hpf->get_status() ? 1.0 : 0.0);
+	float hpf_value = (hpf->getStatus() ? 1.0 : 0.0);
 	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
 }
 
 void
 SchmoozMonoUI::threshold_changed()
 {
-	float threshold = (float)threshold_control->get_value();
+	float threshold = (float)threshold_control->getValue();
 	_write_function(_controller, PORT_THRESHOLD, sizeof(float), 0, &threshold);
 }
 
 void
 SchmoozMonoUI::ratio_changed()
 {
-	float ratio = (float)ratio_control->get_value();
+	float ratio = (float)ratio_control->getValue();
 	_write_function(_controller, PORT_RATIO, sizeof(float), 0, &ratio);
 }
 
 void
 SchmoozMonoUI::attack_changed()
 {
-	float attack = (float)attack_control->get_value();
+	float attack = (float)attack_control->getValue();
 	_write_function(_controller, PORT_ATTACK, sizeof(float), 0, &attack);
 }
 
 void
 SchmoozMonoUI::release_changed()
 {
-	float release = (float)release_control->get_value();
+	float release = (float)release_control->getValue();
 	_write_function(_controller, PORT_RELEASE, sizeof(float), 0, &release);
 }
 
 void
 SchmoozMonoUI::makeup_changed()
 {
-	float makeup = (float)makeup_control->get_value();
+	float makeup = (float)makeup_control->getValue();
 	_write_function(_controller, PORT_MAKEUP, sizeof(float), 0, &makeup);
 }
 
@@ -538,9 +538,9 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	switch(port_index) {
 	case PORT_SIDECHAIN_HPF:
 		new_status = (*(float *)buffer > 0.5 ? TRUE : FALSE);
-		if (new_status != hpf->get_status()) {
+		if (new_status != hpf->getStatus()) {
 			exposeObj = hpf;
-			hpf->set_status((*(float *)buffer > 0.5 ? TRUE : FALSE));
+			hpf->setStatus((*(float *)buffer > 0.5 ? TRUE : FALSE));
 		}
 		break;
 
@@ -549,10 +549,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		// by not calling set_threshold() when dragging on said control
 		new_value = *(float *)buffer;
 
-		if (new_value != threshold_control->get_value() &&
+		if (new_value != threshold_control->getValue() &&
 		    _dragWdgt != threshold_control) {
 			exposeObj = threshold_control;
-			threshold_control->set_value(new_value);
+			threshold_control->setValue(new_value);
 		}
 
 		break;
@@ -560,10 +560,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	case PORT_RATIO:
 		new_value = *(float *)buffer;
 
-		if (new_value != ratio_control->get_value() &&
+		if (new_value != ratio_control->getValue() &&
 		    _dragWdgt != ratio_control) {
 			exposeObj = ratio_control;
-			ratio_control->set_value(new_value);
+			ratio_control->setValue(new_value);
 		}
 
 		break;
@@ -571,30 +571,30 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	case PORT_ATTACK:
 		new_value = *(float *)buffer;
 
-		if (new_value != attack_control->get_value() &&
+		if (new_value != attack_control->getValue() &&
 		    _dragWdgt != attack_control) {
 			exposeObj = attack_control;
-			attack_control->set_value(new_value);
+			attack_control->setValue(new_value);
 		}
 		break;
 
 	case PORT_RELEASE:
 		new_value = *(float *)buffer;
 
-		if (new_value != release_control->get_value() &&
+		if (new_value != release_control->getValue() &&
 		    _dragWdgt != release_control) {
 			exposeObj = release_control;
-			release_control->set_value(new_value);
+			release_control->setValue(new_value);
 		}
 		break;
 
 	case PORT_MAKEUP:
 		new_value = *(float *)buffer;
 
-		if (new_value != makeup_control->get_value() &&
+		if (new_value != makeup_control->getValue() &&
 		    _dragWdgt != makeup_control) {
 			exposeObj = makeup_control;
-			makeup_control->set_value(new_value);
+			makeup_control->setValue(new_value);
 		}
 		break;
 
