@@ -91,9 +91,9 @@ private:
 	void attack_changed();
 	void release_changed();
 	void makeup_changed();
-/*
 	void drywet_changed();
 
+/*
 	void redraw_attenuation();
 	bool expose_attenuation(GdkEventExpose *);
 */
@@ -121,6 +121,8 @@ private:
 	HorizontalColorSlider *makeup_control;
 
 	TimingGraph *timing_graph;
+
+	DryWetControl *drywet_control;
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -211,6 +213,9 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	timing_graph = new TimingGraph(attack_control, release_control, ratio_control);
 	wdgts.push_back(timing_graph);
 
+	drywet_control = new DryWetControl(0.0, 1.0);
+	wdgts.push_back(drywet_control); // 330, 24, 24, 337
+
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
 	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
@@ -218,15 +223,17 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 	threshold->setPosition( WDGT_GRAPH_X, WDGT_GRAPH_Y, WDGT_GRAPH_W, WDGT_GRAPH_H );
 
-	ratio_control->setPosition(300, 33, 12, 196);
-	ratio_bg->setPosition(298, 31, 16, 200);
+	ratio_control  ->setPosition(300, 33,  12, 196);
+	ratio_bg       ->setPosition(298, 31,  16, 200);
 
-	attack_control ->setPosition(93, 265, 200, 16);
-	release_control->setPosition(93, 287, 200, 16);
+	attack_control ->setPosition(93, 265, 200,  16);
+	release_control->setPosition(93, 287, 200,  16);
 
-	makeup_control ->setPosition(93, 375, 200, 16);
+	makeup_control ->setPosition(93, 375, 200,  16);
 
-	timing_graph   ->setPosition(94, 310, 198, 46);
+	timing_graph   ->setPosition(94, 310, 198,  46);
+
+	drywet_control ->setPosition(331, 24,  24, 337);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -258,6 +265,9 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 		} else if (_dragWdgt == makeup_control) {
 			makeup_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
 			makeup_changed();
+		} else if (_dragWdgt == drywet_control) {
+			drywet_control->setValueFromVerticalDrag(_predrag_value, _dragStartY, evt->y);
+			drywet_changed();
 		} else {
 			// don't expose
 			return true;
@@ -294,6 +304,8 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 		_predrag_value = release_control->getValue();
 	} else if (_buttonPressWdgt == makeup_control) {
 		_predrag_value = makeup_control->getValue();
+	} else if (_buttonPressWdgt == drywet_control) {
+		_predrag_value = drywet_control->getValue();
 	} else {
 		return true;
 	}
@@ -454,14 +466,14 @@ SchmoozMonoUI::makeup_changed()
 	_write_function(_controller, PORT_MAKEUP, sizeof(float), 0, &makeup);
 }
 
-/*
 void
 SchmoozMonoUI::drywet_changed()
 {
-	float drywet = (float)_drywet->get_value();
+	float drywet = (float)drywet_control->getValue();
 	_write_function(_controller, PORT_DRYWET, sizeof(float), 0, &drywet);
 }
 
+/*
 bool
 SchmoozMonoUI::expose_attenuation(GdkEventExpose *expose)
 {
@@ -598,11 +610,20 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		}
 		break;
 
-/*
 	case PORT_DRYWET:
-		_drywet->set_value( (double) *(float *)buffer);
+		new_value = *(float *)buffer;
+
+		if (new_value != drywet_control->getValue() &&
+		    _dragWdgt != drywet_control) {
+			exposeObj = drywet_control;
+			drywet_control->setValue(new_value);
+		}
+		break;
+
+		drywet_control->setValue( (double) *(float *)buffer);
 		break;	
 
+/*
 	case PORT_OUTPUT_ATTENUATION:
 		_current_attenuation = *(float *)buffer;
 		redraw_attenuation();
