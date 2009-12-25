@@ -396,6 +396,68 @@ private:
 };
 
 
+class DryWetControl : public SlidingControl
+{
+public:
+	DryWetControl(float _min_value, float _max_value)
+		: SlidingControl(_min_value, _max_value)
+	{
+		image_drywet_cntrl          = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "dry-wet_thumb.png");
+		if (!check_cairo_png(image_drywet_cntrl)) {
+			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "dry-wet_thumb.png" << std::endl;
+		}
+		image_drywet_cntrl_prelight = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png");
+		if (!check_cairo_png(image_drywet_cntrl_prelight)) {
+			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png" << std::endl;
+		}
+		control_h = 12.0;
+
+		setControlOffsetY(0, -control_h);
+	}
+
+	~DryWetControl()
+	{
+		cairo_surface_destroy(image_drywet_cntrl);
+		cairo_surface_destroy(image_drywet_cntrl_prelight);
+	}
+
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		cairo_surface_t *tmp = NULL;
+
+		if (hover) {
+			tmp = image_drywet_cntrl_prelight;
+		} else {
+			tmp = image_drywet_cntrl;
+		}
+
+		double _ty1, _ty2;
+		_ty1 = y1 + offset_y;
+		_ty2 = y1 + offset_y + control_h;
+
+		cairo_set_source_surface(cr, tmp, x1, _ty1);
+
+		cairo_rectangle(cr, x1, _ty1, x2 - x1, _ty2 - _ty1);
+		cairo_fill(cr);
+	}
+
+	bool intersectsRectangle(double x, double y, double w, double h) const
+	{
+		return 	((x+w) >= x1 && 
+			  x    < x2 &&
+			 (y+h) >= (y1 + offset_y) &&
+			  y    <  (y1 + offset_y + control_h));
+	};
+
+private:
+	double control_h;
+
+	cairo_surface_t *image_drywet_cntrl;
+	cairo_surface_t *image_drywet_cntrl_prelight;
+};
+
+
+
 class HorizontalColorSlider : public SlidingControl
 {
 public:
