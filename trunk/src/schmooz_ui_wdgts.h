@@ -92,42 +92,70 @@ public:
 	{
 		min_value = _min_value;
 		max_value = _max_value;
+
+		control_offset_x1 = 0.0;
+		control_offset_x2 = 0.0;
+		control_offset_y1 = 0.0;
+		control_offset_y2 = 0.0;
 	}
 
 	float get_value() const { return value; }
 	float get_relative_value() const { return relative_value; }
 
-	virtual void set_value(float newvalue) 
+	void set_value(float newvalue) 
 	{ 
 		value = newvalue;
 
 		relative_value = (value - min_value) / (max_value - min_value);
-		offset_x = (x2-x1) * relative_value;
-		offset_y = (y2-y1) * relative_value;
+		offset_x = control_offset_x1 + ( (x2+control_offset_x2) - (x1+control_offset_x1) ) * relative_value;
+		offset_y = control_offset_y1 + ( (y2+control_offset_y2) - (y1+control_offset_y1) ) * relative_value;
 		//std::cerr << "new value = " << value << ", offsets: " << offset_x << " or " << offset_y << std::endl;
 	}
 
 
-	virtual void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
+	void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
 	{
-		float tmp = (max_value - min_value) * (float)(y - dragStart) / (y2-y1) + valueAtStart;
+		float tmp = (max_value - min_value) * 
+				(float)(y - dragStart) / 
+				( (y2+control_offset_y2) - (y1+control_offset_y1) ) + valueAtStart;
 		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << y << " => value = " << tmp << std::endl;
+
+
+		tmp = fmax(min_value, fmin(tmp, max_value) );
 	
-		if (tmp >= min_value && tmp <= max_value) {
-			set_value(tmp);
-		}
+		set_value(tmp);
 	}
 
 	void set_value_from_horizontal_drag(float valueAtStart, int dragStart, int x)
 	{
-		float tmp = (max_value - min_value) * (float)(x - dragStart) / (x2-x1) + valueAtStart;
+		float tmp = (max_value - min_value) * 
+				(float)(x - dragStart) / 
+				( (x2+control_offset_x2) - (x1+control_offset_x1) ) + valueAtStart;
 	
 		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << x << " => value = " << tmp << std::endl;
 
-		if (tmp >= min_value && tmp <= max_value) {
-			set_value(tmp);
-		}
+		tmp = fmax(min_value, fmin(tmp, max_value) );
+
+		set_value(tmp);
 	}
+
+	void set_control_offset_x(float offt1, float offt2)
+	{
+		control_offset_x1 = offt1;
+		control_offset_x2 = offt2;
+
+		set_value(value);
+	}
+
+	void set_control_offset_y(float offt1, float offt2)
+	{
+		control_offset_y1 = offt1;
+		control_offset_y2 = offt2;
+
+		set_value(value);
+	}
+
+
 protected:
 	float offset_x;
 	float offset_y;
@@ -138,6 +166,10 @@ protected:
 	float value;
 	float relative_value;
 
+	float control_offset_x1;
+	float control_offset_x2;
+	float control_offset_y1;
+	float control_offset_y2;
 };
 
 class ThresholdGraph : public Wdgt::Object
@@ -318,31 +350,14 @@ public:
 			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "ratio_thumb_prelight.png" << std::endl;
 		}
 		control_h = 12.0;
+
+		set_control_offset_y(0, -control_h);
 	}
 
 	~RatioControl()
 	{
 		cairo_surface_destroy(image_ratio_cntrl);
 		cairo_surface_destroy(image_ratio_cntrl_prelight);
-	}
-
-	virtual void set_value(float newvalue) 
-	{ 
-		value = newvalue;
-
-		relative_value = (value - min_value) / (max_value - min_value);
-		offset_x = (x2-x1) * relative_value;
-		offset_y = (y2-control_h-y1) * relative_value; // -control_h is extra over the standard version
-	}
-
-	virtual void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
-	{
-		float tmp = (max_value - min_value) * (float)(y - dragStart) / (y2-control_h-y1) + valueAtStart; // -control_h is extra over the standard version
-		//std::cerr << " [" << min_value << " .. " << max_value << "], drag = " << dragStart << " -> " << y << " => value = " << tmp << std::endl;
-	
-		if (tmp >= min_value && tmp <= max_value) {
-			set_value(tmp);
-		}
 	}
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const
@@ -425,6 +440,8 @@ public:
 		if (!check_cairo_png(slider_color_prelight)) {
 			std::cerr << "SchmoozUI: could not open " << color_prelight << std::endl;
 		}
+
+		set_control_offset_x(3.0, -0.0);
 	}
 
 	~HorizontalColorSlider()
