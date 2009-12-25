@@ -67,9 +67,9 @@ public:
 		cairo_paint(cr);
 	}
 
-	bool get_status() const   { return hpf_status; }
-	void set_status(bool tmp) { hpf_status = tmp; }
-	bool toggle_status()      { hpf_status = !hpf_status; return hpf_status; }
+	bool getStatus() const   { return hpf_status; }
+	void setStatus(bool tmp) { hpf_status = tmp; }
+	bool toggleStatus()      { hpf_status = !hpf_status; return hpf_status; }
 
 private:
 	bool hpf_status;
@@ -99,10 +99,10 @@ public:
 		control_offset_y2 = 0.0;
 	}
 
-	float get_value() const { return value; }
-	float get_relative_value() const { return relative_value; }
+	float getValue() const { return value; }
+	float getRelativeValue() const { return relative_value; }
 
-	void set_value(float newvalue) 
+	void setValue(float newvalue) 
 	{ 
 		value = newvalue;
 
@@ -113,7 +113,7 @@ public:
 	}
 
 
-	void set_value_from_vertical_drag(float valueAtStart, int dragStart, int y)
+	void setValueFromVerticalDrag(float valueAtStart, int dragStart, int y)
 	{
 		float tmp = (max_value - min_value) * 
 				(float)(y - dragStart) / 
@@ -123,10 +123,10 @@ public:
 
 		tmp = fmax(min_value, fmin(tmp, max_value) );
 	
-		set_value(tmp);
+		setValue(tmp);
 	}
 
-	void set_value_from_horizontal_drag(float valueAtStart, int dragStart, int x)
+	void setValueFromHorizontalDrag(float valueAtStart, int dragStart, int x)
 	{
 		float tmp = (max_value - min_value) * 
 				(float)(x - dragStart) / 
@@ -136,23 +136,23 @@ public:
 
 		tmp = fmax(min_value, fmin(tmp, max_value) );
 
-		set_value(tmp);
+		setValue(tmp);
 	}
 
-	void set_control_offset_x(float offt1, float offt2)
+	void setControlOffsetX(float offt1, float offt2)
 	{
 		control_offset_x1 = offt1;
 		control_offset_x2 = offt2;
 
-		set_value(value);
+		setValue(value);
 	}
 
-	void set_control_offset_y(float offt1, float offt2)
+	void setControlOffsetY(float offt1, float offt2)
 	{
 		control_offset_y1 = offt1;
 		control_offset_y2 = offt2;
 
-		set_value(value);
+		setValue(value);
 	}
 
 
@@ -203,8 +203,8 @@ public:
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
-		float cutoff_x = (x2-x1) * (threshold_control->get_relative_value());
-		float cutoff_y = (y2-y1) * (1.0 - threshold_control->get_relative_value());
+		float cutoff_x = (x2-x1) * (threshold_control->getRelativeValue());
+		float cutoff_y = (y2-y1) * (1.0 - threshold_control->getRelativeValue());
 
 		// The graph above the threshold
 		cairo_set_source_surface(cr, image_threshold, x1, y1);
@@ -226,7 +226,7 @@ public:
 		// the line from the threshold point to the right side, as affected by ratio
 		cairo_set_source_rgb(cr, 0.412, 0.820, 0.976);
 		cairo_move_to(cr, x1 + cutoff_x, y1 + cutoff_y);
-		cairo_line_to(cr, x2, y1 + cutoff_y - cutoff_y / ratio_control->get_value());
+		cairo_line_to(cr, x2, y1 + cutoff_y - cutoff_y / ratio_control->getValue());
 		cairo_stroke(cr);
 	}
 
@@ -351,7 +351,7 @@ public:
 		}
 		control_h = 12.0;
 
-		set_control_offset_y(0, -control_h);
+		setControlOffsetY(0, -control_h);
 	}
 
 	~RatioControl()
@@ -441,7 +441,7 @@ public:
 			std::cerr << "SchmoozUI: could not open " << color_prelight << std::endl;
 		}
 
-		set_control_offset_x(3.0, -0.0);
+		setControlOffsetX(3.0, -0.0);
 	}
 
 	~HorizontalColorSlider()
@@ -539,8 +539,8 @@ public:
 		// attack curve
 		// note that attack relative value is scaled to 0.1 .. 1.0 so that release will
 		// never appear to be 0
-		double attack_w = w * (relative_release_point - relative_attack_point) * (0.05 + attack->get_relative_value() * 0.95);
-		double attack_h = h/2.0 * (ratio->get_value() / 20.0);
+		double attack_w = w * (relative_release_point - relative_attack_point) * (0.05 + attack->getRelativeValue() * 0.95);
+		double attack_h = h/2.0 * (ratio->getValue() / 20.0);
 
 		cairo_line_to(cr, x1 + w * relative_attack_point + attack_w, y1 + h*1.0/4.0+attack_h);
 		cairo_line_to(cr, x1 + w * relative_release_point, y1 + h*1.0/4.0+attack_h);
@@ -548,7 +548,7 @@ public:
 
 		// note that release relative value is scaled to 0.1 .. 1.0 so that release will
 		// never appear to be 0
-		double release_w = w * (1.0 - relative_release_point) * (0.1 + release->get_relative_value() * 0.9);
+		double release_w = w * (1.0 - relative_release_point) * (0.1 + release->getRelativeValue() * 0.9);
 		cairo_line_to(cr, x1 + w * relative_release_point + release_w, y1 + h*3.0/4.0);
 
 		cairo_line_to(cr, x2, y1 + h*3.0/4.0);
