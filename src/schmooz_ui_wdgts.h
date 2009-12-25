@@ -18,30 +18,41 @@
 */
 #include "wdgt.h"
 
-class HPFButton : public Wdgt::Object
+inline cairo_surface_t *
+load_png(std::string file)
+{
+	cairo_surface_t *ret = cairo_image_surface_create_from_png (file.c_str());
+	if (!check_cairo_png(ret)) {
+		std::cerr << "SchmoozUI: could not open " << file << std::endl;
+	}
+	return ret;
+}
+
+
+class Button : public Wdgt::Object
 {
 public:
-	HPFButton()
+	Button(std::string pngBase)
 	{
-		image_hpf_on           = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "high-pass_on.png");
-		if (!check_cairo_png(image_hpf_on)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "high-pass_on.png" << std::endl;
-		}
-		image_hpf_on_prelight  = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "high-pass_on_prelight.png");
-		if (!check_cairo_png(image_hpf_on_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "high-pass_on_prelight.png" << std::endl;
-		}
-		image_hpf_off          = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "high-pass_off.png");
-		if (!check_cairo_png(image_hpf_off)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "high-pass_off.png" << std::endl;
-		}
-		image_hpf_off_prelight = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "high-pass_off_prelight.png");
-		if (!check_cairo_png(image_hpf_off_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "high-pass_off_prelight.png" << std::endl;
-		}
+		std::string png_on(SCHMOOZ_PNG_DIR);
+		png_on += pngBase + "_on.png";
+
+		std::string png_on_prelight(SCHMOOZ_PNG_DIR);
+		png_on_prelight += pngBase + "_on_prelight.png";
+
+		std::string png_off(SCHMOOZ_PNG_DIR);
+		png_off += pngBase + "_off.png";
+
+		std::string png_off_prelight(SCHMOOZ_PNG_DIR);
+		png_off_prelight += pngBase + "_off_prelight.png";
+
+		image_hpf_on           = load_png(png_on);
+		image_hpf_on_prelight  = load_png(png_on_prelight);
+		image_hpf_off          = load_png(png_off);
+		image_hpf_off_prelight = load_png(png_off_prelight);
 	}
 
-	~HPFButton()
+	~Button()
 	{
 		cairo_surface_destroy(image_hpf_on);
 		cairo_surface_destroy(image_hpf_on_prelight);
@@ -179,14 +190,8 @@ public:
 		: threshold_control(_threshold_control)
 		, ratio_control(_ratio_control)
 	{
-		image_graph_bg      = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "graph_bg.png");
-		if (!check_cairo_png(image_graph_bg)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "graph_bg.png" << std::endl;
-		}
-		image_threshold     = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "graph_bg_threshold.png");
-		if (!check_cairo_png(image_threshold)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "graph_bg_threshold.png" << std::endl;
-		}
+		image_graph_bg      = load_png(SCHMOOZ_PNG_DIR "graph_bg.png");
+		image_threshold     = load_png(SCHMOOZ_PNG_DIR "graph_bg_threshold.png");
 		
 		// This is unnecessary as the graph is always redrawn when
 		// the threshold control is. I'll keep it here to document the relationship
@@ -244,14 +249,9 @@ public:
 	ThresholdControl(float _min_value, float _max_value, double _clip_x1, double _clip_x2)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_thr_cntrl          = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "threshold.png");
-		if (!check_cairo_png(image_thr_cntrl)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "threshold.png" << std::endl;
-		}
-		image_thr_cntrl_prelight = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "threshold_prelight.png");
-		if (!check_cairo_png(image_thr_cntrl_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "threshold_prelight.png" << std::endl;
-		}
+		image_thr_cntrl          = load_png(SCHMOOZ_PNG_DIR "threshold.png");
+		image_thr_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "threshold_prelight.png");
+
 		control_w = 15.0;
 
 		clip_x1 = _clip_x1;
@@ -313,10 +313,7 @@ class RatioBackground : public Wdgt::Object
 public:
 	RatioBackground()
 	{
-		image_bg = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "ratio_trough.png");
-		if (!check_cairo_png(image_bg)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "ratio_trough.png" << std::endl;
-		}
+		image_bg = load_png(SCHMOOZ_PNG_DIR "ratio_trough.png");
 	}
 	
 	~RatioBackground()
@@ -341,14 +338,9 @@ public:
 	RatioControl(float _min_value, float _max_value)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_ratio_cntrl          = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "ratio_thumb.png");
-		if (!check_cairo_png(image_ratio_cntrl)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "ratio_thumb.png" << std::endl;
-		}
-		image_ratio_cntrl_prelight = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "ratio_thumb_prelight.png");
-		if (!check_cairo_png(image_ratio_cntrl_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "ratio_thumb_prelight.png" << std::endl;
-		}
+		image_ratio_cntrl          = load_png(SCHMOOZ_PNG_DIR "ratio_thumb.png");
+		image_ratio_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "ratio_thumb_prelight.png");
+
 		control_h = 12.0;
 
 		setControlOffsetY(0, -control_h);
@@ -402,14 +394,9 @@ public:
 	DryWetControl(float _min_value, float _max_value)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_drywet_cntrl          = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "dry-wet_thumb.png");
-		if (!check_cairo_png(image_drywet_cntrl)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "dry-wet_thumb.png" << std::endl;
-		}
-		image_drywet_cntrl_prelight = cairo_image_surface_create_from_png (SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png");
-		if (!check_cairo_png(image_drywet_cntrl_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png" << std::endl;
-		}
+		image_drywet_cntrl          = load_png(SCHMOOZ_PNG_DIR "dry-wet_thumb.png");
+		image_drywet_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png");
+
 		control_h = 12.0;
 
 		setControlOffsetY(0, -control_h);
@@ -473,16 +460,8 @@ public:
 		//std::cerr << "opening: '" << zero << "'" << std::endl;
 		//std::cerr << "opening: '" << zero_prelight << "'" << std::endl;
 		
-		slider_background          
-			= cairo_image_surface_create_from_png( zero.c_str() );
-		if (!check_cairo_png(slider_background)) {
-			std::cerr << "SchmoozUI: could not open " << zero << std::endl;
-		}
-		slider_background_prelight
-			= cairo_image_surface_create_from_png( zero_prelight.c_str() );
-		if (!check_cairo_png(slider_background_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << zero_prelight << std::endl;
-		}
+		slider_background          = load_png(zero);
+		slider_background_prelight = load_png(zero_prelight);
 
 		png += pngBase;
 
@@ -492,16 +471,8 @@ public:
 		//std::cerr << "opening: '" << color << "'" << std::endl;
 		//std::cerr << "opening: '" << color_prelight << "'" << std::endl;
 
-		slider_color
-			= cairo_image_surface_create_from_png ( color.c_str() );
-		if (!check_cairo_png(slider_color)) {
-			std::cerr << "SchmoozUI: could not open " << color << std::endl;
-		}
-		slider_color_prelight
-			= cairo_image_surface_create_from_png ( color_prelight.c_str() );
-		if (!check_cairo_png(slider_color_prelight)) {
-			std::cerr << "SchmoozUI: could not open " << color_prelight << std::endl;
-		}
+		slider_color               = load_png(color);
+		slider_color_prelight      = load_png(color_prelight);
 
 		setControlOffsetX(3.0, -0.0);
 	}

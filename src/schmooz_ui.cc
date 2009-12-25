@@ -107,7 +107,7 @@ private:
 	cairo_surface_t *_image_background;
 
 	// Wdgts
-	HPFButton *hpf;
+	Button *hpf;
 
 	ThresholdGraph *threshold;
 	ThresholdControl *threshold_control;
@@ -184,7 +184,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_drawingArea.set_events(mask);
 
 
-	hpf = new HPFButton();
+	hpf = new Button("high-pass");
 	wdgts.push_back(hpf);
 
 
