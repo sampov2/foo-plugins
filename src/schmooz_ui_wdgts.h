@@ -27,7 +27,9 @@ namespace Wdgt
 
 inline cairo_surface_t *
 load_png(std::string file)
-{
+{	
+	file = SCHMOOZ_PNG_DIR + file;
+
 	cairo_surface_t *ret = cairo_image_surface_create_from_png (file.c_str());
 	if (!check_cairo_png(ret)) {
 		std::cerr << "SchmoozUI: could not open " << file << std::endl;
@@ -41,17 +43,10 @@ class Button : public Wdgt::Object
 public:
 	Button(std::string pngBase)
 	{
-		std::string png_on(SCHMOOZ_PNG_DIR);
-		png_on += pngBase + "_on.png";
-
-		std::string png_on_prelight(SCHMOOZ_PNG_DIR);
-		png_on_prelight += pngBase + "_on_prelight.png";
-
-		std::string png_off(SCHMOOZ_PNG_DIR);
-		png_off += pngBase + "_off.png";
-
-		std::string png_off_prelight(SCHMOOZ_PNG_DIR);
-		png_off_prelight += pngBase + "_off_prelight.png";
+		std::string png_on           = pngBase + "_on.png";
+		std::string png_on_prelight  = pngBase + "_on_prelight.png";
+		std::string png_off          = pngBase + "_off.png";
+		std::string png_off_prelight = pngBase + "_off_prelight.png";
 
 		image_hpf_on           = load_png(png_on);
 		image_hpf_on_prelight  = load_png(png_on_prelight);
@@ -197,8 +192,8 @@ public:
 		: threshold_control(_threshold_control)
 		, ratio_control(_ratio_control)
 	{
-		image_graph_bg      = load_png(SCHMOOZ_PNG_DIR "graph_bg.png");
-		image_threshold     = load_png(SCHMOOZ_PNG_DIR "graph_bg_threshold.png");
+		image_graph_bg      = load_png("graph_bg.png");
+		image_threshold     = load_png("graph_bg_threshold.png");
 		
 		// This is unnecessary as the graph is always redrawn when
 		// the threshold control is. I'll keep it here to document the relationship
@@ -256,8 +251,8 @@ public:
 	ThresholdControl(float _min_value, float _max_value, double _clip_x1, double _clip_x2)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_thr_cntrl          = load_png(SCHMOOZ_PNG_DIR "threshold.png");
-		image_thr_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "threshold_prelight.png");
+		image_thr_cntrl          = load_png("threshold.png");
+		image_thr_cntrl_prelight = load_png("threshold_prelight.png");
 
 		control_w = 15.0;
 
@@ -320,7 +315,7 @@ class RatioBackground : public Wdgt::Object
 public:
 	RatioBackground()
 	{
-		image_bg = load_png(SCHMOOZ_PNG_DIR "ratio_trough.png");
+		image_bg = load_png("ratio_trough.png");
 	}
 	
 	~RatioBackground()
@@ -345,8 +340,8 @@ public:
 	RatioControl(float _min_value, float _max_value)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_ratio_cntrl          = load_png(SCHMOOZ_PNG_DIR "ratio_thumb.png");
-		image_ratio_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "ratio_thumb_prelight.png");
+		image_ratio_cntrl          = load_png("ratio_thumb.png");
+		image_ratio_cntrl_prelight = load_png("ratio_thumb_prelight.png");
 
 		control_h = 12.0;
 
@@ -401,8 +396,8 @@ public:
 	DryWetControl(float _min_value, float _max_value)
 		: SlidingControl(_min_value, _max_value)
 	{
-		image_drywet_cntrl          = load_png(SCHMOOZ_PNG_DIR "dry-wet_thumb.png");
-		image_drywet_cntrl_prelight = load_png(SCHMOOZ_PNG_DIR "dry-wet_thumb_prelight.png");
+		image_drywet_cntrl          = load_png("dry-wet_thumb.png");
+		image_drywet_cntrl_prelight = load_png("dry-wet_thumb_prelight.png");
 
 		control_h = 12.0;
 
@@ -458,8 +453,7 @@ public:
 	HorizontalColorSlider(float _min_value, float _max_value, std::string pngBase)
 		: SlidingControl(_min_value, _max_value)
 	{
-		std::string png(SCHMOOZ_PNG_DIR);
-		png += "slider_";
+		std::string png("slider_");
 
 		std::string zero = png + "zero.png";
 		std::string zero_prelight = png + "zero_prelight.png";
@@ -648,6 +642,70 @@ private:
 
 	float relative_attack_point;
 	float relative_release_point;
+};
+
+class AttenuationMeter : public Wdgt::Object
+{
+public:
+	AttenuationMeter(float _minimum, float _maximum)
+		: min_value(_minimum)
+		, max_value(_maximum)
+		, value(0)
+		, relative_value(0)
+	{
+		meter_image = load_png("make-up_full.png");
+	}
+
+	~AttenuationMeter()
+	{
+		cairo_surface_destroy(meter_image);
+	}
+	
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+
+		float width = relative_value * (x2-x1);
+		float zero = x1 + (-min_value) / (max_value - min_value) * (x2-x1);
+
+		if (fabsf(width) < 1.0) {
+			//cairo_rectangle(cr, zero - 0.75, y1, 1.5, (y2-y1));
+		} else if (value <=0.0) {
+			cairo_set_source_surface(cr, meter_image, x1, y1);
+			cairo_rectangle(cr, zero + width, y1, -width, (y2-y1));
+			cairo_fill(cr);
+		} else {
+			cairo_set_source_surface(cr, meter_image, x1, y1);
+			cairo_rectangle(cr, zero,         y1,  width, (y2-y1));
+			cairo_fill(cr);
+		}
+
+		cairo_set_source_rgb(cr, 0.639, 0.494, 0.373);
+		cairo_set_line_width(cr, 1.0);
+		cairo_move_to(cr, zero + 1, y1);
+		cairo_line_to(cr, zero + 1, y2);
+		cairo_stroke(cr);
+	}
+
+	void setValue(float _value)
+	{
+		value = _value;
+
+		// Relative_value is not normalized to 0..1
+		// instead 0 means a value of 0dB and it ranges from x..y where y-x = 1
+
+		relative_value = value / (max_value - min_value);
+	}
+
+	float getValue() const { return value; }
+
+protected:
+	float min_value;
+	float max_value;
+	
+	float value;
+	float relative_value;
+
+	cairo_surface_t *meter_image;
 };
 
 }

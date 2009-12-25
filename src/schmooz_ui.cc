@@ -124,6 +124,9 @@ private:
 
 	Wdgt::DryWetControl *drywet_control;
 
+	// Meters, meters, meters...
+	Wdgt::AttenuationMeter *attenuation_meter;
+
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
 	bool exposeWdgt(Wdgt::Object *);
@@ -138,7 +141,7 @@ private:
 	Wdgt::Object *identifyWdgt(GdkEventMotion *);
 
 	Wdgt::Object *_hoverWdgt;
-	Wdgt::Object *_dragWdgt;
+	Wdgt::SlidingControl *_dragWdgt;
 	Wdgt::Object *_buttonPressWdgt;
 
 	int _dragStartX;
@@ -216,6 +219,11 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	drywet_control = new Wdgt::DryWetControl(0.0, 1.0);
 	wdgts.push_back(drywet_control); // 330, 24, 24, 337
 
+	// meters
+	attenuation_meter = new Wdgt::AttenuationMeter(-70.0, 20.0);
+	wdgts.push_back(attenuation_meter);
+
+
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
 	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
@@ -234,6 +242,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	timing_graph   ->setPosition(94, 310, 198,  46);
 
 	drywet_control ->setPosition(331, 24,  24, 337);
+
+	attenuation_meter->setPosition(93,418, 253, 6);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -303,7 +313,7 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 
 	_predrag_value = slider->getValue();
 
-	_dragWdgt = _buttonPressWdgt;
+	_dragWdgt = slider;
 	_dragStartX = evt->x;
 	_dragStartY = evt->y;
 	return true;
@@ -573,12 +583,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		slider = drywet_control;
 		break;
 
-/*
 	case PORT_OUTPUT_ATTENUATION:
-		_current_attenuation = *(float *)buffer;
-		redraw_attenuation();
+		attenuation_meter->setValue(*(float *)buffer);
+		exposeObj = attenuation_meter;
 		break;
-*/
 
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << *(float *)buffer << ")" << std::endl;
