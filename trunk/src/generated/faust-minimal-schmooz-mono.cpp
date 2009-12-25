@@ -4,7 +4,7 @@
 // version: "0.9b"
 // copyright: "(c)Sampo Savolainen 2009"
 //
-// Code generated with Faust 0.9.9.6b10 (http://faust.grame.fr)
+// Code generated with Faust 0.9.10 (http://faust.grame.fr)
 //-----------------------------------------------------
 /* link with : "" */
 #include <math.h>
@@ -97,7 +97,7 @@ class dsp {
 	virtual int getNumOutputs() 					= 0;
 	virtual void buildUserInterface(UI* interface) 	= 0;
 	virtual void init(int samplingRate) 			= 0;
- 	virtual void compute(int len, float** inputs, float** outputs, float *gain) 	= 0;
+ 	virtual void compute(int len, float** inputs, float** outputs) 	= 0;
 };
 		
 
@@ -112,7 +112,7 @@ class dsp {
 
 typedef long double quad;
 
-class mydsp : public dsp {
+class mydsp : public dsp{
   private:
 	float 	S0[2];
 	FAUSTFLOAT 	fslider0;
@@ -167,7 +167,7 @@ class mydsp : public dsp {
 	}
 
 	virtual int getNumInputs() 	{ return 1; }
-	virtual int getNumOutputs() 	{ return 1; }
+	virtual int getNumOutputs() 	{ return 3; }
 	static void classInit(int samplingFreq) {
 	}
 	virtual void instanceInit(int samplingFreq) {
@@ -234,7 +234,7 @@ class mydsp : public dsp {
 		interface->addHorizontalSlider("threshold (dB)", &fslider2, -10.0f, -60.0f, 10.0f, 1.0f);
 		interface->closeBox();
 	}
-	virtual void compute (int count, FAUSTFLOAT** input, FAUSTFLOAT** output, float *gain) {
+	virtual void compute (int count, FAUSTFLOAT** input, FAUSTFLOAT** output) {
 		float 	S4[2];
 		float 	fSlow0 = (fConst0 / fslider0);
 		float 	fSlow1 = (fConst1 / fslider1);
@@ -249,8 +249,8 @@ class mydsp : public dsp {
 		S4[1] = fSlow1;
 		FAUSTFLOAT* input0 = input[0];
 		FAUSTFLOAT* output0 = output[0];
-		float	tmp;
-		float   attenuation = 0.0;
+		FAUSTFLOAT* output1 = output[1];
+		FAUSTFLOAT* output2 = output[2];
 		for (int i=0; i<count; i++) {
 			float 	S1[2];
 			float 	S2[2];
@@ -263,31 +263,30 @@ class mydsp : public dsp {
 			int iTemp2 = int((1048576 * (fTemp1 * fTemp1)));
 			iVec1[IOTA&127] = iTemp2;
 			iRec2[0] = ((iVec1[IOTA&127] + iRec2[1]) - iVec1[(IOTA-iConst23)&127]);
-			float fTemp3 = (20 * log10f(sqrtf((fConst24 * float(iRec2[0])))));
-			float fTemp4 = ((fSlow2 < fTemp3) * (fTemp3 - fSlow2));
-			float fTemp5 = S4[int((fTemp4 < fRec1[1]))];
-			fRec1[0] = ((fRec1[1] * (1 - fTemp5)) + (fTemp4 * fTemp5));
-			float fTemp6 = (fSlow5 * fRec1[0]);
-			float fTemp7 = (fSlow6 - fTemp6);
-			S3[0] = fTemp7;
-			float fTemp8 = (2 * fRec0[1]);
-			S3[1] = (((fConst25 * S6[int((fTemp7 < fRec0[1]))]) + fTemp8) - fRec0[2]);
-			float fTemp9 = S3[int((fabsf((0 - ((fSlow6 + fRec0[2]) - (fTemp6 + fTemp8)))) > fConst25))];
-			S2[0] = fTemp9;
-			S2[1] = fTemp7;
-			int iTemp10 = int((fTemp9 > fTemp7));
-			S1[0] = S2[iTemp10];
+			float fTemp3 = sqrtf((fConst24 * float(iRec2[0])));
+			float fTemp4 = (20 * log10f(fTemp3));
+			float fTemp5 = ((fSlow2 < fTemp4) * (fTemp4 - fSlow2));
+			float fTemp6 = S4[int((fTemp5 < fRec1[1]))];
+			fRec1[0] = ((fRec1[1] * (1 - fTemp6)) + (fTemp5 * fTemp6));
+			float fTemp7 = (fSlow5 * fRec1[0]);
+			float fTemp8 = (fSlow6 - fTemp7);
+			S3[0] = fTemp8;
+			float fTemp9 = (2 * fRec0[1]);
+			S3[1] = (((fConst25 * S6[int((fTemp8 < fRec0[1]))]) + fTemp9) - fRec0[2]);
+			float fTemp10 = S3[int((fabsf((0 - ((fSlow6 + fRec0[2]) - (fTemp7 + fTemp9)))) > fConst25))];
+			S2[0] = fTemp10;
+			S2[1] = fTemp8;
+			int iTemp11 = int((fTemp10 > fTemp8));
+			S1[0] = S2[iTemp11];
 			float 	S7[2];
-			S7[0] = fTemp7;
-			S7[1] = fTemp9;
-			S1[1] = S7[iTemp10];
-			fRec0[0] = S1[int((((fRec0[1] + fTemp6) - fSlow6) > 0.0f))];
+			S7[0] = fTemp8;
+			S7[1] = fTemp10;
+			S1[1] = S7[iTemp11];
+			fRec0[0] = S1[int((((fRec0[1] + fTemp7) - fSlow6) > 0.0f))];
 			S0[0] = powf(10,(5.000000e-02f * fRec0[0]));
 			output0[i] = (FAUSTFLOAT)(fVec0[0] * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])));
-			tmp = (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))]));
-			if (i == 0 || tmp < attenuation) {
-				attenuation = tmp;
-			}
+			output1[i] = (FAUSTFLOAT)fRec0[0];
+			output2[i] = (FAUSTFLOAT)fTemp3;
 			// post processing
 			fRec0[2] = fRec0[1]; fRec0[1] = fRec0[0];
 			fRec1[1] = fRec1[0];
@@ -297,7 +296,6 @@ class mydsp : public dsp {
 			fRec3[2] = fRec3[1]; fRec3[1] = fRec3[0];
 			fVec0[2] = fVec0[1]; fVec0[1] = fVec0[0];
 		}
-		*gain = attenuation;
 	}
 };
 
