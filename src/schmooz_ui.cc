@@ -107,22 +107,22 @@ private:
 	cairo_surface_t *_image_background;
 
 	// Wdgts
-	Button *hpf;
+	Wdgt::Button *hpf;
 
-	ThresholdGraph *threshold;
-	ThresholdControl *threshold_control;
+	Wdgt::ThresholdGraph *threshold;
+	Wdgt::ThresholdControl *threshold_control;
 
-	RatioBackground *ratio_bg;
-	RatioControl *ratio_control;
+	Wdgt::RatioBackground *ratio_bg;
+	Wdgt::RatioControl *ratio_control;
 
-	HorizontalColorSlider *attack_control;
-	HorizontalColorSlider *release_control;
+	Wdgt::HorizontalColorSlider *attack_control;
+	Wdgt::HorizontalColorSlider *release_control;
 
-	HorizontalColorSlider *makeup_control;
+	Wdgt::HorizontalColorSlider *makeup_control;
 
-	TimingGraph *timing_graph;
+	Wdgt::TimingGraph *timing_graph;
 
-	DryWetControl *drywet_control;
+	Wdgt::DryWetControl *drywet_control;
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -184,36 +184,36 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	_drawingArea.set_events(mask);
 
 
-	hpf = new Button("high-pass");
+	hpf = new Wdgt::Button("high-pass");
 	wdgts.push_back(hpf);
 
 
-	threshold_control = new ThresholdControl(-60.0, 10.0,
+	threshold_control = new Wdgt::ThresholdControl(-60.0, 10.0,
 						 WDGT_THRESH_CONTROL_CLIP_X1,
 						 WDGT_THRESH_CONTROL_CLIP_X2);
-	ratio_control = new RatioControl(1.5,20.0);
-	threshold = new ThresholdGraph(threshold_control, ratio_control);
+	ratio_control = new Wdgt::RatioControl(1.5,20.0);
+	threshold = new Wdgt::ThresholdGraph(threshold_control, ratio_control);
 
 	wdgts.push_back(threshold_control);
 	wdgts.push_back(threshold);
 
 	wdgts.push_back(ratio_control);
 
-	ratio_bg = new RatioBackground();
+	ratio_bg = new Wdgt::RatioBackground();
 	wdgts.push_back(ratio_bg);
 
-	attack_control  = new HorizontalColorSlider( 0.1,  120.0, "attack");
+	attack_control  = new Wdgt::HorizontalColorSlider( 0.1,  120.0, "attack");
 	wdgts.push_back(attack_control);
-	release_control = new HorizontalColorSlider(50.0, 1200.0, "release");
+	release_control = new Wdgt::HorizontalColorSlider(50.0, 1200.0, "release");
 	wdgts.push_back(release_control);
 
-	makeup_control = new HorizontalColorSlider(0.0, 40.0, "make-up");
+	makeup_control = new Wdgt::HorizontalColorSlider(0.0, 40.0, "make-up");
 	wdgts.push_back(makeup_control);
 
-	timing_graph = new TimingGraph(attack_control, release_control, ratio_control);
+	timing_graph = new Wdgt::TimingGraph(attack_control, release_control, ratio_control);
 	wdgts.push_back(timing_graph);
 
-	drywet_control = new DryWetControl(0.0, 1.0);
+	drywet_control = new Wdgt::DryWetControl(0.0, 1.0);
 	wdgts.push_back(drywet_control); // 330, 24, 24, 337
 
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
@@ -291,24 +291,17 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 bool
 SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 {
-	std::cerr << "button press" << std::endl;
+	//std::cerr << "button press" << std::endl;
+
 	_buttonPressWdgt = _hoverWdgt;
 
-	if (_buttonPressWdgt == threshold_control) {
-		_predrag_value = threshold_control->getValue();
-	} else if (_buttonPressWdgt == ratio_control) {
-		_predrag_value = ratio_control->getValue();
-	} else if (_buttonPressWdgt == attack_control) {
-		_predrag_value = attack_control->getValue();
-	} else if (_buttonPressWdgt == release_control) {
-		_predrag_value = release_control->getValue();
-	} else if (_buttonPressWdgt == makeup_control) {
-		_predrag_value = makeup_control->getValue();
-	} else if (_buttonPressWdgt == drywet_control) {
-		_predrag_value = drywet_control->getValue();
-	} else {
+	Wdgt::SlidingControl *slider = dynamic_cast<Wdgt::SlidingControl *>(_buttonPressWdgt);
+
+	if (slider == NULL) {
 		return true;
 	}
+
+	_predrag_value = slider->getValue();
 
 	_dragWdgt = _buttonPressWdgt;
 	_dragStartX = evt->x;
@@ -319,7 +312,7 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 bool 
 SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 {
-	std::cerr << "button release" << std::endl;
+	//std::cerr << "button release" << std::endl;
 
 	Wdgt::Object *exposeObj = NULL;
 
@@ -541,8 +534,8 @@ void
 SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size, 
                         uint32_t format, const void *buffer)
 {
-	Wdgt::Object *exposeObj = false;
-
+	Wdgt::Object *exposeObj = NULL;
+	Wdgt::SlidingControl *slider = NULL;
 
 	bool new_status;
 	float new_value;
@@ -557,71 +550,28 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		break;
 
 	case PORT_THRESHOLD:
-		// note that we prevent event feedback from screwing with drag "smoothness"
-		// by not calling set_threshold() when dragging on said control
-		new_value = *(float *)buffer;
-
-		if (new_value != threshold_control->getValue() &&
-		    _dragWdgt != threshold_control) {
-			exposeObj = threshold_control;
-			threshold_control->setValue(new_value);
-		}
-
+		slider = threshold_control;
 		break;
 
 	case PORT_RATIO:
-		new_value = *(float *)buffer;
-
-		if (new_value != ratio_control->getValue() &&
-		    _dragWdgt != ratio_control) {
-			exposeObj = ratio_control;
-			ratio_control->setValue(new_value);
-		}
-
+		slider = ratio_control;
 		break;
 
 	case PORT_ATTACK:
-		new_value = *(float *)buffer;
-
-		if (new_value != attack_control->getValue() &&
-		    _dragWdgt != attack_control) {
-			exposeObj = attack_control;
-			attack_control->setValue(new_value);
-		}
+		slider = attack_control;
 		break;
 
 	case PORT_RELEASE:
-		new_value = *(float *)buffer;
-
-		if (new_value != release_control->getValue() &&
-		    _dragWdgt != release_control) {
-			exposeObj = release_control;
-			release_control->setValue(new_value);
-		}
+		slider = release_control;
 		break;
 
 	case PORT_MAKEUP:
-		new_value = *(float *)buffer;
-
-		if (new_value != makeup_control->getValue() &&
-		    _dragWdgt != makeup_control) {
-			exposeObj = makeup_control;
-			makeup_control->setValue(new_value);
-		}
+		slider = makeup_control;
 		break;
 
 	case PORT_DRYWET:
-		new_value = *(float *)buffer;
-
-		if (new_value != drywet_control->getValue() &&
-		    _dragWdgt != drywet_control) {
-			exposeObj = drywet_control;
-			drywet_control->setValue(new_value);
-		}
+		slider = drywet_control;
 		break;
-
-		drywet_control->setValue( (double) *(float *)buffer);
-		break;	
 
 /*
 	case PORT_OUTPUT_ATTENUATION:
@@ -633,6 +583,21 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << *(float *)buffer << ")" << std::endl;
 		return;
+	}
+
+	// 
+	if (slider != NULL) {
+
+		new_value = *(float *)buffer;
+
+		// note that we prevent event feedback from screwing with drag "smoothness"
+		// by not calling set_threshold() when dragging on said control
+		if (new_value != slider->getValue() &&
+		    _dragWdgt != slider) {
+			exposeObj = slider;
+			slider->setValue(new_value);
+		}
+
 	}
 
 	if (_ready_to_draw && exposeObj != NULL) {

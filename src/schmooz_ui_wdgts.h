@@ -16,7 +16,14 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+
+#ifndef _SCHMOOZ_UI_WDGTS_H
+#define _SCHMOOZ_UI_WDGTS_H
+
 #include "wdgt.h"
+
+namespace Wdgt
+{
 
 inline cairo_surface_t *
 load_png(std::string file)
@@ -642,3 +649,8 @@ private:
 	float relative_attack_point;
 	float relative_release_point;
 };
+
+}
+
+#endif /* _SCHMOOZ_UI_WDGTS_H */
+
