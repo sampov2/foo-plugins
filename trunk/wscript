@@ -97,6 +97,7 @@ def build(bld):
 		graphics/slider_make-up_prelight.png
 		graphics/dry-wet_thumb.png
 		graphics/dry-wet_thumb_prelight.png
+		graphics/make-up_full.png
 	'''
 
 	bld.install_files('${LV2DIR}/foo.lv2/schmooz_ui', pngs)
