@@ -808,8 +808,6 @@ public:
 		value = _value;
 
 		relative_value = (value - min_value) / (max_value - min_value);
-
-		std::cerr << "new value " << value << ", relatively: " << relative_value << std::endl;
 	}
 
 	float getValue() const { return value; }
