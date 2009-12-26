@@ -27,8 +27,6 @@ import ("biquad-hpf.dsp");
 metering_speed    = 0.1 * min(192000.0, max(22050.0, SR));
 attenuation_speed = 0.0005 * min(192000.0, max(22050.0, SR));
 
-
-
 DRYWET2(ratio,dry,wet) = dry * ratio + wet * (1 - ratio);
 
 GAIN(signal, gain) = signal * gain, signal;
@@ -36,4 +34,14 @@ GAIN(signal, gain) = signal * gain, signal;
 COMP = HPF : RMS(rms_speed) <: (DETECTOR : RATIO : ( RATELIMITER ~ _) <: DB2COEFF, (_) ), (_);
 
 // the mean() function is defined in rms.dsp
-process = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), mean(attenuation_speed), mean(metering_speed);
+processComp = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), mean(attenuation_speed), mean(metering_speed);
+
+
+// the slowdown factor "should" be SR dependent, but its pretty irrelevant
+slowdown(x) = * (0.9998) + 0.0002 * x;
+bypass_value = slowdown(bypass_switch) ~ _;
+
+BYPASS = *(1-bypass_value) + *(bypass_value);
+
+process = _ <: _, processComp : ( BYPASS, _, _);
+

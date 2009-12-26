@@ -39,6 +39,8 @@
 #define PORT_OUTPUT_INPUT_POWER 10
 #define PORT_OUTPUT_COMP_POWER  11
 
+#define PORT_BYPASS             12
+
 
 #define SCHMOOZ_UI_URI "http://studionumbersix.com/foo/lv2/schmooz-mono/ui"
 
@@ -89,6 +91,7 @@ private:
 	bool _ready_to_draw;
 
 	void hpf_toggled();
+	void bypass_toggled();
 	void threshold_changed();
 	void ratio_changed();
 	void attack_changed();
@@ -111,6 +114,7 @@ private:
 
 	// Wdgts
 	Wdgt::Button *hpf;
+	Wdgt::Button *bypass;
 
 	Wdgt::ThresholdGraph *threshold;
 	Wdgt::ThresholdControl *threshold_control;
@@ -196,6 +200,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	hpf = new Wdgt::Button("high-pass");
 	wdgts.push_back(hpf);
 
+	bypass = new Wdgt::Button("bypass");
+	wdgts.push_back(bypass);
 
 	threshold_control = new Wdgt::ThresholdControl(-60.0, 10.0,
 						 WDGT_THRESH_CONTROL_CLIP_X1,
@@ -237,6 +243,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
+
+	bypass->setPosition(25, 414, 30, 24);
 
 	threshold_control->setPosition(WDGT_GRAPH_X + 1, WDGT_GRAPH_Y - 1, 
 				       WDGT_GRAPH_W - 3, WDGT_GRAPH_H );
@@ -306,8 +314,20 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 		return true;
 	}
 
+
+	Wdgt::Object *oldHover = _hoverWdgt;
+
 	_hoverWdgt = newHover;
-	expose(NULL);
+
+	// Redraw ex-hover-widget
+	if (oldHover != NULL) {
+		exposeWdgt(oldHover);
+	}
+
+	// Redraw new hover-widget
+	if (_hoverWdgt != NULL) {
+		exposeWdgt(_hoverWdgt);
+	}
 
 	return true;
 }
@@ -345,6 +365,10 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 			hpf->toggleStatus();
 			hpf_toggled();
 			exposeObj = hpf;
+		} else if (_buttonPressWdgt == bypass) {
+			bypass->toggleStatus();
+			bypass_toggled();
+			exposeObj = bypass;
 		}
 	
 	}
@@ -446,6 +470,13 @@ SchmoozMonoUI::hpf_toggled()
 {
 	float hpf_value = (hpf->getStatus() ? 1.0 : 0.0);
 	_write_function(_controller, PORT_SIDECHAIN_HPF, sizeof(float), 0, &hpf_value);
+}
+
+void
+SchmoozMonoUI::bypass_toggled()
+{
+	float bypass_value = (bypass->getStatus() ? 1.0 : 0.0);
+	_write_function(_controller, PORT_BYPASS, sizeof(float), 0, &bypass_value);
 }
 
 void
@@ -573,6 +604,15 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		}
 		break;
 
+	case PORT_BYPASS:
+		new_status = (*(float *)buffer > 0.5 ? TRUE : FALSE);
+		if (new_status != bypass->getStatus()) {
+			exposeObj = bypass;
+			bypass->setStatus((*(float *)buffer > 0.5 ? TRUE : FALSE));
+		}
+		break;
+
+
 	case PORT_THRESHOLD:
 		slider = threshold_control;
 		break;
@@ -599,6 +639,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 
 	case PORT_OUTPUT_ATTENUATION:
 		attenuation_meter->setValue(*(float *)buffer);
+		// perhaps a timer event would be better..
 		exposeObj = attenuation_meter;
 		break;
 

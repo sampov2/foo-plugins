@@ -80,6 +80,10 @@ def build(bld):
 		graphics/high-pass_on_prelight.png
 		graphics/high-pass_off.png
 		graphics/high-pass_off_prelight.png
+		graphics/bypass_on.png
+		graphics/bypass_on_prelight.png
+		graphics/bypass_off.png
+		graphics/bypass_off_prelight.png
 		graphics/graph_bg.png
 		graphics/graph_bg_threshold.png
 		graphics/threshold.png

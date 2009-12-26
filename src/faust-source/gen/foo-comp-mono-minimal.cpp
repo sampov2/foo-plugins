@@ -4,7 +4,7 @@
 // version: "0.9b"
 // copyright: "(c)Sampo Savolainen 2009"
 //
-// Code generated with Faust 0.9.9.6b10 (http://faust.grame.fr)
+// Code generated with Faust 0.9.10 (http://faust.grame.fr)
 //-----------------------------------------------------
 /* link with : "" */
 #include <math.h>
@@ -112,7 +112,7 @@ class dsp {
 
 typedef long double quad;
 
-class mydsp : public dsp {
+class mydsp : public dsp{
   private:
 	float 	S0[2];
 	FAUSTFLOAT 	fslider0;
@@ -158,6 +158,15 @@ class mydsp : public dsp {
 	float 	fConst25;
 	float 	fRec0[3];
 	FAUSTFLOAT 	fslider6;
+	float 	S8[2];
+	FAUSTFLOAT 	fslider7;
+	float 	fRec5[2];
+	int 	iVec2[128];
+	int 	iRec6[2];
+	int 	iVec3[32768];
+	int 	iConst26;
+	int 	iRec7[2];
+	float 	fConst27;
   public:
 	static void metadata(Meta* m) 	{ 
 		m->declare("name", "foo schmoozcomp mono");
@@ -167,7 +176,7 @@ class mydsp : public dsp {
 	}
 
 	virtual int getNumInputs() 	{ return 1; }
-	virtual int getNumOutputs() 	{ return 1; }
+	virtual int getNumOutputs() 	{ return 3; }
 	static void classInit(int samplingFreq) {
 	}
 	virtual void instanceInit(int samplingFreq) {
@@ -218,6 +227,16 @@ class mydsp : public dsp {
 		for (int i=0; i<3; i++) fRec0[i] = 0;
 		S0[1] = 0;
 		fslider6 = 1.0f;
+		S8[0] = 1.0f;
+		S8[1] = 0.0f;
+		fslider7 = 0.0f;
+		for (int i=0; i<2; i++) fRec5[i] = 0;
+		for (int i=0; i<128; i++) iVec2[i] = 0;
+		for (int i=0; i<2; i++) iRec6[i] = 0;
+		for (int i=0; i<32768; i++) iVec3[i] = 0;
+		iConst26 = int((0.1f * fConst22));
+		for (int i=0; i<2; i++) iRec7[i] = 0;
+		fConst27 = (9.536743e-06f / fConst22);
 	}
 	virtual void init(int samplingFreq) {
 		classInit(samplingFreq);
@@ -226,6 +245,7 @@ class mydsp : public dsp {
 	virtual void buildUserInterface(UI* interface) {
 		interface->openVerticalBox("foo-comp-mono");
 		interface->addHorizontalSlider("attack (ms)", &fslider0, 10.0f, 0.1f, 120.0f, 0.1f);
+		interface->addHorizontalSlider("bypass", &fslider7, 0.0f, 0.0f, 1.0f, 1.0f);
 		interface->addHorizontalSlider("compression ratio", &fslider4, 5.0f, 1.5f, 20.0f, 0.5f);
 		interface->addHorizontalSlider("dry-wet", &fslider6, 1.0f, 0.0f, 1.0f, 0.1f);
 		interface->addHorizontalSlider("makeup gain (dB)", &fslider5, 0.0f, 0.0f, 40.0f, 0.5f);
@@ -245,10 +265,13 @@ class mydsp : public dsp {
 		float 	fSlow6 = fslider5;
 		float 	fSlow7 = fslider6;
 		float 	fSlow8 = (1 - fSlow7);
+		float 	fSlow9 = (2.000000e-04f * S8[int(fslider7)]);
 		S4[0] = fSlow0;
 		S4[1] = fSlow1;
 		FAUSTFLOAT* input0 = input[0];
 		FAUSTFLOAT* output0 = output[0];
+		FAUSTFLOAT* output1 = output[1];
+		FAUSTFLOAT* output2 = output[2];
 		for (int i=0; i<count; i++) {
 			float 	S1[2];
 			float 	S2[2];
@@ -261,28 +284,41 @@ class mydsp : public dsp {
 			int iTemp2 = int((1048576 * (fTemp1 * fTemp1)));
 			iVec1[IOTA&127] = iTemp2;
 			iRec2[0] = ((iVec1[IOTA&127] + iRec2[1]) - iVec1[(IOTA-iConst23)&127]);
-			float fTemp3 = (20 * log10f(sqrtf((fConst24 * float(iRec2[0])))));
-			float fTemp4 = ((fSlow2 < fTemp3) * (fTemp3 - fSlow2));
-			float fTemp5 = S4[int((fTemp4 < fRec1[1]))];
-			fRec1[0] = ((fRec1[1] * (1 - fTemp5)) + (fTemp4 * fTemp5));
-			float fTemp6 = (fSlow5 * fRec1[0]);
-			float fTemp7 = (fSlow6 - fTemp6);
-			S3[0] = fTemp7;
-			float fTemp8 = (2 * fRec0[1]);
-			S3[1] = (((fConst25 * S6[int((fTemp7 < fRec0[1]))]) + fTemp8) - fRec0[2]);
-			float fTemp9 = S3[int((fabsf((0 - ((fSlow6 + fRec0[2]) - (fTemp6 + fTemp8)))) > fConst25))];
-			S2[0] = fTemp9;
-			S2[1] = fTemp7;
-			int iTemp10 = int((fTemp9 > fTemp7));
-			S1[0] = S2[iTemp10];
+			float fTemp3 = sqrtf((fConst24 * float(iRec2[0])));
+			float fTemp4 = (20 * log10f(fTemp3));
+			float fTemp5 = ((fSlow2 < fTemp4) * (fTemp4 - fSlow2));
+			float fTemp6 = S4[int((fTemp5 < fRec1[1]))];
+			fRec1[0] = ((fRec1[1] * (1 - fTemp6)) + (fTemp5 * fTemp6));
+			float fTemp7 = (fSlow5 * fRec1[0]);
+			float fTemp8 = (fSlow6 - fTemp7);
+			S3[0] = fTemp8;
+			float fTemp9 = (2 * fRec0[1]);
+			S3[1] = (((fConst25 * S6[int((fTemp8 < fRec0[1]))]) + fTemp9) - fRec0[2]);
+			float fTemp10 = S3[int((fabsf((0 - ((fSlow6 + fRec0[2]) - (fTemp7 + fTemp9)))) > fConst25))];
+			S2[0] = fTemp10;
+			S2[1] = fTemp8;
+			int iTemp11 = int((fTemp10 > fTemp8));
+			S1[0] = S2[iTemp11];
 			float 	S7[2];
-			S7[0] = fTemp7;
-			S7[1] = fTemp9;
-			S1[1] = S7[iTemp10];
-			fRec0[0] = S1[int((((fRec0[1] + fTemp6) - fSlow6) > 0.0f))];
+			S7[0] = fTemp8;
+			S7[1] = fTemp10;
+			S1[1] = S7[iTemp11];
+			fRec0[0] = S1[int((((fRec0[1] + fTemp7) - fSlow6) > 0.0f))];
 			S0[0] = powf(10,(5.000000e-02f * fRec0[0]));
-			output0[i] = (FAUSTFLOAT)(fVec0[0] * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])));
+			fRec5[0] = (fSlow9 + (0.9998f * fRec5[1]));
+			output0[i] = (FAUSTFLOAT)(fVec0[0] * ((1 - fRec5[0]) + (fRec5[0] * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])))));
+			int iTemp12 = int((1048576 * fRec0[0]));
+			iVec2[IOTA&127] = iTemp12;
+			iRec6[0] = ((iVec2[IOTA&127] + iRec6[1]) - iVec2[(IOTA-iConst23)&127]);
+			output1[i] = (FAUSTFLOAT)(fConst24 * float(iRec6[0]));
+			int iTemp13 = int((1048576 * fTemp3));
+			iVec3[IOTA&32767] = iTemp13;
+			iRec7[0] = ((iVec3[IOTA&32767] + iRec7[1]) - iVec3[(IOTA-iConst26)&32767]);
+			output2[i] = (FAUSTFLOAT)(fConst27 * float(iRec7[0]));
 			// post processing
+			iRec7[1] = iRec7[0];
+			iRec6[1] = iRec6[0];
+			fRec5[1] = fRec5[0];
 			fRec0[2] = fRec0[1]; fRec0[1] = fRec0[0];
 			fRec1[1] = fRec1[0];
 			iRec2[1] = iRec2[0];

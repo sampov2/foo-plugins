@@ -100,6 +100,7 @@ makeup_gain 	 = hslider("makeup gain (dB)",           0,      0,   40,   0.5); /
 
 drywet		 = hslider("dry-wet", 1.0, 0.0, 1.0, 0.1);
 
+bypass_switch = select2( hslider("bypass", 0, 0, 1, 1), 1.0, 0.0);
 
 /*
 // Hard-wired settings for sndfile tests
