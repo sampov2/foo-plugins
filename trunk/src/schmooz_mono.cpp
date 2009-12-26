@@ -74,7 +74,7 @@ public:
 	float *outputBuffers[3];
 
 	float input_peak = -70.0;
-	float compressed_peak = 200;
+	float compressed_peak = -70.0;
 	float full_atten_gain = 0;
 	float full_atten_gain_abs = 0;
 

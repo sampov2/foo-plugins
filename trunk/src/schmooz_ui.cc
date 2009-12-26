@@ -129,6 +129,9 @@ private:
 
 	// Meters, meters, meters...
 	Wdgt::AttenuationMeter *attenuation_meter;
+	Wdgt::VerticalMeter *input_meter;
+	Wdgt::HorizontalMeter *comp_meter;
+
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -226,6 +229,12 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	attenuation_meter = new Wdgt::AttenuationMeter(-70.0, 20.0);
 	wdgts.push_back(attenuation_meter);
 
+	input_meter = new Wdgt::VerticalMeter(-60.0, 10.0);
+	wdgts.push_back(input_meter);
+
+	comp_meter = new Wdgt::HorizontalMeter(-60.0, 10.0);
+	wdgts.push_back(comp_meter);
+
 
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
@@ -246,7 +255,9 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 	drywet_control ->setPosition(331, 24,  24, 337);
 
-	attenuation_meter->setPosition(93,418, 253, 6);
+	attenuation_meter->setPosition(93,418, 253,   6);
+	input_meter      ->setPosition(81, 31,   6, 200);
+	comp_meter       ->setPosition(93,237, 200,   6);
 
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
@@ -591,10 +602,16 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		exposeObj = attenuation_meter;
 		break;
 
-/*
 	case PORT_OUTPUT_INPUT_POWER:
+		input_meter->setValue(*(float *)buffer);
+		exposeObj = input_meter;
+		break;
+
 	case PORT_OUTPUT_COMP_POWER:
-*/
+		comp_meter->setValue(*(float *)buffer);
+		exposeObj = comp_meter;
+		break;
+
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << *(float *)buffer << ")" << std::endl;
 		return;
