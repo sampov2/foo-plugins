@@ -213,16 +213,23 @@ public:
 		float cutoff_x = (x2-x1) * (threshold_control->getRelativeValue());
 		float cutoff_y = (y2-y1) * (1.0 - threshold_control->getRelativeValue());
 
-		// The graph above the threshold
+		// draw the background
+		cairo_set_source_surface(cr, image_graph_bg, x1, y1);
+		cairo_paint(cr);
+
+		// then the "compression triangle"
 		cairo_set_source_surface(cr, image_threshold, x1, y1);
-		cairo_rectangle(cr, x1, y1, (x2-x1), cutoff_y);
+
+		float offset_y_min_ratio = cutoff_y - cutoff_y / 1.5;
+		float offset_y_max_ratio = cutoff_y - cutoff_y / 20.0;
+
+		cairo_move_to(cr, x2, y1 + offset_y_min_ratio);
+		cairo_line_to(cr, x1 + cutoff_x, y1 + cutoff_y);
+		cairo_line_to(cr, x2, y1 + offset_y_max_ratio);
+		cairo_close_path(cr);
+
 		cairo_fill(cr);
 
-		// .. below the threshold
-		cairo_set_source_surface(cr, image_graph_bg, x1, y1);
-		cairo_rectangle(cr, x1, y1+cutoff_y, (x2-x1), y2-y1-cutoff_y);
-		cairo_fill(cr);
-		
 		// the line from the bottom left corner up to the threshold
 		cairo_set_line_width(cr, 1.0);
 		cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
