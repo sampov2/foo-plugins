@@ -654,15 +654,19 @@ public:
 		, relative_value(0)
 	{
 		meter_image = load_png("make-up_full.png");
+		meter_bg    = load_png("make-up.png");
 	}
 
 	~AttenuationMeter()
 	{
 		cairo_surface_destroy(meter_image);
+		cairo_surface_destroy(meter_bg);
 	}
 	
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
+		cairo_set_source_surface(cr, meter_bg, x1, y1);
+		cairo_paint(cr);
 
 		float width = relative_value * (x2-x1);
 		float zero = x1 + (-min_value) / (max_value - min_value) * (x2-x1);
@@ -679,11 +683,13 @@ public:
 			cairo_fill(cr);
 		}
 
+		/* TODO: this bit draws a line at 0dB
 		cairo_set_source_rgb(cr, 0.639, 0.494, 0.373);
 		cairo_set_line_width(cr, 1.0);
 		cairo_move_to(cr, zero + 1, y1);
 		cairo_line_to(cr, zero + 1, y2);
 		cairo_stroke(cr);
+		*/
 	}
 
 	void setValue(float _value)
@@ -706,7 +712,62 @@ protected:
 	float relative_value;
 
 	cairo_surface_t *meter_image;
+	cairo_surface_t *meter_bg;
 };
+
+class VerticalMeter : public Wdgt::Object
+{
+public:
+	VerticalMeter(float _minimum, float _maximum)
+		: min_value(_minimum)
+		, max_value(_maximum)
+		, value(0)
+		, relative_value(0)
+	{
+		meter_image = load_png("gain_v_full.png");
+		meter_bg    = load_png("gain_v.png");
+	}
+
+	~VerticalMeter()
+	{
+		cairo_surface_destroy(meter_image);
+		cairo_surface_destroy(meter_bg);
+	}
+	
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		float meter_h = (y2-y1) * relative_value;
+	
+		// draw the meter background
+		cairo_set_source_surface(cr, meter_bg, x1, y1);
+		cairo_paint(cr);
+
+		// draw the meter
+		cairo_set_source_surface(cr, meter_image, x1, y1);
+		cairo_rectangle(cr, x1, y2 - meter_h, (x2-x1), meter_h);
+		cairo_fill(cr);
+	}
+
+	void setValue(float _value)
+	{
+		value = _value;
+
+		relative_value = (value - min_value) / (max_value - min_value);
+	}
+
+	float getValue() const { return value; }
+
+protected:
+	float min_value;
+	float max_value;
+	
+	float value;
+	float relative_value;
+
+	cairo_surface_t *meter_image;
+	cairo_surface_t *meter_bg;
+};
+
 
 }
 
