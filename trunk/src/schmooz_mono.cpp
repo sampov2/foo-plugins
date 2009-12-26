@@ -45,6 +45,8 @@ using namespace std;
 #define PORT_OUTPUT_INPUT_POWER 10
 #define PORT_OUTPUT_COMP_POWER  11
 
+#define PORT_BYPASS             12
+
 
 class SchmoozMono : public Plugin<SchmoozMono>, UI {
 public:
@@ -64,6 +66,7 @@ public:
   {
 	*threshold_db 		= *p(PORT_THRESHOLD);
 	*sidechain_hpf_enabled 	= (*p(PORT_SIDECHAIN_HPF) > 0 ? 1 : 0);
+	*bypass_enabled 	= (*p(PORT_BYPASS) > 0 ? 1 : 0);
 	*attack_ms 		= *p(PORT_ATTACK);
 	*release_ms 		= *p(PORT_RELEASE);
 	*compression_ratio 	= *p(PORT_RATIO);
@@ -171,6 +174,9 @@ public:
 	} else if (label == "threshold (dB)") {
 		threshold_db = zone;
 
+	} else if (label == "bypass") {
+		bypass_enabled = zone;
+
 	//} else {
 	//	cerr << "schmooz, addHorizontalSlider() with unknown label " << label << endl;
 	}
@@ -184,6 +190,7 @@ public:
         float   *makeup_gain_db;
         float   *release_ms;
         float   *sidechain_hpf_enabled;
+        float   *bypass_enabled;
         float   *threshold_db;
 
 	mydsp schmooz_mono;
