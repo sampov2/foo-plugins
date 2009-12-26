@@ -6,7 +6,7 @@ CFLAGS_LV2=$(CFLAGS) -Wall -fPIC -DPIC `pkg-config --cflags lv2-plugin`
 LDFLAGS_LV2=-shared -Wl,-Bdynamic `pkg-config --libs lv2-plugin`
 
 
-all: lv2
+all: blushcomp-jack
 
 lv2-full: minimal lv2	
 
@@ -26,7 +26,12 @@ minimal:
 	faust -a minimal.cpp foo-comp-mono.dsp   > gen/foo-comp-mono-minimal.cpp
 	faust -a minimal.cpp foo-comp-stereo.dsp > gen/foo-comp-stereo-minimal.cpp
 
+
 # misc testers
+blushcomp-jack: blushcomp.dsp compressor-basics.dsp biquad-hpf.dsp
+	faust -svg -a jack-gtk.cpp blushcomp.dsp > gen/blushcomp.cpp
+	$(CXX) $(CFLAGS) gen/blushcomp.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blushcomp-jack
+
 gschmooz-jack: foo-comp-mono.dsp compressor-basics.dsp biquad-hpf.dsp
 	faust -svg -a jack-gtk.cpp foo-comp-mono.dsp > gen/foo-comp-mono.cpp
 	$(CXX) $(CFLAGS) gen/foo-comp-mono.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o gschmooz-jack
