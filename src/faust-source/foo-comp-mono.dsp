@@ -23,10 +23,17 @@ import ("compressor-basics.dsp");
 
 import ("biquad-hpf.dsp");
 
+
+metering_speed    = 0.1 * min(192000.0, max(22050.0, SR));
+attenuation_speed = 0.0005 * min(192000.0, max(22050.0, SR));
+
+
+
 DRYWET2(ratio,dry,wet) = dry * ratio + wet * (1 - ratio);
 
 GAIN(signal, gain) = signal * gain, signal;
 
 COMP = HPF : RMS(rms_speed) <: (DETECTOR : RATIO : ( RATELIMITER ~ _) <: DB2COEFF, (_) ), (_);
 
-process = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), _, _;
+// the mean() function is defined in rms.dsp
+process = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), mean(attenuation_speed), mean(metering_speed);
