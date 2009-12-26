@@ -769,6 +769,63 @@ protected:
 };
 
 
+class HorizontalMeter : public Wdgt::Object
+{
+public:
+	HorizontalMeter(float _minimum, float _maximum)
+		: min_value(_minimum)
+		, max_value(_maximum)
+		, value(0)
+		, relative_value(0)
+	{
+		meter_image = load_png("gain_h_full.png");
+		meter_bg    = load_png("gain_h.png");
+	}
+
+	~HorizontalMeter()
+	{
+		cairo_surface_destroy(meter_image);
+		cairo_surface_destroy(meter_bg);
+	}
+	
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		float meter_w = (x2-x1) * relative_value;
+	
+		// draw the meter background
+		cairo_set_source_surface(cr, meter_bg, x1, y1);
+		cairo_paint(cr);
+
+		// draw the meter
+		cairo_set_source_surface(cr, meter_image, x1, y1);
+		cairo_rectangle(cr, x1, y1, meter_w, (y2-y1));
+
+		cairo_fill(cr);
+	}
+
+	void setValue(float _value)
+	{
+		value = _value;
+
+		relative_value = (value - min_value) / (max_value - min_value);
+
+		std::cerr << "new value " << value << ", relatively: " << relative_value << std::endl;
+	}
+
+	float getValue() const { return value; }
+
+protected:
+	float min_value;
+	float max_value;
+	
+	float value;
+	float relative_value;
+
+	cairo_surface_t *meter_image;
+	cairo_surface_t *meter_bg;
+};
+
+
 }
 
 #endif /* _SCHMOOZ_UI_WDGTS_H */

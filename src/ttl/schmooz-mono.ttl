@@ -101,16 +101,16 @@
 		lv2:index 10;
 		lv2:symbol "input_power";
 		lv2:name "Input power";
-		lv2:minimum -70.0;
-		lv2:maximum  0.0;
+		lv2:minimum -60.0;
+		lv2:maximum  10.0;
 	],
   	[
 		a lv2:ControlPort, lv2:OutputPort;
 		lv2:index 11;
 		lv2:symbol "compressed_power";
 		lv2:name "Compressed power";
-		lv2:minimum -70.0;
-		lv2:maximum  0.0;
+		lv2:minimum -60.0;
+		lv2:maximum  10.0;
 	].
 
 <http://studionumbersix.com/foo/lv2/schmooz-mono/ui>
