@@ -158,6 +158,12 @@ class mydsp : public dsp{
 	float 	fConst25;
 	float 	fRec0[3];
 	FAUSTFLOAT 	fslider6;
+	int 	iVec2[128];
+	int 	iRec5[2];
+	int 	iVec3[32768];
+	int 	iConst26;
+	int 	iRec6[2];
+	float 	fConst27;
   public:
 	static void metadata(Meta* m) 	{ 
 		m->declare("name", "foo schmoozcomp mono");
@@ -218,6 +224,12 @@ class mydsp : public dsp{
 		for (int i=0; i<3; i++) fRec0[i] = 0;
 		S0[1] = 0;
 		fslider6 = 1.0f;
+		for (int i=0; i<128; i++) iVec2[i] = 0;
+		for (int i=0; i<2; i++) iRec5[i] = 0;
+		for (int i=0; i<32768; i++) iVec3[i] = 0;
+		iConst26 = int((0.1f * fConst22));
+		for (int i=0; i<2; i++) iRec6[i] = 0;
+		fConst27 = (9.536743e-06f / fConst22);
 	}
 	virtual void init(int samplingFreq) {
 		classInit(samplingFreq);
@@ -285,9 +297,17 @@ class mydsp : public dsp{
 			fRec0[0] = S1[int((((fRec0[1] + fTemp7) - fSlow6) > 0.0f))];
 			S0[0] = powf(10,(5.000000e-02f * fRec0[0]));
 			output0[i] = (FAUSTFLOAT)(fVec0[0] * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])));
-			output1[i] = (FAUSTFLOAT)fRec0[0];
-			output2[i] = (FAUSTFLOAT)fTemp3;
+			int iTemp12 = int((1048576 * fRec0[0]));
+			iVec2[IOTA&127] = iTemp12;
+			iRec5[0] = ((iVec2[IOTA&127] + iRec5[1]) - iVec2[(IOTA-iConst23)&127]);
+			output1[i] = (FAUSTFLOAT)(fConst24 * float(iRec5[0]));
+			int iTemp13 = int((1048576 * fTemp3));
+			iVec3[IOTA&32767] = iTemp13;
+			iRec6[0] = ((iVec3[IOTA&32767] + iRec6[1]) - iVec3[(IOTA-iConst26)&32767]);
+			output2[i] = (FAUSTFLOAT)(fConst27 * float(iRec6[0]));
 			// post processing
+			iRec6[1] = iRec6[0];
+			iRec5[1] = iRec5[0];
 			fRec0[2] = fRec0[1]; fRec0[1] = fRec0[0];
 			fRec1[1] = fRec1[0];
 			iRec2[1] = iRec2[0];
