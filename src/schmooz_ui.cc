@@ -36,6 +36,9 @@
 #define PORT_DRYWET             8
 
 #define PORT_OUTPUT_ATTENUATION 9
+#define PORT_OUTPUT_INPUT_POWER 10
+#define PORT_OUTPUT_COMP_POWER  11
+
 
 #define SCHMOOZ_UI_URI "http://studionumbersix.com/foo/lv2/schmooz-mono/ui"
 
@@ -588,6 +591,10 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 		exposeObj = attenuation_meter;
 		break;
 
+/*
+	case PORT_OUTPUT_INPUT_POWER:
+	case PORT_OUTPUT_COMP_POWER:
+*/
 	default:
 		std::cerr << "unknown port event: SchmoozMonoUI::port_event(" << port_index << ", " << buffer_size << ", " << format << ", " << *(float *)buffer << ")" << std::endl;
 		return;

@@ -42,12 +42,14 @@ using namespace std;
 #define PORT_DRYWET             8
 
 #define PORT_OUTPUT_ATTENUATION 9
+#define PORT_OUTPUT_INPUT_POWER 10
+#define PORT_OUTPUT_COMP_POWER  11
 
 
 class SchmoozMono : public Plugin<SchmoozMono>, UI {
 public:
   SchmoozMono(double rate)
-        : Plugin<SchmoozMono>(10)
+        : Plugin<SchmoozMono>(12)
 	, max_nframes(32768)
   {
 	schmooz_mono.instanceInit( (int)rate );
@@ -101,6 +103,7 @@ public:
 
 			// current raw compressed input is input adjusted 
 			// by compressor gain with makeup negated
+			// TODO: here lies a problem
 			float curr_comp  = curr_input + compgain - *makeup_gain_db;
 
 			// full attenuation (gain) is compgain adjusted by dry/wet
@@ -125,6 +128,8 @@ public:
 	//std::cerr << "full_atten_gain = " << full_atten_gain << std::endl;
 
 	*p(PORT_OUTPUT_ATTENUATION) = full_atten_gain;
+	*p(PORT_OUTPUT_INPUT_POWER) = input_peak;
+	*p(PORT_OUTPUT_COMP_POWER)  = compressed_peak;
   }
 
   // Unused UI-functions        
