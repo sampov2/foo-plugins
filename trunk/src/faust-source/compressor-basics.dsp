@@ -32,8 +32,13 @@ SMOOTH(a, r, prevx, x) =
 	(x     *      select2( (x < prevx), a, r )) + 
 	(prevx * (1 - select2( (x < prevx), a, r)));
 
-DETECTOR = (	RMS(rms_speed) : 
-		COEFF2DB :
+//DETECTOR = (	RMS(rms_speed) : 
+//		COEFF2DB :
+//		THRESH(threshold) : 
+//		SMOOTH(attack, release) ~ _ );
+
+
+DETECTOR = (	COEFF2DB :
 		THRESH(threshold) : 
 		SMOOTH(attack, release) ~ _ );
 

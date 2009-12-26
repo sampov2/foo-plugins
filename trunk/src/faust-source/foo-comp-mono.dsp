@@ -23,13 +23,10 @@ import ("compressor-basics.dsp");
 
 import ("biquad-hpf.dsp");
 
+DRYWET2(ratio,dry,wet) = dry * ratio + wet * (1 - ratio);
 
+GAIN(signal, gain) = signal * gain, signal;
 
-COMP = _ <: ( HPF : DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF );
+COMP = HPF : RMS(rms_speed) <: (DETECTOR : RATIO : ( RATELIMITER ~ _) <: DB2COEFF, (_) ), (_);
 
-//COMP = _ <: ( DETECTOR : RATIO : DB2COEFF );
-
-process =  _ <: ( _ , *(COMP) ) : DRYWET(drywet);
-
-//process =  DETECTOR : RATIO : ( RATELIMITER ~ _ ) : DB2COEFF;
-
+process = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), _, _;
