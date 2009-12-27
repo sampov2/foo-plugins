@@ -17,6 +17,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifndef _WDGT_H
+#define _WDGT_H
+
+#include <string>
+
 namespace Wdgt {
 
 class Object 
@@ -54,8 +59,23 @@ public:
 	};
 
 	std::list<Wdgt::Object *> dependents;
+
+	void setName(std::string _name)
+	{
+		name = _name;
+	}
+
+	const std::string &getName() 
+	{
+		return name;
+	}
+
+
+protected:
+	std::string name;
 };
 
 
 };
 
+#endif /* _WDGT_H */
