@@ -31,17 +31,22 @@ DRYWET2(ratio,dry,wet) = dry * ratio + wet * (1 - ratio);
 
 GAIN(signal, gain) = signal * gain, signal;
 
-COMP = HPF : RMS(rms_speed) <: (DETECTOR : RATIO : ( RATELIMITER ~ _) <: DB2COEFF, (_) ), (_);
+COMP = HPF <: ( RMS(rms_speed) : DETECTOR : RATIO : ( RATELIMITER ~ _) <: DB2COEFF, (_) ), (_);
 
 // the mean() function is defined in rms.dsp
-processComp = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), mean(attenuation_speed), mean(metering_speed);
+//processComp = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), mean(attenuation_speed), mean(metering_speed);
+processComp = _ <: _, COMP : GAIN, _, _ : DRYWET2(drywet), _, _;
 
 
 // the slowdown factor "should" be SR dependent, but its pretty irrelevant
+
+// declicking bypass
 slowdown(x) = * (0.9998) + 0.0002 * x;
 bypass_value = slowdown(bypass_switch) ~ _;
-
 BYPASS = *(1-bypass_value) + *(bypass_value);
 
-process = _ <: _, processComp : ( BYPASS, _, _);
+// simple, non-declicking bypass
+BYPASS_SIMPLE = *(1-bypass_switch) + *(bypass_switch);
+
+process = _ <: _, processComp : ( BYPASS, _, RMS(metering_speed) );
 
