@@ -136,6 +136,8 @@ private:
 	Wdgt::VerticalMeter *input_meter;
 	Wdgt::HorizontalMeter *comp_meter;
 
+	Wdgt::HoverLabel *hover_label;
+
 
 	// Gtk essentials
 	void size_request(Gtk::Requisition *);
@@ -198,15 +200,19 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 
 
 	hpf = new Wdgt::Button("high-pass");
+	hpf->setName("Sidechain high-pass filter");
 	wdgts.push_back(hpf);
 
 	bypass = new Wdgt::Button("bypass");
+	bypass->setName("Effect bypass");
 	wdgts.push_back(bypass);
 
 	threshold_control = new Wdgt::ThresholdControl(-60.0, 10.0,
 						 WDGT_THRESH_CONTROL_CLIP_X1,
 						 WDGT_THRESH_CONTROL_CLIP_X2);
+	threshold_control->setName("Compression threshold");
 	ratio_control = new Wdgt::RatioControl(1.5,20.0);
+	ratio_control->setName("Compression ratio");
 	threshold = new Wdgt::ThresholdGraph(threshold_control, ratio_control);
 
 	wdgts.push_back(threshold_control);
@@ -218,29 +224,39 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	wdgts.push_back(ratio_bg);
 
 	attack_control  = new Wdgt::HorizontalColorSlider( 0.1,  120.0, "attack");
+	attack_control->setName("Attack time");
 	wdgts.push_back(attack_control);
+
 	release_control = new Wdgt::HorizontalColorSlider(50.0, 1200.0, "release");
+	release_control->setName("Release time");
 	wdgts.push_back(release_control);
 
 	makeup_control = new Wdgt::HorizontalColorSlider(0.0, 40.0, "make-up");
+	makeup_control->setName("Make-up gain");
 	wdgts.push_back(makeup_control);
 
 	timing_graph = new Wdgt::TimingGraph(attack_control, release_control, ratio_control);
 	wdgts.push_back(timing_graph);
 
 	drywet_control = new Wdgt::DryWetControl(0.0, 1.0);
+	drywet_control->setName("Dry/wet balance");
 	wdgts.push_back(drywet_control); // 330, 24, 24, 337
 
 	// meters
 	attenuation_meter = new Wdgt::AttenuationMeter(-70.0, 20.0);
+	attenuation_meter->setName("Gain applied by the effect");
 	wdgts.push_back(attenuation_meter);
 
 	input_meter = new Wdgt::VerticalMeter(-60.0, 10.0);
+	input_meter->setName("Input signal");
 	wdgts.push_back(input_meter);
 
 	comp_meter = new Wdgt::HorizontalMeter(-60.0, 10.0);
+	comp_meter->setName("Compressed signal");
 	wdgts.push_back(comp_meter);
 
+	hover_label = new Wdgt::HoverLabel();
+	wdgts.push_back(hover_label);
 
 	hpf->setPosition( WDGT_HPF_X, WDGT_HPF_Y, WDGT_HPF_W, WDGT_HPF_H );
 
@@ -267,6 +283,8 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	input_meter      ->setPosition(81, 31,   6, 200);
 	comp_meter       ->setPosition(93,237, 200,   6);
 
+	//hover_label      ->setPosition(0, 442, 355,  18);
+	hover_label      ->setPosition(0, 442, 355,  36);
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
 }
@@ -327,7 +345,13 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 	// Redraw new hover-widget
 	if (_hoverWdgt != NULL) {
 		exposeWdgt(_hoverWdgt);
+		hover_label->setLabel(_hoverWdgt->getName());
+	} else {
+		hover_label->setLabel("");
 	}
+
+	exposeWdgt(hover_label);
+
 
 	return true;
 }

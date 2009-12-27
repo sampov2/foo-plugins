@@ -830,6 +830,49 @@ protected:
 	cairo_surface_t *meter_bg;
 };
 
+class HoverLabel : public Wdgt::Object
+{
+public:
+	HoverLabel()
+	{
+	}
+
+	~HoverLabel()
+	{
+	}
+	
+	virtual void drawWidget(bool hover, cairo_t *cr) const
+	{
+		cairo_set_font_size(cr, 9);
+		cairo_set_source_rgb(cr, 0.482, 0.361, 0.263);
+		/*
+		cairo_rectangle(cr, x1, y1, (x2-x1), (y2-y1));
+		cairo_fill(cr);
+		*/
+       		cairo_font_extents_t extents;
+		cairo_font_extents(cr, &extents);
+
+		cairo_text_extents_t t_ext;
+		cairo_text_extents(cr, label.c_str(), &t_ext);
+		cairo_move_to(cr, x1 + (x2-x1-t_ext.width)/2, y1 + extents.height);
+		cairo_show_text(cr, label.c_str());
+	
+		cairo_stroke(cr);
+		
+	}
+
+	void setLabel(std::string _label)
+	{
+		label = _label;
+	}
+
+	std::string &getLabel() { return label; }
+
+protected:
+	std::string label;
+};
+
+
 
 }
 
