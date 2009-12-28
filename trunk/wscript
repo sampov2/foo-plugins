@@ -26,7 +26,7 @@ def set_options(opt):
 def build(bld):
 	guiobj = bld.new_task_gen('cxx','shlib')
 	guiobj.source = '''
-		src/schmooz_ui.cc
+		src/schmooz_ui.cpp
 	'''
 
 	guiobj.name   = 'schmooz_ui'
