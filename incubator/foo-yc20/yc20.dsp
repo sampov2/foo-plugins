@@ -9,8 +9,11 @@ declare copyright "(c)Sampo Savolainen 2009";
 
 import("music.lib");
 
+import ("biquad.dsp");
+
 import ("oscillator.dsp");
 import ("divider.dsp");
+import ("wave_transformer.dsp");
 
 /*
 
@@ -28,9 +31,13 @@ import ("divider.dsp");
 //  master pitch
 //  vibrato (speed and depth controls)
 //  touch vibrato
-oscillator_bias = 1.0;
+oscillator_bias = vslider("oscillator bias",1.0, 0.1, 2.0, 0.1);
+
 
 base_freq = 440*8;
+oscillator_freq = /(12) : *(440*8) : + (440*8);
 
-process = oscillator_bias <: par(i, 12, oscillator(base_freq+i*base_freq/12 )) : par(i, 12, divider);
+
+process = oscillator_bias <: par(i, 12, oscillator(base_freq+i*base_freq/12 )) : dividers : wave_transformers;
+
 
