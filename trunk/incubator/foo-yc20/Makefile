@@ -12,3 +12,8 @@ foo-yc20-jack: *.dsp
 	faust -svg -a jack-gtk.cpp yc20.dsp > gen/yc20.cpp
 	$(CXX) $(CFLAGS) gen/yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20-jack
 
+yc20-plotter: *.dsp
+	faust -a plot.cpp yc20.dsp > gen/yc20-plot.cpp
+	$(CXX) $(CFLAGS) gen/yc20-plot.cpp -o yc20-plotter
+	echo './yc20-plotter -n 1000 > dump && bash cat dump  | sed "s/\t/\n/g" | grep -v ^$ > dump2 && gnuplot'
+

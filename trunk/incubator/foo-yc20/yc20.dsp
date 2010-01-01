@@ -27,12 +27,21 @@ import ("wave_transformer.dsp");
 
  */
 
+oscillator_dither_amount = 0.02;
+
 // bias should be affected by:
 //  master pitch
 //  vibrato (speed and depth controls)
 //  touch vibrato
 oscillator_bias = vslider("oscillator bias",1.0, 0.1, 2.0, 0.001);
 
-process = oscillator_bias <: oscillators : dividers : wave_transformers;
+
+gain = par(i, 12*8, *(0.5));
+
+//process = oscillator_bias <: oscillator(440);
+
+//process = oscillator_bias <: oscillators : dividers : gain;
+
+process = oscillator_bias <: oscillators : dividers : wave_transformers : gain;
 
 

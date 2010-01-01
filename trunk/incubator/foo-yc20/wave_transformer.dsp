@@ -26,19 +26,27 @@ wave_transformers =
 	wave_transformer_I3,
 	wave_transformer_I3;
 
-// TODO: This is still a guess. It could probably be looked up on the schematics
-next_stage_resistance = 50000;
-
 wave_transformer(C6, C5, C4, C3, C2, C1, C0) = (
 	passive_hp(next_stage_resistance, 0.039),  // one capacitor in series, resistance is a guess
-	(passive_lp(15000, C6) : passive_hp(next_stage_resistance, 0.039)),
-	(passive_lp(15000, C5) : passive_hp(next_stage_resistance, 0.039)),
-	(passive_lp(15000, C4) : passive_hp(next_stage_resistance, 0.039)),
-	(passive_lp(15000, C3) : passive_hp(next_stage_resistance, 0.039)),
-	(passive_lp(15000, C2) : passive_hp(180000, 0.039)), 
-	(passive_lp(15000, C1) : passive_hp(82000, 0.039)), 
-	(passive_lp(15000, C0) : passive_hp(56000, 0.039)), 
-	_);
+	(passive_lp(15000, C6) : passive_hp(next_stage_resistance + 15000, 0.039)),
+	(passive_lp(15000, C5) : passive_hp(next_stage_resistance + 15000, 0.039)),
+	(passive_lp(15000, C4) : passive_hp(next_stage_resistance + 15000, 0.039)),
+	(passive_lp(15000, C3) : passive_hp(next_stage_resistance + 15000, 0.039)),
+	(passive_lp(15000, C2) : passive_hp(R2 + 15000, 0.039)), 
+	(passive_lp(15000, C1) : passive_hp(R1 + 15000, 0.039)), 
+	(passive_lp(15000, C0) : passive_hp(R0 + 15000, 0.039)) 
+	)
+with {
+
+	// TODO: This is still a guess. It could probably be looked up on the schematics
+	next_stage_resistance = 180000.0 + 1.0/( 1.0/10000.0 + 1.0/100000.0 );
+
+	// next stage resistance affects the high pass cutoff point
+	R2 = 1.0 / ( 1.0/next_stage_resistance + 1.0/180000.0 );
+	R1 = 1.0 / ( 1.0/next_stage_resistance + 1.0/82000.0  );
+	R0 = 1.0 / ( 1.0/next_stage_resistance + 1.0/56000.0  );
+	
+};
 
 
 //                                      C6      C5      C4     C3     C2     C1     C0
