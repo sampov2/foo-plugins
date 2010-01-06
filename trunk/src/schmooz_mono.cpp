@@ -20,8 +20,6 @@
 #include <cmath>
 #include "utils.h"
 
-//#include <iostream>
-
 inline float max(float a, float b) { return fmax(a, b); }
 inline float min(float a, float b) { return fmin(a, b); }
 
@@ -101,12 +99,12 @@ public:
 			--i;
 			// current input (after HPF and RMS follower)
 			float curr_input = CO_DB(input_measurement_buffer[i]);
-
 			float compgain   = attenuation_measurement_buffer[i]; // in dB
 
 			// current raw compressed input is input adjusted 
 			// by compressor gain with makeup negated
-			// TODO: here lies a problem
+			// TODO: this should be proper input signal, not curr_input
+			// as curr_input is modified by the sidechain HPF
 			float curr_comp  = curr_input + compgain - *makeup_gain_db;
 
 			// full attenuation (gain) is compgain adjusted by dry/wet
@@ -123,8 +121,8 @@ public:
 				full_atten_gain_abs = full_abs;
 			}
 		}
-
 	}
+
 	//std::cerr << "--------" << std::endl;
 	//std::cerr << "input_peak = " << input_peak << std::endl;
 	//std::cerr << "compressed_peak = " << compressed_peak << std::endl;
