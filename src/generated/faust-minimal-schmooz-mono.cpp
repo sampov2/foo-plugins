@@ -146,10 +146,10 @@ class mydsp : public dsp{
 	float 	fConst21;
 	float 	fRec4[3];
 	int 	IOTA;
-	int 	iVec1[32768];
+	float 	fVec1[32768];
 	float 	fConst22;
 	int 	iConst23;
-	int 	iRec2[2];
+	float 	fRec2[2];
 	float 	fConst24;
 	float 	fRec1[2];
 	FAUSTFLOAT 	fslider4;
@@ -160,8 +160,9 @@ class mydsp : public dsp{
 	FAUSTFLOAT 	fslider6;
 	float 	S8[2];
 	FAUSTFLOAT 	fslider7;
+	float 	fRec5[2];
 	int 	iConst26;
-	int 	iRec5[2];
+	float 	fRec6[2];
 	float 	fConst27;
   public:
 	static void metadata(Meta* m) 	{ 
@@ -209,11 +210,11 @@ class mydsp : public dsp{
 		fConst21 = (1.0f / (1.0f + fConst14));
 		for (int i=0; i<3; i++) fRec4[i] = 0;
 		IOTA = 0;
-		for (int i=0; i<32768; i++) iVec1[i] = 0;
+		for (int i=0; i<32768; i++) fVec1[i] = 0;
 		fConst22 = min(192000.0f, max(22050.0f, fSamplingFreq));
 		iConst23 = int((5.000000e-04f * fConst22));
-		for (int i=0; i<2; i++) iRec2[i] = 0;
-		fConst24 = (1.907349e-03f / fConst22);
+		for (int i=0; i<2; i++) fRec2[i] = 0;
+		fConst24 = (2000.0f / fConst22);
 		for (int i=0; i<2; i++) fRec1[i] = 0;
 		fslider4 = 5.0f;
 		fslider5 = 0.0f;
@@ -226,9 +227,10 @@ class mydsp : public dsp{
 		S8[0] = 1.0f;
 		S8[1] = 0.0f;
 		fslider7 = 0.0f;
+		for (int i=0; i<2; i++) fRec5[i] = 0;
 		iConst26 = int((0.1f * fConst22));
-		for (int i=0; i<2; i++) iRec5[i] = 0;
-		fConst27 = (9.536743e-06f / fConst22);
+		for (int i=0; i<2; i++) fRec6[i] = 0;
+		fConst27 = (10.0f / fConst22);
 	}
 	virtual void init(int samplingFreq) {
 		classInit(samplingFreq);
@@ -257,8 +259,7 @@ class mydsp : public dsp{
 		float 	fSlow6 = fslider5;
 		float 	fSlow7 = fslider6;
 		float 	fSlow8 = (1 - fSlow7);
-		float 	fSlow9 = S8[int(fslider7)];
-		float 	fSlow10 = (1 - fSlow9);
+		float 	fSlow9 = (2.000000e-04f * S8[int(fslider7)]);
 		S4[0] = fSlow0;
 		S4[1] = fSlow1;
 		FAUSTFLOAT* input0 = input[0];
@@ -274,10 +275,10 @@ class mydsp : public dsp{
 			fRec3[0] = (fConst11 * (((((fConst10 * fVec0[1]) + (fConst9 * fVec0[0])) + (fConst9 * fVec0[2])) + (fConst7 * fRec3[1])) + (fConst5 * fRec3[2])));
 			fRec4[0] = (fConst21 * (((((fConst20 * fVec0[1]) + (fConst19 * fVec0[0])) + (fConst19 * fVec0[2])) + (fConst17 * fRec4[1])) + (fConst15 * fRec4[2])));
 			float fTemp1 = ((fSlow4 * fRec4[0]) + (fSlow3 * fRec3[0]));
-			int iTemp2 = int((1048576 * (fTemp1 * fTemp1)));
-			iVec1[IOTA&32767] = iTemp2;
-			iRec2[0] = ((iVec1[IOTA&32767] + iRec2[1]) - iVec1[(IOTA-iConst23)&32767]);
-			float fTemp3 = (20 * log10f(sqrtf((fConst24 * float(iRec2[0])))));
+			float fTemp2 = (fTemp1 * fTemp1);
+			fVec1[IOTA&32767] = fTemp2;
+			fRec2[0] = ((fVec1[IOTA&32767] + fRec2[1]) - fVec1[(IOTA-iConst23)&32767]);
+			float fTemp3 = (20 * log10f(sqrtf((fConst24 * fRec2[0]))));
 			float fTemp4 = ((fSlow2 < fTemp3) * (fTemp3 - fSlow2));
 			float fTemp5 = S4[int((fTemp4 < fRec1[1]))];
 			fRec1[0] = ((fRec1[1] * (1 - fTemp5)) + (fTemp4 * fTemp5));
@@ -297,15 +298,17 @@ class mydsp : public dsp{
 			S1[1] = S7[iTemp10];
 			fRec0[0] = S1[int((((fRec0[1] + fTemp6) - fSlow6) > 0.0f))];
 			S0[0] = powf(10,(5.000000e-02f * fRec0[0]));
-			output0[i] = (FAUSTFLOAT)(fVec0[0] * (fSlow10 + (fSlow9 * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])))));
+			fRec5[0] = (fSlow9 + (0.9998f * fRec5[1]));
+			output0[i] = (FAUSTFLOAT)(fVec0[0] * ((1 - fRec5[0]) + (fRec5[0] * (fSlow8 + (fSlow7 * S0[int((fRec0[0] < -318.8f))])))));
 			output1[i] = (FAUSTFLOAT)fRec0[0];
-			iRec5[0] = ((iVec1[IOTA&32767] + iRec5[1]) - iVec1[(IOTA-iConst26)&32767]);
-			output2[i] = (FAUSTFLOAT)sqrtf((fConst27 * float(iRec5[0])));
+			fRec6[0] = ((fVec1[IOTA&32767] + fRec6[1]) - fVec1[(IOTA-iConst26)&32767]);
+			output2[i] = (FAUSTFLOAT)sqrtf((fConst27 * fRec6[0]));
 			// post processing
-			iRec5[1] = iRec5[0];
+			fRec6[1] = fRec6[0];
+			fRec5[1] = fRec5[0];
 			fRec0[2] = fRec0[1]; fRec0[1] = fRec0[0];
 			fRec1[1] = fRec1[0];
-			iRec2[1] = iRec2[0];
+			fRec2[1] = fRec2[0];
 			IOTA = IOTA+1;
 			fRec4[2] = fRec4[1]; fRec4[1] = fRec4[0];
 			fRec3[2] = fRec3[1]; fRec3[1] = fRec3[0];
