@@ -48,31 +48,33 @@ public:
 		std::string png_off          = pngBase + "_off.png";
 		std::string png_off_prelight = pngBase + "_off_prelight.png";
 
-		image_hpf_on           = load_png(png_on);
-		image_hpf_on_prelight  = load_png(png_on_prelight);
-		image_hpf_off          = load_png(png_off);
-		image_hpf_off_prelight = load_png(png_off_prelight);
+		image_on           = load_png(png_on);
+		image_on_prelight  = load_png(png_on_prelight);
+		image_off          = load_png(png_off);
+		image_off_prelight = load_png(png_off_prelight);
+
+		status = false;
 	}
 
 	~Button()
 	{
-		cairo_surface_destroy(image_hpf_on);
-		cairo_surface_destroy(image_hpf_on_prelight);
-		cairo_surface_destroy(image_hpf_off);
-		cairo_surface_destroy(image_hpf_off_prelight);
+		cairo_surface_destroy(image_on);
+		cairo_surface_destroy(image_on_prelight);
+		cairo_surface_destroy(image_off);
+		cairo_surface_destroy(image_off_prelight);
 	}
 
 	virtual void drawWidget(bool hover, cairo_t *cr) const
 	{
 		cairo_surface_t *tmp = NULL;
-		switch( (hover ? 1 : 0) | (hpf_status ? 2: 0)) {
-			case 0: tmp = image_hpf_off;
+		switch( (hover ? 1 : 0) | (status ? 2: 0)) {
+			case 0: tmp = image_off;
 				break;
-			case 1: tmp = image_hpf_off_prelight;
+			case 1: tmp = image_off_prelight;
 				break;
-			case 2: tmp = image_hpf_on;
+			case 2: tmp = image_on;
 				break;
-			case 3: tmp = image_hpf_on_prelight;
+			case 3: tmp = image_on_prelight;
 				break;
 		}
 
@@ -80,17 +82,17 @@ public:
 		cairo_paint(cr);
 	}
 
-	bool getStatus() const   { return hpf_status; }
-	void setStatus(bool tmp) { hpf_status = tmp; }
-	bool toggleStatus()      { hpf_status = !hpf_status; return hpf_status; }
+	bool getStatus() const   { return status; }
+	void setStatus(bool tmp) { status = tmp; }
+	bool toggleStatus()      { status = !status; return status; }
 
 private:
-	bool hpf_status;
+	bool status;
 
-	cairo_surface_t *image_hpf_on;
-	cairo_surface_t *image_hpf_on_prelight;
-	cairo_surface_t *image_hpf_off;
-	cairo_surface_t *image_hpf_off_prelight;
+	cairo_surface_t *image_on;
+	cairo_surface_t *image_on_prelight;
+	cairo_surface_t *image_off;
+	cairo_surface_t *image_off_prelight;
 };
 
 
@@ -110,6 +112,9 @@ public:
 		control_offset_x2 = 0.0;
 		control_offset_y1 = 0.0;
 		control_offset_y2 = 0.0;
+
+
+		setValue(min_value);
 	}
 
 	float getValue() const { return value; }
