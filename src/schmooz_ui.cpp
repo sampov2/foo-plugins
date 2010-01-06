@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iostream>
 #include <list>
+#include <set>
 
 
 // These need to match the indexes in manifest.ttl
@@ -57,6 +58,9 @@
 #define WDGT_THRESH_CONTROL_W 15
 #define WDGT_THRESH_CONTROL_CLIP_X1 94
 #define WDGT_THRESH_CONTROL_CLIP_X2 292
+
+//#define IDENTIFY_THREAD(func) { std::cerr << "Thread at " func "() is: " << pthread_self() << std::endl; }
+#define IDENTIFY_THREAD(func) { }
 
 bool
 check_cairo_png(cairo_surface_t *s)
@@ -150,6 +154,8 @@ private:
 	bool button_press_event(GdkEventButton *);
 	bool button_release_event(GdkEventButton *);
 
+	bool draw_queue();
+
 	Wdgt::Object *identifyWdgt(GdkEventMotion *);
 
 	Wdgt::Object *_hoverWdgt;
@@ -161,7 +167,8 @@ private:
 
 	std::list<Wdgt::Object *> wdgts;
 
-	
+	std::set<Wdgt::Object *> redraw_queue;
+	sigc::connection redraw_timer_connection;
 };
 
 SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor, 
@@ -191,6 +198,7 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
  	_drawingArea.signal_motion_notify_event().connect ( sigc::mem_fun (*this, &SchmoozMonoUI::motion_notify_event) );
 	_drawingArea.signal_button_press_event().connect  ( sigc::mem_fun (*this, &SchmoozMonoUI::button_press_event));
 	_drawingArea.signal_button_release_event().connect( sigc::mem_fun (*this, &SchmoozMonoUI::button_release_event));
+
 
 	Gdk::EventMask mask = _drawingArea.get_events();
 
@@ -287,6 +295,12 @@ SchmoozMonoUI::SchmoozMonoUI(const struct _LV2UI_Descriptor *descriptor,
 	hover_label      ->setPosition(0, 442, 355,  36);
 	// Set widget for host
 	*(GtkWidget **)(widget) = GTK_WIDGET(_drawingArea.gobj());
+
+	redraw_timer_connection = Glib::signal_timeout().connect( sigc::mem_fun(*this, &SchmoozMonoUI::draw_queue), 50 );
+/*
+	_redrawTimer = Glib::TimeoutSource::create(1);
+	_redrawTimer->connect( sigc::mem_fun (*this, &SchmoozMonoUI::draw_queue));
+*/
 }
 
 void
@@ -299,6 +313,8 @@ SchmoozMonoUI::size_request(Gtk::Requisition *req)
 bool 
 SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 {
+	IDENTIFY_THREAD("motion_notify_event");
+
 	if (_dragWdgt != NULL) {
 		if (_dragWdgt == threshold_control) {
 			threshold_control->setValueFromHorizontalDrag(_predrag_value, _dragStartX, evt->x);
@@ -359,6 +375,8 @@ SchmoozMonoUI::motion_notify_event(GdkEventMotion *evt)
 bool
 SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 {
+	IDENTIFY_THREAD("button_press_event");
+
 	//std::cerr << "button press" << std::endl;
 
 	_buttonPressWdgt = _hoverWdgt;
@@ -380,6 +398,8 @@ SchmoozMonoUI::button_press_event(GdkEventButton *evt)
 bool 
 SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 {
+	IDENTIFY_THREAD("button_release_event");
+
 	//std::cerr << "button release" << std::endl;
 
 	Wdgt::Object *exposeObj = NULL;
@@ -405,6 +425,25 @@ SchmoozMonoUI::button_release_event(GdkEventButton *evt)
 	}
 
 	return true;
+}
+
+bool
+SchmoozMonoUI::draw_queue()
+{
+	IDENTIFY_THREAD("draw_queue");
+
+	if (!_ready_to_draw || redraw_queue.empty()) {
+		return TRUE;
+	}
+
+	// TODO: this is in desperate need of synchronization
+	for (std::set<Wdgt::Object *>::iterator i = redraw_queue.begin(); i != redraw_queue.end(); ++i)
+	{
+		exposeWdgt(*i);
+	}
+	redraw_queue.erase( redraw_queue.begin(), redraw_queue.end() );
+
+	return TRUE;
 }
 
 bool 
@@ -605,6 +644,7 @@ SchmoozMonoUI::~SchmoozMonoUI()
 		++i;
 	}
 	cairo_surface_destroy(_image_background);
+	redraw_timer_connection.disconnect();
 	// TODO: lots'n'lots of unallocation
 	// cairo, wdgt stuff
 }
@@ -613,6 +653,8 @@ void
 SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size, 
                         uint32_t format, const void *buffer)
 {
+	IDENTIFY_THREAD("port_event");
+
 	Wdgt::Object *exposeObj = NULL;
 	Wdgt::SlidingControl *slider = NULL;
 
@@ -698,7 +740,7 @@ SchmoozMonoUI::port_event(uint32_t port_index, uint32_t buffer_size,
 	}
 
 	if (_ready_to_draw && exposeObj != NULL) {
-		exposeWdgt(exposeObj);
+		redraw_queue.insert(exposeObj);
 	}
 }
 
