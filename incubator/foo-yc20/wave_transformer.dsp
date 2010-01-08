@@ -27,7 +27,10 @@ wave_transformers =
 	wave_transformer_I3;
 
 wave_transformer(C6, C5, C4, C3, C2, C1, C0) = (
-	passive_hp(next_stage_resistance, 0.039),  // one capacitor in series, resistance is a guess
+	// passive lp on the 1st drawbar is to emulate capacitance in the circuitry.
+	// otherwise it will be too shrill
+	//(passive_hp(next_stage_resistance, 0.039) : passive_lp(next_stage_resistance, 0.0002 )),
+	passive_hp(next_stage_resistance, 0.039),
 	(passive_lp(15000, C6) : passive_hp(next_stage_resistance + 15000, 0.039)),
 	(passive_lp(15000, C5) : passive_hp(next_stage_resistance + 15000, 0.039)),
 	(passive_lp(15000, C4) : passive_hp(next_stage_resistance + 15000, 0.039)),
