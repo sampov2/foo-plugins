@@ -14,6 +14,8 @@ import ("biquad.dsp");
 import ("oscillator.dsp");
 import ("divider.dsp");
 import ("wave_transformer.dsp");
+import ("keyboard.dsp");
+import ("mixer.dsp");
 
 /*
 
@@ -24,10 +26,7 @@ import ("wave_transformer.dsp");
 
    12x oscillators -> 12x flip-flop dividers -> 12*y (y = about 8) filters -> bus bars
 
-
  */
-
-oscillator_dither_amount = 0.02;
 
 // bias should be affected by:
 //  master pitch
@@ -38,10 +37,5 @@ oscillator_bias = vslider("oscillator bias",1.0, 0.1, 2.0, 0.001);
 
 gain = par(i, 12*8, *(0.5));
 
-//process = oscillator_bias <: oscillator(440);
-
-//process = oscillator_bias <: oscillators : dividers : gain;
-
-process = oscillator_bias <: oscillators : dividers : wave_transformers : gain;
-
+process = oscillator_bias <: oscillators : dividers : wave_transformers : keyboard_slow : mixer;
 
