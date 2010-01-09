@@ -1,13 +1,18 @@
 
-balance_control = vslider("balance", 1.0, 0.0, 1.0, 0.25);
+balance_control = hslider("balance", 1.0, 0.0, 1.0, 0.25);
 
-manual_i_1     = hgroup("i", vslider("1'", 1.0, 0.0, 1.0, 0.25));
-manual_i_1_3p5 = hgroup("i", vslider("1 3/5'", 1.0, 0.0, 1.0, 0.25));
-manual_i_2     = hgroup("i", vslider("2'", 1.0, 0.0, 1.0, 0.25));
-manual_i_2_2p3 = hgroup("i", vslider("2 2/3'", 1.0, 0.0, 1.0, 0.25));
-manual_i_4     = hgroup("i", vslider("4'", 1.0, 0.0, 1.0, 0.25));
-manual_i_8     = hgroup("i", vslider("8'", 1.0, 0.0, 1.0, 0.25));
-manual_i_16    = hgroup("i", vslider("16'", 1.0, 0.0, 1.0, 0.25));
+manual_i_1     = hgroup("i", vslider("[7]1'",     0.25, 0.0, 1.0, 0.25));
+manual_i_1_3p5 = hgroup("i", vslider("[6]1 3/5'", 0.0,  0.0, 1.0, 0.25));
+manual_i_2     = hgroup("i", vslider("[5]2'",     1.0,  0.0, 1.0, 0.25));
+manual_i_2_2p3 = hgroup("i", vslider("[4]2 2/3'", 0.75, 0.0, 1.0, 0.25));
+manual_i_4     = hgroup("i", vslider("[3]4'",     1.0,  0.0, 1.0, 0.25));
+manual_i_8     = hgroup("i", vslider("[2]8'",     1.0,  0.0, 1.0, 0.25));
+manual_i_16    = hgroup("i", vslider("[1]16'",    0.75,  0.0, 1.0, 0.25));
+
+manual_ii_2    = hgroup("ii", vslider("[4]2'",    1.0,  0.0, 1.0, 0.25));
+manual_ii_4    = hgroup("ii", vslider("[3]4'",    1.0,  0.0, 1.0, 0.25));
+manual_ii_8    = hgroup("ii", vslider("[2]8'",    1.0,  0.0, 1.0, 0.25));
+manual_ii_16   = hgroup("ii", vslider("[1]16'",   1.0,  0.0, 1.0, 0.25));
 
 mixer = mixer_normal, mixer_bass :> +(_) : *(0.1);
 
@@ -23,7 +28,11 @@ with {
 		 + bus_8     * manual_i_8
 		 + bus_16    * manual_i_16;
 
-	manual_ii = 0;
+	manual_ii = bus_2    * manual_ii_2
+		  + bus_4    * manual_ii_4
+		  + bus_8    * manual_ii_8
+		  + bus_16   * manual_ii_16;
+	// TODO: filter & brightness
 };
 
 
