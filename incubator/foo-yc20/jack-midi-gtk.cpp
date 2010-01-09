@@ -835,6 +835,10 @@ void GTKUI::addButton(const char* label, float* zone)
     int note;
     int octave = atoi(label+1);
 
+    if (strlen(label) != 2) {
+	isNote = false;
+    }
+
     if (octave == 0 && errno == EINVAL) {
         isNote = false;
     }
