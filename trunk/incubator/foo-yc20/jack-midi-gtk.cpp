@@ -1435,18 +1435,18 @@ int process (jack_nframes_t nframes, void *arg)
 	void *midi = jack_port_get_buffer(input_port_midi, nframes);
 
 	jack_midi_event_t event;
-	jack_nframes_t event_index = 0;
-	jack_nframes_t event_count = jack_midi_get_event_count(midi);
+	jack_nframes_t n = jack_midi_get_event_count(midi);
 
-
-	if (event_count > 0) {
+	if (n > 0) {
 
             // TODO: frame accuracy
 	    // TODO: panic button
-	    for (uint32_t i = 0; i < event_count; ++i) {
+	    for (uint32_t i = 0; i < n; ++i) {
 	        jack_midi_event_get(&event, midi, i);
-		int note;
-		float value;
+
+		int note = -1;
+		float value = 0.0;
+
 	       	if( ((*(event.buffer) & 0xf0)) == 0x90 )
 		{
 			/* note on */
