@@ -856,7 +856,7 @@ void GTKUI::addButton(const char* label, float* zone)
     }
 
     if (isNote) {
-	fprintf(stderr, "Connected key %s, octave %d, note %d\n", label, octave, note);
+	//fprintf(stderr, "Connected key %s, octave %d, note %d\n", label, octave, note);
         yc20_keys[octave*12 + note] = zone;
 	return;
     }
