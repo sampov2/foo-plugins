@@ -32,7 +32,7 @@ import ("mixer.dsp");
 //  master pitch
 //  vibrato (speed and depth controls)
 //  touch vibrato
-oscillator_bias = vslider("oscillator bias",1.0, 0.1, 2.0, 0.001);
+oscillator_bias = hslider("oscillator bias",1.0, 0.1, 2.0, 0.001);
 
 
 gain = par(i, 12*8, *(0.5));
