@@ -1,6 +1,6 @@
 // 5 octaves + one C = 61 keys
 
-// Bottom 17 keys is the bass manual
+// Bottom 17 keys is the switchable bass manual
 key_c0 = button("c0");
 key_C0 = button("C0");
 key_d0 = button("d0");
@@ -72,7 +72,7 @@ key_c5 = button("c5");
 
 
 // This will be needed later on
-//bass_engaged = 1.0; // or 0.0
+bass_engaged = hgroup("bass",hslider("[3]bass manual",0.0, 0.0, 1.0, 1.0));
 
 // This implementation uses every voice and has equal number of outputs
 // when compared to the "slow" (read "correct") version
@@ -126,60 +126,68 @@ keyboard_slow(
     bass_bus_4, bass_bus_8, bass_bus_16
 with
 {
-	bus_1       = key_c0*c5 + key_C0*C5 + key_d0*d5 + key_D0*D5 + key_e0*e5 + key_f0*f5 + key_F0*F5 + key_g0*g5 + key_G0*G5 + key_a0*a5 + key_A0*A5 + key_b0*b5
-	            + key_c1*c6 + key_C1*C6 + key_d1*d6 + key_D1*D6 + key_e1*e6 + key_f1*f6 + key_F1*F6 + key_g1*g6 + key_G1*G6 + key_a1*a6 + key_A1*A6 + key_b1*b6
+	bus_1     =  (key_c0*c5 + key_C0*C5 + key_d0*d5 + key_D0*D5 + key_e0*e5 + key_f0*f5 + key_F0*F5 + key_g0*g5 + key_G0*G5 + key_a0*a5 + key_A0*A5 + key_b0*b5
+	            + key_c1*c6 + key_C1*C6 + key_d1*d6 + key_D1*D6 + key_e1*e6) * (1.0 - bass_engaged)
+		                                                                + key_f1*f6 + key_F1*F6 + key_g1*g6 + key_G1*G6 + key_a1*a6 + key_A1*A6 + key_b1*b6
 	            + key_c2*c7 + key_C2*C7 + key_d2*d7 + key_D2*D7 + key_e2*e7 + key_f2*f7 + key_F2*F7 + key_g2*g7 + key_G2*G7 + key_a2*a7 + key_A2*A7 + key_b2*b7
 	            + key_c3*c8 + key_C3*C8 + key_d3*d8 + key_D3*D8 + key_e3*e8 + key_f3*f8 + key_F3*F8 + key_g3*g8 + key_G3*G8 + key_a3*a8 + key_A3*A8 + key_b3*b8
 	            + key_c4*c8 + key_C4*C8 + key_d4*d8 + key_D4*D8 + key_e4*e8 + key_f4*f8 + key_F4*F8 + key_g4*g8 + key_G4*G8 + key_a4*a8 + key_A4*A8 + key_b4*b8
 		    + key_c5*c8;
 
-	bus_1_3p5   = key_c0*G4 + key_C0*a4 + key_d0*A4 + key_D0*b4 + key_e0*c5 + key_f0*C5 + key_F0*d5 + key_g0*D5 + key_G0*e5 + key_a0*f5 + key_A0*F5 + key_b0*g5
-	            + key_c1*G5 + key_C1*a5 + key_d1*A5 + key_D1*b5 + key_e1*c6 + key_f1*C6 + key_F1*d6 + key_g1*D6 + key_G1*e6 + key_a1*f6 + key_A1*F6 + key_b1*g6
+	bus_1_3p5 =  (key_c0*G4 + key_C0*a4 + key_d0*A4 + key_D0*b4 + key_e0*c5 + key_f0*C5 + key_F0*d5 + key_g0*D5 + key_G0*e5 + key_a0*f5 + key_A0*F5 + key_b0*g5
+	            + key_c1*G5 + key_C1*a5 + key_d1*A5 + key_D1*b5 + key_e1*c6) * (1.0 - bass_engaged)
+		                                                                + key_f1*C6 + key_F1*d6 + key_g1*D6 + key_G1*e6 + key_a1*f6 + key_A1*F6 + key_b1*g6
 	            + key_c2*G6 + key_C2*a6 + key_d2*A6 + key_D2*b6 + key_e2*c7 + key_f2*C7 + key_F2*d7 + key_g2*D7 + key_G2*e7 + key_a2*f7 + key_A2*F7 + key_b2*g7
 	            + key_c3*G7 + key_C3*a7 + key_d3*A7 + key_D3*b7 + key_e3*c8 + key_f3*C8 + key_F3*d8 + key_g3*D8 + key_G3*e8 + key_a3*f8 + key_A3*F8 + key_b3*g8
 	            + key_c4*G8 + key_C4*a8 + key_d4*A8 + key_D4*b8 + key_e4*c8 + key_f4*C8 + key_F4*d8 + key_g4*D8 + key_G4*e8 + key_a4*f8 + key_A4*F8 + key_b4*g8
 		    + key_c5*G8;
 
-	bus_2       = key_c0*c4 + key_C0*C4 + key_d0*d4 + key_D0*D4 + key_e0*e4 + key_f0*f4 + key_F0*F4 + key_g0*g4 + key_G0*G4 + key_a0*a4 + key_A0*A4 + key_b0*b4
-	            + key_c1*c5 + key_C1*C5 + key_d1*d5 + key_D1*D5 + key_e1*e5 + key_f1*f5 + key_F1*F5 + key_g1*g5 + key_G1*G5 + key_a1*a5 + key_A1*A5 + key_b1*b5
+	bus_2     =  (key_c0*c4 + key_C0*C4 + key_d0*d4 + key_D0*D4 + key_e0*e4 + key_f0*f4 + key_F0*F4 + key_g0*g4 + key_G0*G4 + key_a0*a4 + key_A0*A4 + key_b0*b4
+	            + key_c1*c5 + key_C1*C5 + key_d1*d5 + key_D1*D5 + key_e1*e5) * (1.0 - bass_engaged)
+		                                                                + key_f1*f5 + key_F1*F5 + key_g1*g5 + key_G1*G5 + key_a1*a5 + key_A1*A5 + key_b1*b5
 	            + key_c2*c6 + key_C2*C6 + key_d2*d6 + key_D2*D6 + key_e2*e6 + key_f2*f6 + key_F2*F6 + key_g2*g6 + key_G2*G6 + key_a2*a6 + key_A2*A6 + key_b2*b6
 	            + key_c3*c7 + key_C3*C7 + key_d3*d7 + key_D3*D7 + key_e3*e7 + key_f3*f7 + key_F3*F7 + key_g3*g7 + key_G3*G7 + key_a3*a7 + key_A3*A7 + key_b3*b7
 	            + key_c4*c8 + key_C4*C8 + key_d4*d8 + key_D4*D8 + key_e4*e8 + key_f4*f8 + key_F4*F8 + key_g4*g8 + key_G4*G8 + key_a4*a8 + key_A4*A8 + key_b4*b8
 		    + key_c5*c8;
 
-	bus_2_2p3   = key_c0*f3 + key_C0*F3 + key_d0*g3 + key_D0*G3 + key_e0*a3 + key_f0*A3 + key_F0*b3 + key_g0*c4 + key_G0*C4 + key_a0*d4 + key_A0*D4 + key_b0*e4
-	            + key_c1*f4 + key_C1*F4 + key_d1*g4 + key_D1*G4 + key_e1*a4 + key_f1*A4 + key_F1*b4 + key_g1*c5 + key_G1*C5 + key_a1*d5 + key_A1*D5 + key_b1*e5
+	bus_2_2p3 =  (key_c0*f3 + key_C0*F3 + key_d0*g3 + key_D0*G3 + key_e0*a3 + key_f0*A3 + key_F0*b3 + key_g0*c4 + key_G0*C4 + key_a0*d4 + key_A0*D4 + key_b0*e4
+	            + key_c1*f4 + key_C1*F4 + key_d1*g4 + key_D1*G4 + key_e1*a4) * (1.0 - bass_engaged)
+		                                                                + key_f1*A4 + key_F1*b4 + key_g1*c5 + key_G1*C5 + key_a1*d5 + key_A1*D5 + key_b1*e5
 	            + key_c2*f5 + key_C2*F5 + key_d2*g5 + key_D2*G5 + key_e2*a5 + key_f2*A5 + key_F2*b5 + key_g2*c6 + key_G2*C6 + key_a2*d6 + key_A2*D6 + key_b2*e6
 	            + key_c3*f6 + key_C3*F6 + key_d3*g6 + key_D3*G6 + key_e3*a6 + key_f3*A6 + key_F3*b6 + key_g3*c7 + key_G3*C7 + key_a3*d7 + key_A3*D7 + key_b3*e7
 	            + key_c4*f7 + key_C4*F7 + key_d4*g7 + key_D4*G7 + key_e4*a7 + key_f4*A7 + key_F4*b7 + key_g4*c8 + key_G4*C8 + key_a4*d8 + key_A4*D8 + key_b4*e8
 		    + key_c5*f8;
 
-	bus_4       = key_c0*c3 + key_C0*C3 + key_d0*d3 + key_D0*D3 + key_e0*e3 + key_f0*f3 + key_F0*F3 + key_g0*g3 + key_G0*G3 + key_a0*a3 + key_A0*A3 + key_b0*b3
-	            + key_c1*c4 + key_C1*C4 + key_d1*d4 + key_D1*D4 + key_e1*e4 + key_f1*f4 + key_F1*F4 + key_g1*g4 + key_G1*G4 + key_a1*a4 + key_A1*A4 + key_b1*b4
+	bus_4     =  (key_c0*c3 + key_C0*C3 + key_d0*d3 + key_D0*D3 + key_e0*e3 + key_f0*f3 + key_F0*F3 + key_g0*g3 + key_G0*G3 + key_a0*a3 + key_A0*A3 + key_b0*b3
+	            + key_c1*c4 + key_C1*C4 + key_d1*d4 + key_D1*D4 + key_e1*e4) * (1.0 - bass_engaged)
+										+ key_f1*f4 + key_F1*F4 + key_g1*g4 + key_G1*G4 + key_a1*a4 + key_A1*A4 + key_b1*b4
 	            + key_c2*c5 + key_C2*C5 + key_d2*d5 + key_D2*D5 + key_e2*e5 + key_f2*f5 + key_F2*F5 + key_g2*g5 + key_G2*G5 + key_a2*a5 + key_A2*A5 + key_b2*b5
 	            + key_c3*c6 + key_C3*C6 + key_d3*d6 + key_D3*D6 + key_e3*e6 + key_f3*f6 + key_F3*F6 + key_g3*g6 + key_G3*G6 + key_a3*a6 + key_A3*A6 + key_b3*b6
 	            + key_c4*c7 + key_C4*C7 + key_d4*d7 + key_D4*D7 + key_e4*e7 + key_f4*f7 + key_F4*F7 + key_g4*g7 + key_G4*G7 + key_a4*a7 + key_A4*A7 + key_b4*b7
 		    + key_c5*c8;
 
-	bus_8       = key_c0*c2 + key_C0*C2 + key_d0*d2 + key_D0*D2 + key_e0*e2 + key_f0*f2 + key_F0*F2 + key_g0*g2 + key_G0*G2 + key_a0*a2 + key_A0*A2 + key_b0*b2
-	            + key_c1*c3 + key_C1*C3 + key_d1*d3 + key_D1*D3 + key_e1*e3 + key_f1*f3 + key_F1*F3 + key_g1*g3 + key_G1*G3 + key_a1*a3 + key_A1*A3 + key_b1*b3
+	bus_8     =  (key_c0*c2 + key_C0*C2 + key_d0*d2 + key_D0*D2 + key_e0*e2 + key_f0*f2 + key_F0*F2 + key_g0*g2 + key_G0*G2 + key_a0*a2 + key_A0*A2 + key_b0*b2
+	            + key_c1*c3 + key_C1*C3 + key_d1*d3 + key_D1*D3 + key_e1*e3) * (1.0 - bass_engaged)
+										+ key_f1*f3 + key_F1*F3 + key_g1*g3 + key_G1*G3 + key_a1*a3 + key_A1*A3 + key_b1*b3
 	            + key_c2*c4 + key_C2*C4 + key_d2*d4 + key_D2*D4 + key_e2*e4 + key_f2*f4 + key_F2*F4 + key_g2*g4 + key_G2*G4 + key_a2*a4 + key_A2*A4 + key_b2*b4
 	            + key_c3*c5 + key_C3*C5 + key_d3*d5 + key_D3*D5 + key_e3*e5 + key_f3*f5 + key_F3*F5 + key_g3*g5 + key_G3*G5 + key_a3*a5 + key_A3*A5 + key_b3*b5
 	            + key_c4*c6 + key_C4*C6 + key_d4*d6 + key_D4*D6 + key_e4*e6 + key_f4*f6 + key_F4*F6 + key_g4*g6 + key_G4*G6 + key_a4*a6 + key_A4*A6 + key_b4*b6
 		    + key_c5*c7;
 
-	bus_16      = key_c0*c1 + key_C0*C1 + key_d0*d1 + key_D0*D1 + key_e0*e1 + key_f0*f1 + key_F0*F1 + key_g0*g1 + key_G0*G1 + key_a0*a1 + key_A0*A1 + key_b0*b1
-	            + key_c1*c2 + key_C1*C2 + key_d1*d2 + key_D1*D2 + key_e1*e2 + key_f1*f2 + key_F1*F2 + key_g1*g2 + key_G1*G2 + key_a1*a2 + key_A1*A2 + key_b1*b2
+	bus_16    =  (key_c0*c1 + key_C0*C1 + key_d0*d1 + key_D0*D1 + key_e0*e1 + key_f0*f1 + key_F0*F1 + key_g0*g1 + key_G0*G1 + key_a0*a1 + key_A0*A1 + key_b0*b1
+	            + key_c1*c2 + key_C1*C2 + key_d1*d2 + key_D1*D2 + key_e1*e2) * (1.0 - bass_engaged)
+										+ key_f1*f2 + key_F1*F2 + key_g1*g2 + key_G1*G2 + key_a1*a2 + key_A1*A2 + key_b1*b2
 	            + key_c2*c3 + key_C2*C3 + key_d2*d3 + key_D2*D3 + key_e2*e3 + key_f2*f3 + key_F2*F3 + key_g2*g3 + key_G2*G3 + key_a2*a3 + key_A2*A3 + key_b2*b3
 	            + key_c3*c4 + key_C3*C4 + key_d3*d4 + key_D3*D4 + key_e3*e4 + key_f3*f4 + key_F3*F4 + key_g3*g4 + key_G3*G4 + key_a3*a4 + key_A3*A4 + key_b3*b4
 	            + key_c4*c5 + key_C4*C5 + key_d4*d5 + key_D4*D5 + key_e4*e5 + key_f4*f5 + key_F4*F5 + key_g4*g5 + key_G4*G5 + key_a4*a5 + key_A4*A5 + key_b4*b5
 		    + key_c5*c6;
 
-	// yet to be done. there also needs to be a bit of logic to remove
-	// the bass manual parts from the other buses when the bass manual is engaged.
-	bass_bus_4  = 1;
-	bass_bus_8  = 1;
-	bass_bus_16 = 1;
+	bass_bus_4  = (key_c0*c3 + key_C0*C3 + key_d0*d3 + key_D0*D3 + key_e0*e3 + key_f0*f3 + key_F0*F3 + key_g0*g3 + key_G0*G3 + key_a0*a3 + key_A0*A3 + key_b0*b3
+	             + key_c1*c4 + key_C1*C4 + key_d1*d4 + key_D1*D4 + key_e1*e4) * bass_engaged;
+	bass_bus_8  = (key_c0*c2 + key_C0*C2 + key_d0*d2 + key_D0*D2 + key_e0*e2 + key_f0*f2 + key_F0*F2 + key_g0*g2 + key_G0*G2 + key_a0*a2 + key_A0*A2 + key_b0*b2
+	             + key_c1*c3 + key_C1*C3 + key_d1*d3 + key_D1*D3 + key_e1*e3) * bass_engaged;
+	bass_bus_16 = (key_c0*c1 + key_C0*C1 + key_d0*d1 + key_D0*D1 + key_e0*e1 + key_f0*f1 + key_F0*F1 + key_g0*g1 + key_G0*G1 + key_a0*a1 + key_A0*A1 + key_b0*b1
+	             + key_c1*c2 + key_C1*C2 + key_d1*d2 + key_D1*D2 + key_e1*e2) * bass_engaged;
 
 };
 
