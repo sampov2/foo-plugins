@@ -1,17 +1,3 @@
-
-
-passive_rc_freq(r, uf) = 1/(2 * PI * r * capacitance)
-with {
-	capacitance = uf / 1000000;
-};
-
-
-passive_lp(r, uf) = biquad_lp(passive_rc_freq(r,uf));
-passive_hp(r, uf) = biquad_hp(passive_rc_freq(r,uf));
-
-
-//wave_transformers = wave_transformer_I1_C : par(i, 11, wave_transformer);
-//wave_transformers = par(i, 12, wave_transformer);
 wave_transformers = 
 	wave_transformer_I1,
 	wave_transformer_I1,
