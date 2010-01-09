@@ -1,7 +1,6 @@
 // tests to emulate a Yamaha YC-20 Combo Organ from the early 1970s
 
-//declare name      "FooC-20";
-declare name      "osc";
+declare name      "Foo YC-20 simulation";
 declare author    "Sampo Savolainen";
 declare license   "GPL";
 declare copyright "(c)Sampo Savolainen 2009";
