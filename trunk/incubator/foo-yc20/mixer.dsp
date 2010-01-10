@@ -49,7 +49,7 @@ with {
 	filter = passive_lp(10000, 0.056);
 
 	// This should compensate for the relative quietness, also TODO: Bass volume!
-	gain = *(12.0);
+	gain = *(6.0);
 
 	
 };
