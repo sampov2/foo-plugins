@@ -1,13 +1,13 @@
 
 balance_control = hslider("balance", 1.0, 0.0, 1.0, 0.25);
 
-manual_i_1     = hgroup("i", vslider("[7]1'",     0.25, 0.0, 1.0, 0.25));
+manual_i_1     = hgroup("i", vslider("[7]1'",     0.5,  0.0, 1.0, 0.25));
 manual_i_1_3p5 = hgroup("i", vslider("[6]1 3/5'", 0.0,  0.0, 1.0, 0.25));
 manual_i_2     = hgroup("i", vslider("[5]2'",     1.0,  0.0, 1.0, 0.25));
-manual_i_2_2p3 = hgroup("i", vslider("[4]2 2/3'", 0.75, 0.0, 1.0, 0.25));
+manual_i_2_2p3 = hgroup("i", vslider("[4]2 2/3'", 0.5,  0.0, 1.0, 0.25));
 manual_i_4     = hgroup("i", vslider("[3]4'",     1.0,  0.0, 1.0, 0.25));
 manual_i_8     = hgroup("i", vslider("[2]8'",     1.0,  0.0, 1.0, 0.25));
-manual_i_16    = hgroup("i", vslider("[1]16'",    0.75, 0.0, 1.0, 0.25));
+manual_i_16    = hgroup("i", vslider("[1]16'",    0.5,  0.0, 1.0, 0.25));
 
 manual_ii_2    = hgroup("ii", vslider("[4]2'",    1.0,  0.0, 1.0, 0.25));
 manual_ii_4    = hgroup("ii", vslider("[3]4'",    1.0,  0.0, 1.0, 0.25));
