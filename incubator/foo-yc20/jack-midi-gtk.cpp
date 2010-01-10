@@ -1454,13 +1454,13 @@ int process (jack_nframes_t nframes, void *arg)
 	       	if( ((*(event.buffer) & 0xf0)) == 0x90 )
 		{
 			/* note on */
-			note = *(event.buffer + 1) -48;
+			note = *(event.buffer + 1) - 36;
 			value = 1.0;
 		}
 		else if( ((*(event.buffer)) & 0xf0) == 0x80 )
 		{
 			/* note off */
-			note = *(event.buffer + 1) -48;
+			note = *(event.buffer + 1) - 36;
 			value = 0.0;
 		}
 
