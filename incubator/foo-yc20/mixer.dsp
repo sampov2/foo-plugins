@@ -17,7 +17,7 @@ manual_ii_16   = hgroup("ii", vslider("[1]16'",   1.0,  0.0, 1.0, 0.25));
 manual_bass_8  = hgroup("bass", vslider("[2]8'",  1.0,  0.0, 1.0, 0.25));
 manual_bass_16 = hgroup("bass", vslider("[1]16'", 1.0,  0.0, 1.0, 0.25));
 
-mixer = mixer_normal, mixer_bass :> +(_) : *(0.1);
+mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 0.2 * hslider("volume", 0.1, 0.0, 1.0, 0.1));
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) = balance(manual_i, manual_ii)
 with {
 	balance = (_ * balance_control) + (_ * (balance_control-1));
@@ -50,7 +50,5 @@ with {
 
 	// This should compensate for the relative quietness, also TODO: Bass volume!
 	gain = *(6.0);
-
-	
 };
 
