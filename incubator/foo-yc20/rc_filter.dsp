@@ -1,6 +1,6 @@
 
 // Thanks to Torben Hohn and...
-// http://www.scienceprog.com/from-analog-to-digital-signal-filtering/
+// http://www.dsplog.com/2007/12/02/digital-implementation-of-rc-low-pass-filter/
 
 passive_lp(resistance, uf) = (filter ~ _)
 with {
