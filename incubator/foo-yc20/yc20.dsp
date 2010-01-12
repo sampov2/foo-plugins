@@ -8,7 +8,7 @@ declare copyright "(c)Sampo Savolainen 2009";
 
 import ("music.lib");
 
-import ("biquad.dsp");
+import ("rc_filter.dsp");
 
 import ("vibrato.dsp");
 import ("oscillator.dsp");
