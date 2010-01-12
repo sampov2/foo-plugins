@@ -2,6 +2,8 @@
 // Thanks to Torben Hohn and...
 // http://www.dsplog.com/2007/12/02/digital-implementation-of-rc-low-pass-filter/
 
+// Note that float precision might limit how well these work..
+
 passive_lp(resistance, uf) = (filter ~ _)
 with {
 	// simplified to minimize floating point precision problems
