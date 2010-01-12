@@ -4,7 +4,7 @@
 
 vibrato = vibrato_speed * vibrato_amount
 with {
-	control_speed  = vgroup("[2]vibrato", hslider("[2]speed",  0.0, 0.0, 1.0, 0.2));
+	control_speed  = vgroup("[2]vibrato", hslider("[2]speed", 0.0, 0.0, 1.0, 0.2));
 	control_amount = vgroup("[2]vibrato", hslider("[1]depth", 0.0, 0.0, 1.0, 0.2));
 
 	// how many samples is each full waveform
@@ -18,5 +18,5 @@ with {
 
 	vibrato_speed = sine_wave_oscillator(5.0 + 3*control_speed);
 
-	vibrato_amount = 0.005 + 0.015 * control_amount;
+	vibrato_amount = 0.0001 + 0.0199 * control_amount;
 };
