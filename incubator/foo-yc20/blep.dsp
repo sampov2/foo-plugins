@@ -127,7 +127,7 @@ with {
 	q = float(freq)/float(SR);
 	phase = +(q) : fmod(_, 1.0);
 
-	polyblep(t) = 
+	polyblep_real(t) = 
 		select2(t < -1, 
 			select2(t > 1, 
 				select2( t > 0, 
@@ -136,13 +136,15 @@ with {
 				,0)
 			,0);
 
+	polyblep(t) = polyblep_real( t / q) * 2;
+
 	naive_square(ph) = ph, select2( ph < 0.5, -1.0, 1.0);
 
 	// 0 no polyblep
 	// 1 add polyblep at ph
 	// 2 add reverse phase polyblep at ph - 0.5
-	selector(ph) = select2( (ph - ph') < 0, 
-		       select2( fmod(ph+0.5,1.0) <= q, 0, 2), 1);
+	selector(ph) = select2( (ph - ph') <= 0, 
+		       select2( fmod(ph+0.5,1.0) < q, 0, 2), 1);
 
 	// Detects square wave discontinuities by checking whether phase has went past 0 or 0.5
 	// delays signal by one.
@@ -153,14 +155,15 @@ with {
 			x - polyblep(ph - 0.5) - 0), 
 		select3(selector(ph), 
 			prev, 
-			prev + polyblep(ph') + 0, 
+			prev + polyblep(ph' - 1.0) + 0, 
 			prev - polyblep(ph' - 0.5) + 0);
 
 };
 //process = polyblep_square(440.3);
 //process = polyblep_square(8123.1);
 //process = polyblep_square(5053);
-process = polyblep_square(2399) * 0.8;
+//process = polyblep_square(2399) * 0.8;
+process = polyblep_square(3726);
 //process = polyblep_square(vslider("frequency", 440.0, 10.0, 30000.0, 5.0)) * 0.2;
 
 	polyblep_uff(t) = 
