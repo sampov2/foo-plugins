@@ -2,17 +2,26 @@
 // 8 dividers => 9 octaves
 
 dividers = par(i, 12, divider);
-divider = _ <: _, 
-	(flipflop <: _, 
-	(flipflop <: _, 
-	(flipflop <: _, 
-	(flipflop <: _, 
-	(flipflop <: _, 
-	(flipflop <: _, 
-	 flipflop
+
+divider = _, 
+	(divide : _, 
+	(divide : _, 
+	(divide : _,
+	(divide : _,
+	(divide : _,
+	(divide : _,
+	(divide : _, !)
 	))))))
 with {
-	flipflop = (flipflop_internal ~ _) : +(0.5) : *(2.0);
-	flipflop_internal(prev, x) = prev - select2( x > 0.5, 0, select2(x@1 < 0.5, 0, 2*prev + 1 ));
+	divide = phase_divisor <: polyblep_square_slave, _;
+};
+
+phase_divisor(ph) = slow_accumulator(ph) / 2.0
+with {
+        slow_accumulator(x) = (prevphase(x) ~ _) + x;
+
+        prevphase(x, whichphase) = select2( (x - x@1) < 0, whichphase, 1-whichphase);
+
+
 };
 
