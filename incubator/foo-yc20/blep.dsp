@@ -55,8 +55,8 @@ with {
 
 	ext_blep = ffunction( float get_blep(int, int, int) , "blep.cpp", "");
 
-	blep_table = rdtable(n, ext_blep(zeroCrossings, overSampling, inc_by_one), int );
 
+	blep_table = rdtable(n, ext_blep(zeroCrossings, overSampling, inc_by_one), int );
 
 	linear_interpolation(a, b, r) = a + r * (b-a); //, a, b, r;
 
@@ -122,11 +122,40 @@ with {
 		sum(i, 5, blit(fmod(_ + 0.5, 1.0) + (i-3) ));
 };
 
+fast_polyblep(t) = polyblep_real(t)
+with {
+	table_size = 16384;
+
+	polynomial(t) = select2( t > 0, 
+				((t*t)/2 + t + 0.5), 
+				(t - (t*t)/2 - 0.5));
+
+	polynomial_from_idx(i) = i*2.0/table_size-1 : polynomial;
+
+	polyblep_table(i) = rdtable(table_size, polynomial_from_idx, +(1) ~ _ : -(1));
+
+	polyblep_real(t) = (t+1)/2.0*float(table_size) <: (polyblep_table(floor) + polyblep_table(ceil))/2;
+};
+
+process = zero_to_one(2048) * 2 - 1 : fast_polyblep;
+
+//process = fast_polyblep( 2.4 / 1923.4);
+
 polyblep_square(freq) = (phase ~ _) : naive_square : (polyb_it ~ _) : (!, _)
 with {
 	q = float(freq)/float(SR);
 	phase = +(q) : fmod(_, 1.0);
 
+	polyblep_function(t) = select2( t > 0, 
+					((t*t)/2 + t + 0.5), 
+					(t - (t*t)/2 - 0.5));
+	polyblep_table_size = 16384;
+	polyblep_table_idx_to_value(i) = int((i*2.0)/polyblep_table_size-1);
+	polyblep_table_value_to_idx(t) = int((t+1)/2.0*float(polyblep_table_size));
+	polyblep_table(i) = rdtable(polyblep_table_size, polyblep_function, polyblep_table_idx_to_value(i));
+
+	polyblep_real(t) = (t+1)/2.0*float(polyblep_table_size) <: (polyblep_table(floor) + polyblep_table(ceil))/2;
+/*
 	polyblep_real(t) = 
 		select2(t < -1, 
 			select2(t > 1, 
@@ -135,8 +164,8 @@ with {
 					(t - (t*t)/2 - 0.5))
 				,0)
 			,0);
-
-	polyblep(t) = polyblep_real( t / q) * 2;
+*/
+	polyblep(t) = polyblep_real( t / q);
 
 	naive_square(ph) = ph, select2( ph < 0.5, -1.0, 1.0);
 
@@ -149,21 +178,22 @@ with {
 	// Detects square wave discontinuities by checking whether phase has went past 0 or 0.5
 	// delays signal by one.
 	polyb_it(prev, ph, x) = 
-		select3(selector(ph),
+		selector(ph) <:
+		select3(_,
 			x,
-			x + polyblep(ph) - 0,
-			x - polyblep(ph - 0.5) - 0), 
-		select3(selector(ph), 
+			x + polyblep(ph) * 2,
+			x - polyblep(ph - 0.5) * 2), 
+		select3(_,
 			prev, 
-			prev + polyblep(ph' - 1.0) + 0, 
-			prev - polyblep(ph' - 0.5) + 0);
+			prev + polyblep(ph' - 1.0) * 2, 
+			prev - polyblep(ph' - 0.5) * 2);
 
 };
 //process = polyblep_square(440.3);
 //process = polyblep_square(8123.1);
 //process = polyblep_square(5053);
 //process = polyblep_square(2399) * 0.8;
-process = polyblep_square(3726);
+//process = polyblep_square(3726);
 //process = polyblep_square(vslider("frequency", 440.0, 10.0, 30000.0, 5.0)) * 0.2;
 
 	polyblep_uff(t) = 
@@ -215,4 +245,11 @@ process = gulash;
 
 //process = blep_naive_square(4);
 
+/*
 
+decimal(x)      = x - floor(x);
+phase(freq)     = freq/float(samplingfreq) : (+ : decimal) ~ _ : *(float(tablesize));
+
+
+process = phase(440);
+*/
