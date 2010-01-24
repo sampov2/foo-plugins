@@ -18,3 +18,14 @@ yc20-plotter: *.dsp
 	$(CXX) $(CFLAGS) gen/yc20-plot.cpp -o yc20-plotter
 	echo './yc20-plotter -n 1000 > dump && bash cat dump  | sed "s/\t/\n/g" | grep -v ^$ > dump2 && gnuplot'
 
+blep-plot: blep.dsp
+	rm -rf blep-svg
+	faust -svg -a plot.cpp blep.dsp > gen/blep-plot.cpp
+	$(CXX) -I. $(CFLAGS) gen/blep-plot.cpp -o blep-plotter
+
+blep-jack: blep.dsp
+	rm -rf blep-svg
+	faust -svg -a jack-gtk.cpp blep.dsp > gen/blep-jack.cpp
+	$(CXX) $(CFLAGS) gen/blep-jack.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blep-jack
+
+
