@@ -8,19 +8,19 @@ with {
 
 zero_to_one(n) = at_frame / n;
 
-fast_polyblep(t) = polyblep_real(t)
+fast_polyblep(z) = polyblep_lookup
 with {
-	table_size = 16384;
+	table_size = int(16384);
 
 	polynomial(t) = select2( t > 0, 
 				((t*t)/2 + t + 0.5), 
 				(t - (t*t)/2 - 0.5));
 
-	polynomial_from_idx(i) = i*2.0/table_size-1 : polynomial;
+	polynomial_from_idx(i) = float(i)*2.0/float(table_size)-1.0 : polynomial;
 
-	polyblep_table(i) = rdtable(table_size, polynomial_from_idx, +(1) ~ _ : -(1));
+	polyblep_table = rdtable(table_size, polynomial_from_idx, int(+(1) ~ _ : -(1)));
 
-	polyblep_real(t) = (t+1)/2.0*float(table_size) <: (polyblep_table(floor) + polyblep_table(ceil))/2;
+	polyblep_lookup = (z+1)/2.0*float(table_size) <: (polyblep_table(floor:int) + polyblep_table(ceil:int))/2;
 };
 
 polyblep_square_master(f, bias) = (phase ~ _) <: polyblep_square_slave, _
@@ -40,8 +40,8 @@ with {
 				   ((t*t)/2 + t + 0.5), 
 				   (t - (t*t)/2 - 0.5));
 
-	//polyblep(t) = polyblep_real( t / q);
-	polyblep(t) = fast_polyblep( t / q);
+	polyblep(t) = polyblep_real( t / q);
+	//polyblep(t) = fast_polyblep( t / q);
 
 	naive_square(ph) = ph, select2( ph < 0.5, -1.0, 1.0);
 
@@ -67,11 +67,10 @@ with {
 };
 
 
-
 //process = zero_to_one(2048) * 2 - 1 : fast_polyblep;
 
 //process = fast_polyblep( 2.4 / 1923.4);
-
+/*
 phase_divisor(ph) = slow_accumulator(ph) / 2.0
 with {
         slow_accumulator(x) = (prevphase(x) ~ _) + x;
@@ -80,4 +79,43 @@ with {
 };
 
 process = polyblep_square_master(3440.1, 1.0) : _, (phase_divisor : polyblep_square_slave);
+*/
+// almost right, but it starts from the wrong note
+tet12(note) = 440*8 * 2.0^((note + 1) / 12.0);
 
+import ("divider.dsp");
+import ("biquad.dsp");
+import ("wave_transformer.dsp");
+
+entropy = noise : biquad_lp(3.0) : *(log(1.005)) : +(1);
+/*
+entropy = noise
+	: biquad_lp(hslider("entropy lp", 0.1, 0.1, 100.0, 0.1)) 
+	: *(log(hslider("entropy", 0.0, 0.0, 1.0, 0.01)+1)) 
+	: +(1);
+*/
+
+ac_noise = (+(50/float(SR)) ~ _) : fmod(_, 1.0) <: select2(_ < 0.5, 0, _) : *(2*PI) : sin : *(hslider("ac noise", 0.0, 0.0, 1.0, 0.01)); 
+
+
+sine(freq) = (+(freq/float(SR)) ~ _) : fmod(_, 1.0) : *(2*PI) : sin;
+tri(freq) = 0.25 + (+(freq/float(SR)) ~ _) : fmod(_, 1.0) <: select2(_ < 0.5, 1-(_-0.5)*2*2, _*2*2-1);
+
+
+
+
+sin_tri = hslider("sin/tri",0.0,0.0,1.0,0.01);
+
+ac_bias_amount    = 0.0005;
+//ac_bias_amount    = hslider("ac bias", 0.0, 0.0, 1.0, 0.001) / 10; // 0.003
+pure_noise_amount = 0.0015;
+//pure_noise_amount = hslider("pure noise",0.0, 0.0, 1.0, 0.001);
+
+//ac = sine(100) * (1-sin_tri) + tri(100) *sin_tri : *(log(1+ac_bias_amount));
+ac = sine(50) : abs : *(log(1+ac_bias_amount));
+
+process = polyblep_square_master(tet12(2), entropy + ac) : divider 
+	: par(i, 8, +(ac_noise)) // : wave_transformer_I1;
+	: par(i, 8, +(noise * pure_noise_amount))
+	: par(i, 8, *(0.2));
+//	: par(i, 8, *(button("on_off")));
