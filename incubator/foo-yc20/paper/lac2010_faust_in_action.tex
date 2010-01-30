@@ -106,17 +106,15 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
 
 \end{tabular}
 \caption{Amount of PolyBLEP calculations per second for a square wave at Fs = 44.1kHz. 
-(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous sample and current sample for both discontinuities.
+(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous and current sample for both discontinuities.
 (B) an ideal implementation without branching where only one PolyBLEP is evaluated per frame.
 (C) is the number of required PolyBLEP calculations.  }\label{table:polyblep-amount}
  \end{center}
 \end{table}
 
-To be able to run this emulation in real time, I was forced to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
+To be able to run this emulation in real time, I had to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
 
-
-
-
+The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a digital RC filter emulation\cite{rc-filter} \cite{rc-irc}.
 
 
 
