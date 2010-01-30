@@ -78,15 +78,5 @@ biquad_hp(cutoff,x) = (biquad_hp_params(SR, 3.0, cutoff), x) : biquad_run ~ _;
 biquad_lp(cutoff,x) = (biquad_lp_params(SR, 3.0, cutoff), x) : biquad_run ~ _;
 
 
-// Passive RC filter "simulations"
-
-passive_rc_freq(r, uf) = 1/(2 * PI * r * capacitance)
-with {
-	capacitance = uf / 1000000;
-};
-
-
-passive_lp(r, uf) = biquad_lp(passive_rc_freq(r,uf));
-passive_hp(r, uf) = biquad_hp(passive_rc_freq(r,uf));
 
 
