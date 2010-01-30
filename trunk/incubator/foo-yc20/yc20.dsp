@@ -9,6 +9,7 @@ declare copyright "(c)Sampo Savolainen 2009";
 import ("music.lib");
 
 import ("rc_filter.dsp");
+import ("biquad.dsp");
 
 import ("vibrato.dsp");
 import ("oscillator.dsp");
@@ -34,9 +35,22 @@ import ("mixer.dsp");
 //  vibrato (speed and depth controls)
 //  touch vibrato
 
-oscillator_bias = hslider("oscillator bias",1.0, 0.1, 2.0, 0.001) + vibrato;
+// a bit of performance can be gained by this
+//modone = fmod(_, 1.0);
+modone = _ <: _ - floor;
+
+instability = noise * hslider("instability", 0.0, 0.0, 1.0, 0.001);
+
+// 50Hz rectified wave. To avoid abs(), we run the a half-wave sine at 100Hz instead.
+ac_noise = ( (+(100.0/float(SR)) : modone) ~ _) : *(PI) : sin : *(log(1.0015));
+
+// 
+entropy = noise : biquad_lp(3.0) : *(log(1.005)) : +(1);
+
+oscillator_bias = (1 + vibrato + ac_noise + entropy);
 
 gain = par(i, 12*8, *(0.5));
 
 process = oscillator_bias <: oscillators : dividers : wave_transformers : keyboard_slow : mixer;
+
 

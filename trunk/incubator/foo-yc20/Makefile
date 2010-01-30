@@ -8,14 +8,14 @@ LDFLAGS_LV2=-shared -Wl,-Bdynamic `pkg-config --libs lv2-plugin`
 
 all: foo-yc20-jack
 
-foo-yc20-jack: *.dsp jack-midi-gtk.cpp
+foo-yc20-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
 	rm -rf yc20-svg
 	faust -svg -a jack-midi-gtk.cpp yc20.dsp > gen/yc20.cpp
-	$(CXX) $(CFLAGS) gen/yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20-jack
+	$(CXX) -I. $(CFLAGS) gen/yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20-jack
 
 yc20-plotter: *.dsp
 	faust -a plot.cpp yc20.dsp > gen/yc20-plot.cpp
-	$(CXX) $(CFLAGS) gen/yc20-plot.cpp -o yc20-plotter
+	$(CXX) -I. $(CFLAGS) gen/yc20-plot.cpp -o yc20-plotter
 	echo './yc20-plotter -n 1000 > dump && bash cat dump  | sed "s/\t/\n/g" | grep -v ^$ > dump2 && gnuplot'
 
 blep-plot: blep.dsp
@@ -26,6 +26,6 @@ blep-plot: blep.dsp
 blep-jack: blep.dsp
 	rm -rf blep-svg
 	faust -svg -a jack-gtk.cpp blep.dsp > gen/blep-jack.cpp
-	$(CXX) $(CFLAGS) gen/blep-jack.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blep-jack
+	$(CXX) -I. $(CFLAGS) gen/blep-jack.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blep-jack
 
 
