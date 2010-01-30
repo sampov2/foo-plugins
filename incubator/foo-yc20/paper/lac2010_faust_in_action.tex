@@ -19,7 +19,7 @@
 
 \begin{abstract}
 \begin{contentsmall}
-This paper describes the working principles of a 40 year old transistor organ and how it can emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust. Thus the process of writing this emulation highlights some of Faust's strengths and shortcomings.
+This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust. Thus the process of writing this emulation highlights some of Faust's strengths and shortcomings.
 
 %This paper describes two attempts at using the functional signal processing language Faust to create real world audio tools. The first is a simple LV2 compressor plugin with integrated GUI and the second is an emulation of a 40 year old transistor organ (paraphonic subtractive synthesis). The main focus 
 
@@ -35,11 +35,11 @@ Faust, LV2, DSP, emulation
 
 \section{Introduction}
 
-Faust stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces a C++ class which is integrated into a chosen C++ "architecture". This architecture file provides a run-time environment, or wrapper, for the processing. This wrapper can be a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
+Faust\cite{orlarey:09c} stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces a C++ class which is integrated into a chosen C++ "architecture". This architecture file provides a run-time environment, or wrapper, for the processing. This wrapper can be a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
 
 I used Faust to write an emulation of a 1970's combo-organ. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for gigging musicians. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. I chose to emulate this device as I have access to one and to a service manual.
 
-This paper 
+%This paper is the result of the authors' attempt to learn Faust as well as DSP. As such, it is bound to contain naiveties and mistakes. As such, it should be viewed as an 
 
 
 \section{YC-20}
@@ -86,7 +86,7 @@ The emphasis was on creating a playable instrument which sounds as close to the 
 The 12 oscillators are square wave oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. This means each oscillator creates 8 phase-synchronized voices.
 
 % TODO: Check frequency range..
-As the main oscillator frequencies are high (3.5 - 7kHz), the square waves suffer massively from aliasing at usual sampling rates (44.1 - 96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice.
+As the main oscillator frequencies are high (3.5--7kHz), the square waves suffer massively from aliasing at usual sampling rates (44.1--96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
 
 The divider circuits are in fact slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
 
@@ -114,17 +114,23 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
 
 To be able to run this emulation in real time, I had to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
 
-The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a digital RC filter emulation\cite{rc-filter} \cite{rc-irc}.
-
-
-
-
-
-
-
+The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters\cite{rc-filter}.% \cite{rc-irc}.
 
 \subsection{Oscillator bias}
 \label{section:oscillator-bias}
+
+\subsection{Keyboard matrix mixer}
+
+The keyboard matrix mixing, while a relatively simple part, contains a lot of separate operations. Each key is a Faust button\footnote{Button output signal is 1 when the it is being pressed down and otherwise 0} connecting multiple voices to different bus bars. This means each key button used as a multiplier for 7 different voices (one for bus bar). There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
+
+In procedural languages, the matrix mixer could be efficiently written as a set of floating point tables multiplied together. In Faust however, there are no such group operations. This results in a lot of separate multiplications which are difficult for the Faust compiler to optimize.
+
+Engaging and disengaging keys is not declicked. The key switches on the real organ are just switches connecting voices to bus bars. This operation causes clicks as switches turn on and off mid-wave. I have found the non-declicked sound of the emulation to match the original surprisingly well. This might be something I will look at in a later stage though.
+
+
+% inefficient compared to a buffer * buffer operation
+% lacks semantics for this..
+
 
 \section{What did I learn?}
 
@@ -141,6 +147,8 @@ No bugs.
 Transfer of huge amounts of data trivial
 
 Readability!
+
+Reuse!
 
 
 \subsection{Things Faust needs improvement in}
