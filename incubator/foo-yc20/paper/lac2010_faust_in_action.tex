@@ -119,13 +119,20 @@ The filter bank in the real organ consists of three neary identical circuits wit
 \subsection{Oscillator bias}
 \label{section:oscillator-bias}
 
+Every oscillator naturally produces a square wave at a different frequency. However all oscillators share a single bias voltage. This bias voltage is controlled by the vibrato circuit, touch vibrato and the master pitch potentiometer.
+
+%% I am here!
+
+Touch vibrato is controlled by horizontal movement of the keys. As such MIDI keyboards are rare\footnote{The only keyboard I found claiming such capability is the Yamaha STAGEA ELS-01C, which is itself a digital organ.} this feature was left out of the emulation.
+
+
 \subsection{Keyboard matrix mixer}
 
-The keyboard matrix mixing, while a relatively simple part, contains a lot of separate operations. Each key is a Faust button\footnote{Button output signal is 1 when the it is being pressed down and otherwise 0} connecting multiple voices to different bus bars. This means each key button used as a multiplier for 7 different voices (one for bus bar). There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
+The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when the it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button used as a multiplier for 7 different voices (one for bus bar). There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
 
-In procedural languages, the matrix mixer could be efficiently written as a set of floating point tables multiplied together. In Faust however, there are no such group operations. This results in a lot of separate multiplications which are difficult for the Faust compiler to optimize.
+In procedural languages, the matrix mixer could be efficiently written as a set of floating point tables multiplied together. In Faust however, there is no such group operation. This results in a large number of separate multiplications which are difficult for the Faust compiler to optimize.
 
-Engaging and disengaging keys is not declicked. The key switches on the real organ are just switches connecting voices to bus bars. This operation causes clicks as switches turn on and off mid-wave. I have found the non-declicked sound of the emulation to match the original surprisingly well. This might be something I will look at in a later stage though.
+Engaging and disengaging keys is not declicked (or bandlimited). The key switches on the real organ are just simple switches connecting voices to bus bars. This operation causes clicks as switches open and close mid-wave. I have found the non-declicked sound of the emulation to match the original surprisingly well. This is something that could be looked at at a later stage.
 
 
 % inefficient compared to a buffer * buffer operation
