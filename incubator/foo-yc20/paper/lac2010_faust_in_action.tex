@@ -1,0 +1,174 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{lac2010}
+\sloppy
+\newenvironment{contentsmall}{\small}
+
+\title{Faust in Action}
+
+%see lac2010.sty for how to format multiple authors!
+\author
+{Sampo Savolainen % SAVOLAINEN?
+\\ Foo-plugins
+\\ http://foo-plugins.googlecode.com/
+\\ sampo.savolainen@gmail.com
+}
+
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+\begin{contentsmall}
+This paper describes the working principles of a 40 year old transistor organ and how it can emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust. Thus the process of writing this emulation highlights some of Faust's strengths and shortcomings.
+
+%This paper describes two attempts at using the functional signal processing language Faust to create real world audio tools. The first is a simple LV2 compressor plugin with integrated GUI and the second is an emulation of a 40 year old transistor organ (paraphonic subtractive synthesis). The main focus 
+
+%smoothly integrate Faust and procedural development and to offer working practices on using Faust to write applications.
+\end{contentsmall}
+\end{abstract}
+
+\keywords{
+\begin{contentsmall}
+Faust, LV2, DSP, emulation
+\end{contentsmall}
+}
+
+\section{Introduction}
+
+Faust stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces a C++ class which is integrated into a chosen C++ "architecture". This architecture file provides a run-time environment, or wrapper, for the processing. This wrapper can be a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
+
+I used Faust to write an emulation of a 1970's combo-organ. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for gigging musicians. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. I chose to emulate this device as I have access to one and to a service manual.
+
+This paper 
+
+
+\section{YC-20}
+\label{section:yc-20}
+
+This section covers the operations of the organ in great detail. This is section is later referred to when discussing the emulated parts.
+
+\subsection{Features}
+
+The organ has one physical manual with 61 keys and two sound sections and a switchable bass manual. Section I has drawbars 16', 8', 4', 2-2/3', 2' and 1' while section II has drawbars 16', 8', 4', 2' and a brightness control. Enabling the bass manual switches the lowest 17 keys (white on black) to bass sounds with drawbars 16' and 8'. There are also controls for pitch, volume, bass volume, vibrato, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal.
+
+% the style of controls? .. probably irrelevant
+\subsection{Tone generation}
+
+The synthesizer architecture comprises of 12 oscillators, one per each note on an octave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. These voices are then fed through a passive filter bank. The divided voices have both a high pass and low pass filters while the oscillator voices have only a high pass filter. This totals 180 resistor-capacitor networks. Filtered voices are connected to switches controlled by the keyboard. The keyboard is in fact a matrix mixer connecting the voices to bus bars. Keys feed each bus bar with the appropriate octave or harmonic.
+
+\subsection{Sections}
+
+The drawbars are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with rc networks. One stream is low pass filtered with two stages while the other has two stages of high pass filtering. The low passed and high passed signals from different drawbars are then combined and buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
+
+The switches on the lowest 17 keys feed either the main bus bars or separate bass bus bars. This is controlled by the bass manual switch. When disabled, the bass bus bars contain no signal. When enabled, the bass keys have no effect on the main bus bars.
+
+Bass manual differs from the two main sections in that both bass manual drawbars (16' and 8') contain a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars, with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars are wired center-tap to source. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it varies the impedance of the signal. The varying impedance and capacitor after summing the drawbar signals makes the network into a fairly complex rc filter with a varying cutoff point and mix amount per bass bus bar.
+
+\subsection{Percussion}
+
+% Still a bit iffy
+Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. This sum is then ran through a VCA controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack and release timings are very fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato.
+
+% As the bass manual switch disengages bass keys from the main bus bars
+
+\subsection{Main output}
+
+The main output of the device is a mix of sections I and II, the percussion part and the bass manual. The mix between sectioions I and II is controlled by the balance potentiometer. The amount of percussion mixed in is controlled by the percussion drawbar. Bass manual is summed into the main output via a potentiometer controlling its volume. This main output is preamplified and then can be attenuated by both the main volume potentiometer of the device and the volume pedal. The volume pedla works by a mechanical shutter and a light dependent resistor.
+
+\section{The emulation} 
+
+I chose Faust to emulate the organ as the organ is effectively an "always on" design. Unlike with polyphonic synthesizers, all possible voices of the organ are always running. There is a large amount of streams transferred between the circuits and Faust's modus operandi fits this design well. The emulation tries not only to emulate the ideal circuit but also some of the inaccuracies and issues caused in the real instrument. 
+
+The emphasis was on creating a playable instrument which sounds as close to the original as possible. A playable emulation needs to be able to work at low latencies and it needs to be efficient enough to be ran on fairly typical hardware.
+
+\subsection{Tone generation}
+
+The 12 oscillators are square wave oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. This means each oscillator creates 8 phase-synchronized voices.
+
+% TODO: Check frequency range..
+As the main oscillator frequencies are high (3.5 - 7kHz), the square waves suffer massively from aliasing at usual sampling rates (44.1 - 96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice.
+
+The divider circuits are in fact slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
+
+PolyBLEP works by adding the polynomial band-limited step function to two samples: the sample before and after a discontinuity in the signal. To achieve this, the Faust implementation delays its output by one sample. At each frame, the phase is inspected and if it has passed a discontinuity, the PolyBLEP function is calculated and added (rising wave) or subtracted (falling wave) for the previous sample and the current sample. As Faust lacks true branches, all possible branches of conditional statements are always calculated. Table \ref{table:polyblep-amount} shows that branching would allow an efficient solution. This is because without branching the amount of PolyBLEP evaluations is purely a function of the sampling rate while the amount of required evaluations is a function of the signal frequency. As the PolyBLEP function is stateless, the mathematical correctness of the implementation would be intact even as the function would be only conditionally evaluated.
+
+\begin{table}[h]
+ \begin{center}
+\begin{tabular}{|l|l|l|l|}
+
+      \hline
+      Frequency & (A)        &  (B)         & (C) \\
+      \hline\hline
+      5kHz     & 176 400     & 44 100       & 10 000\\
+      1kHz     & 176 400     & 44 100       &  2 000\\
+      500Hz    & 176 400     & 44 100       &  1 000\\
+      \hline
+
+\end{tabular}
+\caption{Amount of PolyBLEP calculations per second for a square wave at Fs = 44.1kHz. 
+(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous sample and current sample for both discontinuities.
+(B) an ideal implementation without branching where only one PolyBLEP is evaluated per frame.
+(C) is the number of required PolyBLEP calculations.  }\label{table:polyblep-amount}
+ \end{center}
+\end{table}
+
+To be able to run this emulation in real time, I was forced to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Oscillator bias}
+\label{section:oscillator-bias}
+
+\section{What did I learn?}
+
+Bar
+
+%fmod?
+
+\subsection{Benefits of Faust}
+
+Functional thinking suits audio very well.
+
+No bugs.
+
+Transfer of huge amounts of data trivial
+
+Readability!
+
+
+\subsection{Things Faust needs improvement in}
+
+Branchless select2 and select3 are cool, but sometimes true branches are required.
+Documentation on the more advanced functions could be a lot better: rdtable, rwtable.
+Compiler error messages.
+Re-use of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
+
+DFT and inverse DFT. I want better band-limiting.
+
+\section{Conclusions}
+
+Concluding text.
+
+\section{Acknowledgements}
+
+Thanks to Petri Junno for help and discussions on the design of both the original organ and the emulation.
+
+Torben Hohn, Sakari Bergen
+
+% alias?
+% Yann/Sletz?
+
+
+\bibliographystyle{acl}
+\bibliography{lac2010_faust_in_action}
+
+\end{document}
