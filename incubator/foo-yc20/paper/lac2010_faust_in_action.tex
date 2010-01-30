@@ -19,11 +19,8 @@
 
 \begin{abstract}
 \begin{contentsmall}
-This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust. Thus the process of writing this emulation highlights some of Faust's strengths and shortcomings.
+This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust, thus the process of writing this emulation highlighted some of Faust's strengths and shortcomings.
 
-%This paper describes two attempts at using the functional signal processing language Faust to create real world audio tools. The first is a simple LV2 compressor plugin with integrated GUI and the second is an emulation of a 40 year old transistor organ (paraphonic subtractive synthesis). The main focus 
-
-%smoothly integrate Faust and procedural development and to offer working practices on using Faust to write applications.
 \end{contentsmall}
 \end{abstract}
 
@@ -86,7 +83,7 @@ The emphasis was on creating a playable instrument which sounds as close to the 
 The 12 oscillators are square wave oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. This means each oscillator creates 8 phase-synchronized voices.
 
 % TODO: Check frequency range..
-As the main oscillator frequencies are high (3.5--7kHz), the square waves suffer massively from aliasing at usual sampling rates (44.1--96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
+As the main oscillator frequencies are high (7--14kHz), the square waves suffer massively from aliasing at typical sampling rates (44.1--96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
 
 The divider circuits are in fact slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
 
@@ -121,6 +118,7 @@ The filter bank in the real organ consists of three neary identical circuits wit
 
 Every oscillator naturally produces a square wave at a different frequency. However all oscillators share a single bias voltage. This bias voltage is controlled by the vibrato circuit, touch vibrato and the master pitch potentiometer.
 
+Vibrato control voltage is created by a sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range, which was simply measured from the real device, is 5-8Hz.
 %% I am here!
 
 Touch vibrato is controlled by horizontal movement of the keys. As such MIDI keyboards are rare\footnote{The only keyboard I found claiming such capability is the Yamaha STAGEA ELS-01C, which is itself a digital organ.} this feature was left out of the emulation.
