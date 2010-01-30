@@ -14,7 +14,7 @@ with {
 	position_at_wave(freq,c) = wavelength(freq) + c;
 
 	// square wave so half of the waveform is at 1.0 and the other half at -1.0
-	sine_wave_oscillator(freq) = sin ( (position_at_wave(freq) ~ fmod(_,1.0)) * 2 * PI );
+	sine_wave_oscillator(freq) = sin ( (position_at_wave(freq) ~ modone) * 2 * PI );
 
 	vibrato_speed = sine_wave_oscillator(5.0 + 3*control_speed);
 
