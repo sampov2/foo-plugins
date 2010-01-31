@@ -34,9 +34,30 @@ float square_blep_prev(int select, float prev, float ph_1, float q)
 	case 1:
 		return prev + polyblep_it((ph_1 - 1.0)/q) * 2;
 	case 2:
-		return prev - polyblep_it((ph_1 - 0.5)/q) * 2;
 	default:
-		fprintf(stderr,"square_blep_prev(%d,%f,%f,%f)\n",select,prev,ph_1,q);
-		return -100;
+		return prev - polyblep_it((ph_1 - 0.5)/q) * 2;
+	}
+}
+
+
+float saw_blep_x(int select, float x, float ph, float q)
+{
+	switch(select) {
+	case 0:
+		return x;
+	case 1:
+	default:
+		return x + polyblep_it(ph / q)*2;
+	}
+}
+
+float saw_blep_prev(int select, float prev, float ph_1, float q)
+{
+	switch(select) {
+	case 0:
+		return prev;
+	case 1:
+	default:
+		return prev + polyblep_it((ph_1 - 1.0)/q) * 2;
 	}
 }
