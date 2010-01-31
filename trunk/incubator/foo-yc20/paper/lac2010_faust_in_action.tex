@@ -1,5 +1,7 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage{lac2010}
+\usepackage{amssymb,amsmath}
+
 \sloppy
 \newenvironment{contentsmall}{\small}
 
@@ -42,7 +44,7 @@ I used Faust to write an emulation of a 1970's combo-organ. The Yamaha YC-20 is 
 \section{YC-20}
 \label{section:yc-20}
 
-This section covers the operations of the organ in great detail. This is section is later referred to when discussing the emulated parts.
+This section covers the operations of the organ in detail\cite{yamaha:yc20}. This is section is later referred to when discussing the emulated parts.
 
 \subsection{Features}
 
@@ -80,12 +82,19 @@ The emphasis was on creating a playable instrument which sounds as close to the 
 
 \subsection{Tone generation}
 
-The 12 oscillators are square wave oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. This means each oscillator creates 8 phase-synchronized voices.
+The 12 oscillators are sawtooth oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. The flip flops naturally produce square waves. This means each oscillator creates 8 phase-synchronized voices.
 
-% TODO: Check frequency range..
-As the main oscillator frequencies are high (7--14kHz), the square waves suffer massively from aliasing at typical sampling rates (44.1--96kHz). I evaluated different methods to band-limit the oscillators and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a cleaner signal with less aliasing harmonics, it is computationally more expensive. Also, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. Bandlimiting of the divider circuits was also a factor in the choice. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
+As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing at typical sampling rates (44.1--96kHz). Naturally, also the dividers need to be band-limited as well. I evaluated different methods to band-limit the signals and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a less aliasing harmonics, it is computationally more expensive. More importantly, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
 
-The divider circuits are in fact slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
+I evaluated second, third and fourth order polynomial functions for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore the second order function did not create the sub-harmonics the third and fourth order functions caused. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{polyblep:chosen}.
+
+\begin{equation}
+\label{polyblep:chosen}
+r(t) = \begin{cases} 	t^2/2  + t + 1/2, & \mbox{if } -1 \leq t \leq 0\\ 
+			-t^2/2 + t - 1/2, & \mbox{if } 0 < t \leq 1 \end{cases}
+\end{equation}
+
+The divider circuits emulated as slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
 
 PolyBLEP works by adding the polynomial band-limited step function to two samples: the sample before and after a discontinuity in the signal. To achieve this, the Faust implementation delays its output by one sample. At each frame, the phase is inspected and if it has passed a discontinuity, the PolyBLEP function is calculated and added (rising wave) or subtracted (falling wave) for the previous sample and the current sample. As Faust lacks true branches, all possible branches of conditional statements are always calculated. Table \ref{table:polyblep-amount} shows that branching would allow an efficient solution. This is because without branching the amount of PolyBLEP evaluations is purely a function of the sampling rate while the amount of required evaluations is a function of the signal frequency. As the PolyBLEP function is stateless, the mathematical correctness of the implementation would be intact even as the function would be only conditionally evaluated.
 
@@ -96,14 +105,14 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
       \hline
       Frequency & (A)        &  (B)         & (C) \\
       \hline\hline
-      5kHz     & 176 400     & 44 100       & 10 000\\
-      1kHz     & 176 400     & 44 100       &  2 000\\
-      500Hz    & 176 400     & 44 100       &  1 000\\
+      5kHz     & 352 800     & 44 100       & 10 000\\
+      1kHz     & 352 800     & 44 100       &  2 000\\
+      500Hz    & 352 800     & 44 100       &  1 000\\
       \hline
 
 \end{tabular}
 \caption{Amount of PolyBLEP calculations per second for a square wave at Fs = 44.1kHz. 
-(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous and current sample for both discontinuities.
+(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous and current sample for both discontinuities. The branched nature of the residual function multiplies this number further by a factor of two.
 (B) an ideal implementation without branching where only one PolyBLEP is evaluated per frame.
 (C) is the number of required PolyBLEP calculations.  }\label{table:polyblep-amount}
  \end{center}
