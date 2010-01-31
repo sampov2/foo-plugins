@@ -33,14 +33,6 @@ with {
 		selector(ph) <:
 			saw_blep_x   (_, x,    ph,  q) ,
 			saw_blep_prev(_, prev, ph', q);
-/*
-                select2(_,
-                        x,
-                        x + polyblep(ph) * 2),
-                select2(_,
-                        prev, 
-                        prev + polyblep(ph' - 1.0) * 2);
-*/
 
 	saw_blep_x    = ffunction (float saw_blep_x   (int, float, float, float), "polyblep.cpp", "");
 	saw_blep_prev = ffunction (float saw_blep_prev(int, float, float, float), "polyblep.cpp", "");
