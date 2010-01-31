@@ -25,11 +25,12 @@ with {
 		select2( sig' < threshold, 0, 1));
 
 
-	envelope_speed = 1.1;
+	envelope_speed = 0.1;
 	envelope_coeff = envelope_speed : exp(1) / (1.5 * float(SR) * _) : (1 - _);
-	envelope_rms = int(max(22050,min(192000,SR)) * 0.005);
 
 	apply_envelope = +(_*(1-envelope_coeff)) ~ *(envelope_coeff) 
-			: *(1/(1-envelope_coeff)) 
-			: rms(envelope_rms) : max(1.0);
+			: *(1/(1-envelope_coeff)) : min(1.0)
+			: sum_it;
+
+	sum_it(x) = x + x'' + x''' + x'''' + x''''' + x'''''' : /(6.0);
 };
