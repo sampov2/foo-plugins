@@ -47,13 +47,12 @@ ac_noise = ( (+(100.0/float(SR)) : modone) ~ _) : *(PI) : sin : *(log(1.0015));
 // Entropy
 entropy = noise : biquad_lp(3.0) : *(log(1.0005));
 
-oscillator_bias = (1 + vibrato + ac_noise + entropy);
-//oscillator_bias = (1 + vibrato + ac_noise);
+//oscillator_bias = (1 + vibrato + ac_noise + entropy);
+oscillator_bias = (1 + vibrato + ac_noise);
 
 gain = par(i, 12*8, *(0.5));
 
 process = oscillator_bias <: oscillators : dividers : wave_transformers : keyboard_slow : mixer;
 
 //process = oscillator_bias <: oscillators <: _, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !, !;
-
 
