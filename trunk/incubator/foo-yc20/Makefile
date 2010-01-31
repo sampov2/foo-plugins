@@ -13,17 +13,17 @@ foo-yc20-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
 	faust -svg -a jack-midi-gtk.cpp yc20.dsp > gen/yc20.cpp
 	$(CXX) -I. $(CFLAGS) gen/yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20-jack
 
-yc20-plotter: *.dsp
+yc20-plotter: *.dsp polyblep.cpp
 	faust -a plot.cpp yc20.dsp > gen/yc20-plot.cpp
 	$(CXX) -I. $(CFLAGS) gen/yc20-plot.cpp -o yc20-plotter
 	echo './yc20-plotter -n 1000 > dump && bash cat dump  | sed "s/\t/\n/g" | grep -v ^$ > dump2 && gnuplot'
 
-blep-plot: blep.dsp
+blep-plot: blep.dsp polyblep.cpp
 	rm -rf blep-svg
 	faust -svg -a plot.cpp blep.dsp > gen/blep-plot.cpp
 	$(CXX) -I. $(CFLAGS) gen/blep-plot.cpp -o blep-plotter
 
-blep-jack: blep.dsp
+blep-jack: blep.dsp polyblep.cpp
 	rm -rf blep-svg
 	faust -svg -a jack-gtk.cpp blep.dsp > gen/blep-jack.cpp
 	$(CXX) -I. $(CFLAGS) gen/blep-jack.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blep-jack
