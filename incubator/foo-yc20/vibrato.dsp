@@ -18,5 +18,5 @@ with {
 
 	vibrato_osc = sine_wave_oscillator(5.0 + 3*control_speed);
 
-	vibrato_amount = 0.0001 + 0.0199 * control_amount;
+	vibrato_amount = 0.0001 + 0.0149 * control_amount;
 };
