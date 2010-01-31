@@ -17,6 +17,7 @@ import ("divider.dsp");
 import ("wave_transformer.dsp");
 import ("keyboard.dsp");
 import ("mixer.dsp");
+import ("percussion.dsp");
 
 
 /*

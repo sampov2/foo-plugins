@@ -1,5 +1,6 @@
 
-balance_control = hslider("balance", 1.0, 0.0, 1.0, 0.25);
+balance_control    = hslider("balance", 1.0, 0.0, 1.0, 0.25);
+percussion_control = hslider("percussion", 1.0, 0.0, 1.0, 0.25);
 
 manual_i_1     = hgroup("i", vslider("[7]1'",     0.5,  0.0, 1.0, 0.25));
 manual_i_1_3p5 = hgroup("i", vslider("[6]1 3/5'", 0.0,  0.0, 1.0, 0.25));
@@ -22,7 +23,9 @@ manual_bass_16 = hgroup("bass", vslider("[1]16'", 1.0,  0.0, 1.0, 0.25));
 
 mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 0.2 * hslider("volume", 0.1, 0.0, 1.0, 0.1));
 
-mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) = balance(manual_i, manual_ii) + percussion
+mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
+	= balance(manual_i, manual_ii) + percussion
+	: *(0.01 + 0.2 * hslider("volume", 0.1, 0.0, 1.0, 0.1))
 with {
 	balance = (_ * balance_control) + (_ * (balance_control-1));
 
@@ -52,11 +55,13 @@ with {
 			(passive_hp(39000, 0.0027) : passive_hp(39000, 0.0027)));
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
-			hp2+hp4+hp8+hp16, lp2+lp4+lp8+lp16;
+			hp2 + hp4 + hp8 + hp16, 
+			lp2 + lp4 + lp8 + lp16;
 
-	// TODO: percussion
-
-	percussion = 0;
+	percussion =
+		   bus_1 / 3.0 + bus_2_2p3 + bus_16 
+		: *(percussion_envelope(bus_1))
+		: *(percussion_control);
 };
 
 
