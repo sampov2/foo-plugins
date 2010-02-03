@@ -1,0 +1,14 @@
+outfile = strcat(basename, ".data");
+wavefile = strcat(basename, ".wav");
+
+data = log(abs(fft(wavread(wavefile))));
+indexes = [1:1:length(data)/2];
+cut_fft = data(indexes);
+
+plot(cut_fft);
+
+ 
+    fd = fopen(outfile, "wt");
+    fprintf(fd, "%14.6f\n", cut_fft);
+    fclose(fd);
+    disp("Done!");
