@@ -1,0 +1,4 @@
+set format x '%.0fHz'
+set format y '%.1fdB'
+coeff_db(x)=20*log10(x)
+plot 'DATAFILE' using ($0*(SAMPLERATE/2.0/DATALENGTH)):(coeff_db($1)-MAXSAMPLE) with lines title 'TITLE'
