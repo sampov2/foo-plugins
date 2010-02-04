@@ -32,13 +32,12 @@ Faust, LV2, DSP, emulation
 \end{contentsmall}
 }
 
-I
 \section{Introduction}
 
 Faust\cite{orlarey:09c} stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces a C++ class which is integrated into a chosen C++ "architecture". This architecture file provides a run-time environment, or wrapper, for the processing. This wrapper can be a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
 
 %% TODO choose license
-This paper describes how an emulation of a 1970's combo-organ was written in Faust. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for gigging musicians. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. The emulation is written as open source as GPLv3. The process of writing the emulation is also open in the sense that it is described in this paper.
+This paper describes how an emulation of a 1970's combo-organ was written in Faust. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for gigging musicians. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. The emulation is written as open source as GPLv3. In the spirit of open source, the working principles and decisions taken during writing the emulation are described in this paper for all to read.
 
 The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of parallel processes and components. This makes for a good test of Fausts performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it made possible to match the emulation quality against the original. 
 
@@ -49,7 +48,9 @@ This section covers the operations of the organ in detail\cite{yamaha:yc20}. Thi
 
 \subsection{Features}
 
-The organ has one physical manual with 61 keys and two sound sections and a switchable bass manual. Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' while section II has drawbars 16', 8', 4', 2' and a brightness control. Enabling the bass manual switches the lowest 17 keys (white on black) to bass sounds with drawbars 16' and 8'. There are also controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal.
+The organ has one physical manual with 61 keys and two sound sections and a switchable bass manual. Instead of drawbars like Hammond organs, the sounds are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ sounds, I use it instead of lever. Each of the drawbar lever in the organ have four positions from off to full volume. 
+
+Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass sounds with drawbars 16' and 8'. There are also controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
 
 % the style of controls? .. probably irrelevant
 \subsection{Tone generation}
@@ -57,6 +58,7 @@ The organ has one physical manual with 61 keys and two sound sections and a swit
 The synthesizer architecture comprises of 12 oscillators, one per each note on an octave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. These voices are then fed through a passive filter bank. The divided voices have both a high pass and low pass filters while the oscillator voices have only a high pass filter. This totals 180 resistor-capacitor networks. Filtered voices are connected to switches controlled by the keyboard. The keyboard is in fact a matrix mixer connecting the voices to bus bars. Keys feed each bus bar with the appropriate voice matching that key and octave or the matching harmonic voice for the 2-2/3' and 1-3/5' drawbars. 
 
 \subsection{Sections}
+\label{section:sections}
 
 The drawbars are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with rc networks. One stream is low pass filtered with two stages while the other has two stages of high pass filtering. The low passed and high passed signals from different drawbars are then combined and buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
 
@@ -67,7 +69,7 @@ Bass manual differs from the two main sections in that both bass manual drawbars
 \subsection{Percussion}
 
 % Still a bit iffy
-Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. This sum is then ran through a VCA controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack and release timings are very fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato.
+Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. This sum is then ran through a VCA controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack and release timings are very fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato. However there is a substantial amount of bleed from the percussion section which is audible when all other drawbars are off.
 
 % As the bass manual switch disengages bass keys from the main bus bars
 
@@ -87,10 +89,10 @@ The 12 oscillators are sawtooth oscillators with a varying bias voltage (see sec
 
 As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing at typical sampling rates (44.1--96kHz). Naturally, also the dividers need to be band-limited as well. I evaluated different methods to band-limit the signals and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a less aliasing harmonics, it is computationally more expensive. More importantly, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
 
-I evaluated second, third and fourth order polynomial functions for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore the second order function did not create the sub-harmonics the third and fourth order functions caused. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{polyblep:chosen}.
+I evaluated second, third and fourth order polynomial functions for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore the second order function did not create the sub-harmonics the third and fourth order functions caused. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
 
 \begin{equation}
-\label{polyblep:chosen}
+\label{eq:polyblep}
 r(t) = \begin{cases} 	t^2/2  + t + 1/2, & \mbox{if } -1 \leq t \leq 0\\ 
 			-t^2/2 + t - 1/2, & \mbox{if } 0 < t \leq 1 \end{cases}
 \end{equation}
@@ -121,7 +123,10 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
 
 To be able to run this emulation in real time, I had to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
 
-The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters\cite{rc-filter}.% \cite{rc-irc}.
+The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters.
+
+%% TODO
+INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
 
 \subsection{Oscillator bias}
 \label{section:oscillator-bias}
@@ -131,16 +136,11 @@ Every oscillator naturally produces a square wave at a different frequency. Howe
 Vibrato control voltage is created by a sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range, which was simply measured from the real device, is 5-8Hz. The vibrato depth is simply an attenuation control for the vibrato oscillator output.
 
 %% TODO. I am here!
-However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is done by mixing a rectified 50hz sine wave to the oscillator bias.
+However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
+%% TODO: (C) not done yet!
 
-\emph{There will be some plots here of the real and emulated oscillators}
-
-%% 146hz, wrong! fft scale is not 1:1 with hz, of course
-
-%% TODO: insert pic here
-
-%% I am here!
-
+%% TODO
+INSERT FFT PLOTS HIGHLIGHTING FUNDAMENTALS AND FREQ MODULATION
 
 
 \subsection{Keyboard matrix mixer}
@@ -155,24 +155,49 @@ Writing the keyboard matrix mixer also revealed an issue with the service manual
 
 % lacks semantics for this..
 
+\subsection{Section I}
+\label{section:section-I}
+Section I is just an unfiltered mix of bus bars mixed together through the drawbar potentiometers and additional resistors. Thus it requires only to emulate the drawbar potentiometer taper. The taper was measured from the real organ by playing a stable note with all drawbars off except one drawbar which tested all three positions. Compared to full volume, the two middle positions were measured at -12dB and -18dB.
+
+This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (fully engaged). The function returns a gain coefficient usable in the simulation. The function roughly emulates the taper and can be usad with the slider controls. Further work on a graphical user interface could provide the four position levers.
+
+\begin{equation}
+\label{eq:levertransfer}
+\mbox{coeff}(p) = 2.81 x^3 - 2.81 x^2 + x
+\end{equation}
+
+%\mbox{where }p\mbox{ is lever position from 0 (off) to 1}
+
+% TODO: this hasn't been implemented yet
+
 \subsection{Section II}
+
+As described earlier in section \ref{section:sections}, Section II has controllabel brightness. This is achieved through dividing each bus bar into highpassed and lowpassed streams. These streams are then mixed together into bright and dull streams. The brightness control is a simple balance mix of the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use center positions dramatically.
+
+INSERT FILTERING ONCE IT'S DONE
+
+The section II drawbar levers are emulated as described in section \ref{section:section-I}.
 
 % Brightness
 
-
 \section{Performance}
 
-\section{What did I learn?}
+GCC flags.
 
-Bar
+Faust flags. Especially SMP flags.
 
-%fmod?
+How to measure?
+
+\section{Conclusions}
+
+Blah blah.
+
 
 \subsection{Benefits of Faust}
 
 Functional thinking suits audio very well.
 
-No bugs.
+No stupid typical procedural bugs.
 
 Transfer of huge amounts of data trivial
 
@@ -180,29 +205,26 @@ Readability!
 
 Reuse!
 
+SVG is a good learning / debugging tool.
+
 
 \subsection{Things Faust needs improvement in}
 
-Branchless select2 and select3 are cool, but sometimes true branches are required.
-Documentation on the more advanced functions could be a lot better: rdtable, rwtable.
+Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
+
+Documentation on the more advanced functions could be a lot better: recursion, rdtable, rwtable.
+
 Compiler error messages.
-Re-use of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
 
-DFT and inverse DFT. I want better band-limiting.
+DFT and inverse DFT. (I want better band-limiting.)
 
-\section{Conclusions}
-
-Concluding text.
+Size of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
 
 \section{Acknowledgements}
 
-Thanks to Petri Junno for help and discussions on the design of both the original organ and the emulation.
+Thanks to Petri Junno for all the help with analyzing the original organ. I would also like to thank Torben Hohn, Sakari Bergen for providing support and answering my sometimes naive questions. %Also thanks to Yann Orlarey for helpful com
 
-Torben Hohn, Sakari Bergen
-
-% alias?
-% Yann/Sletz?
-
+% Yann
 
 \bibliographystyle{acl}
 \bibliography{lac2010_faust_in_action}
