@@ -39,27 +39,34 @@ with {
 
 	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness);
 
+	//shelf_mix = 0.5; // 0.6 about
+	shelf_mix = 0.6;
+	//shelf_mix = vslider("brightness shelf",0.5,0.0,1.0,0.001);
 	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
 		(bus_2    * manual_ii_2 <:
 			(passive_lp(10000, 0.039) : passive_lp(10000, 0.039)),
-			(passive_hp(39000, 0.022) : passive_hp(39000, 0.022))),
+			(( _ <: passive_hp(39000, 0.022)*(1-shelf_mix) + *(shelf_mix)) 
+				: passive_hp(39000, 0.022))),
 		(bus_4    * manual_ii_4 <:
 			(passive_lp(10000, 0.022) : passive_lp(10000, 0.022)),
-			(passive_hp(39000, 0.010) : passive_hp(39000, 0.010))),
+			(( _ <: passive_hp(39000, 0.010)*(1-shelf_mix) + *(shelf_mix) )
+				: passive_hp(39000, 0.010))),
 		(bus_8    * manual_ii_8 <:
 			(passive_lp(10000, 0.010) : passive_lp(10000, 0.010)),
-			(passive_hp(39000, 0.0047) : passive_hp(39000, 0.0047))),
+			(( _ <: passive_hp(39000, 0.0047)*(1-shelf_mix) + *(shelf_mix) ) 
+				: passive_hp(39000, 0.0047))),
 		(bus_16   * manual_ii_16 <:
 			(passive_lp(10000, 0.0047) : passive_lp(10000, 0.0047)),
-			(passive_hp(39000, 0.0027) : passive_hp(39000, 0.0027)));
+			(( _ <: passive_hp(39000, 0.0027)*(1-shelf_mix) + *(shelf_mix) ) 
+				: passive_hp(39000, 0.0027)));
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
-			hp2 + hp4 + hp8 + hp16, 
-			lp2 + lp4 + lp8 + lp16;
+			((hp2 + hp4 + hp8 + hp16) : passive_hp(110000, 4.7)), 
+			((lp2 + lp4 + lp8 + lp16) : passive_hp(23500, 4.7));
 
 	percussion =
-		   bus_1 / 3.0 + bus_2_2p3 + bus_16 
+		   bus_1 / 2.0 + bus_2_2p3 + bus_16 
 		: *(percussion_envelope(bus_1))
 		: *(percussion_control);
 };
