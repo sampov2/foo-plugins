@@ -2,23 +2,25 @@
 balance_control    = hslider("balance", 1.0, 0.0, 1.0, 0.25);
 percussion_control = hslider("percussion", 1.0, 0.0, 1.0, 0.25);
 
-manual_i_1     = hgroup("i", vslider("[7]1'",     0.5,  0.0, 1.0, 0.25));
-manual_i_1_3p5 = hgroup("i", vslider("[6]1 3/5'", 0.0,  0.0, 1.0, 0.25));
-manual_i_2     = hgroup("i", vslider("[5]2'",     1.0,  0.0, 1.0, 0.25));
-manual_i_2_2p3 = hgroup("i", vslider("[4]2 2/3'", 0.5,  0.0, 1.0, 0.25));
-manual_i_4     = hgroup("i", vslider("[3]4'",     1.0,  0.0, 1.0, 0.25));
-manual_i_8     = hgroup("i", vslider("[2]8'",     1.0,  0.0, 1.0, 0.25));
-manual_i_16    = hgroup("i", vslider("[1]16'",    0.5,  0.0, 1.0, 0.25));
+gain_transfer = _ <: 2.81 * (_^3) - 2.81 * (_^2) + _;
+
+manual_i_1     = hgroup("i", vslider("[7]1'",     0.5,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_1_3p5 = hgroup("i", vslider("[6]1 3/5'", 0.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_2     = hgroup("i", vslider("[5]2'",     1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_2_2p3 = hgroup("i", vslider("[4]2 2/3'", 0.5,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_4     = hgroup("i", vslider("[3]4'",     1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_8     = hgroup("i", vslider("[2]8'",     1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_i_16    = hgroup("i", vslider("[1]16'",    0.5,  0.0, 1.0, 0.25)) : gain_transfer;
 
 brightness     = hgroup("ii", vslider("[1]bright",0.0,  0.0, 1.0, 0.25));
 
-manual_ii_2    = hgroup("ii", vslider("[5]2'",    1.0,  0.0, 1.0, 0.25));
-manual_ii_4    = hgroup("ii", vslider("[4]4'",    1.0,  0.0, 1.0, 0.25));
-manual_ii_8    = hgroup("ii", vslider("[3]8'",    1.0,  0.0, 1.0, 0.25));
-manual_ii_16   = hgroup("ii", vslider("[2]16'",   1.0,  0.0, 1.0, 0.25));
+manual_ii_2    = hgroup("ii", vslider("[5]2'",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_ii_4    = hgroup("ii", vslider("[4]4'",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_ii_8    = hgroup("ii", vslider("[3]8'",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_ii_16   = hgroup("ii", vslider("[2]16'",   1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 
-manual_bass_8  = hgroup("bass", vslider("[2]8'",  1.0,  0.0, 1.0, 0.25));
-manual_bass_16 = hgroup("bass", vslider("[1]16'", 1.0,  0.0, 1.0, 0.25));
+manual_bass_8  = hgroup("bass", vslider("[2]8'",  1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_bass_16 = hgroup("bass", vslider("[1]16'", 1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 
 
 mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 0.2 * hslider("volume", 0.1, 0.0, 1.0, 0.1));
