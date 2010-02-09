@@ -2,6 +2,8 @@
 \usepackage{lac2010}
 \usepackage{amssymb,amsmath}
 
+\usepackage{listings}
+
 \sloppy
 \newenvironment{contentsmall}{\small}
 
@@ -16,6 +18,8 @@
 }
 
 \begin{document}
+\lstset{captionpos=b,tabsize=2,basicstyle=\footnotesize}
+
 \maketitle
 
 
@@ -84,6 +88,7 @@ I chose Faust to emulate the organ as the organ is effectively an "always on" de
 The emphasis was on creating a playable instrument which sounds as close to the original as possible. A playable emulation needs to be able to work at low latencies and it needs to be efficient enough to be ran on fairly typical hardware.
 
 \subsection{Tone generation}
+\label{section:tone-generation}
 
 The 12 oscillators are sawtooth oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. The flip flops naturally produce square waves. This means each oscillator creates 8 phase-synchronized voices.
 
@@ -136,11 +141,11 @@ Every oscillator naturally produces a square wave at a different frequency. Howe
 Vibrato control voltage is created by a sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range, which was simply measured from the real device, is 5-8Hz. The vibrato depth is simply an attenuation control for the vibrato oscillator output.
 
 %% TODO. I am here!
-However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
+%However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
 %% TODO: (C) not done yet!
 
 %% TODO
-INSERT FFT PLOTS HIGHLIGHTING FUNDAMENTALS AND FREQ MODULATION
+%INSERT FFT PLOTS HIGHLIGHTING FUNDAMENTALS AND FREQ MODULATION
 
 
 \subsection{Keyboard matrix mixer}
@@ -163,16 +168,20 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 
 \begin{equation}
 \label{eq:levertransfer}
-\mbox{coeff}(p) = 2.81 x^3 - 2.81 x^2 + x
+\mbox{coeff}(p) = e p^3 - e p^2 + p\\
+%\mbox{where }p\mbox{ is lever position from 0 (off) to 1}
 \end{equation}
 
-%\mbox{where }p\mbox{ is lever position from 0 (off) to 1}
 
 % TODO: this hasn't been implemented yet
 
 \subsection{Section II}
 
-As described earlier in section \ref{section:sections}, Section II has controllabel brightness. This is achieved through dividing each bus bar into highpassed and lowpassed streams. These streams are then mixed together into bright and dull streams. The brightness control is a simple balance mix of the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use center positions dramatically.
+As described earlier in section \ref{section:sections}, Section II has controllable brightness. This is achieved through dividing each bus bar into two streams which are high-passed and low-passed separately. The streams derived from different bus bars are then mixed together into bright and dull streams. The brightness control is a simple balance control between the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically.
+
+The high pass filtering is done ...
+
+Low pass filtering is ...
 
 INSERT FILTERING ONCE IT'S DONE
 
@@ -190,25 +199,44 @@ How to measure?
 
 \section{Conclusions}
 
-Blah blah.
-
+While there is still some way to go for an accurate emulation of the YC-20, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20.  The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will not come cheap. The real organ also has considerable bleed which might be worth emulating.
 
 \subsection{Benefits of Faust}
 
-Functional thinking suits audio very well.
+Functional thinking suits audio applications very well, as solutions to problems can often be expressed as equations. This model sidesteps many of the issues procedural programs face, as the signal flow between processors can be expressed as such. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with tranferring buffers and interpreting offsets and buffer lengths.
 
-No stupid typical procedural bugs.
+In addition to the previously mentioned benefits, the created code is also more readable. The syntax offers good tools, such as sequential composition, which keep functions simple and concise. This is often beneficial when compared to typical C-style syntax where one needs to use with consecutive function calls or enclosed statements. See listings \ref{list:c-consec}, \ref{list:c-enclosed} and \ref{list:faust} for an example. While listing \ref{list:c-enclosed} is pretty readable, one should note that functions are presented to the reader in reverse order and it is also difficult to see to which function the multiplication is applied to.
 
-Transfer of huge amounts of data trivial
+\begin{lstlisting}[language=C,label=list:c-consec,caption=Consecutive calls]
+float dostuff(float f) {
+	f = func1(f);
+	f = func2(f) * 2.5;
+	f = func3(f);
+	return f;
+}
+\end{lstlisting}
 
-Readability!
+\begin{lstlisting}[language=C,label=list:c-enclosed,caption=Enclosed statements]
+float dostuff(float f) {
+	return func3( func2( func1(f)) * 2.5 );
+}
+\end{lstlisting}
 
-Reuse!
+\begin{lstlisting}[language=C,label=list:faust,caption=Faust sequential composition]
+dostuff = func1 : func2 : *(2.5) : func3;
+\end{lstlisting}
 
-SVG is a good learning / debugging tool.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create a hyperlinked SVG document which depicts the whole compiled process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
 
+The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it can promote the spread of good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
+
+Faust also allows automatic parallelization and vectorization of programs. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}.
 
 \subsection{Things Faust needs improvement in}
+
+As discussed in section \ref{section:tone-generation}, there is a strong case for truly branching operations. The semantics of Faust
+
+There are a few different paths Faust can take here, the first choice being whether to make the current select operations branch or create new branching operations in addition to the current implementations. The semantics of Faust mandate that 
 
 Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
 
