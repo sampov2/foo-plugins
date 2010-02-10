@@ -130,6 +130,10 @@ To be able to run this emulation in real time, I had to implement a true branchi
 
 The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters.
 
+% TODO: the filter is too steep
+
+\emph{This section is unfinished as the filters are still being analyzed and emulated}
+
 %% TODO: filtering is still not ok. simulation seems steeper than the real thing
 INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
 
@@ -162,9 +166,11 @@ Writing the keyboard matrix mixer also revealed an issue with the service manual
 
 \subsection{Section I}
 \label{section:section-I}
+
 Section I is just an unfiltered mix of bus bars mixed together through the drawbar potentiometers and additional resistors. Thus it requires only to emulate the drawbar potentiometer taper. The taper was measured from the real organ by playing a stable note with all drawbars off except one drawbar which tested all three positions. Compared to full volume, the two middle positions were measured at -12dB and -18dB.
 
 This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (fully engaged). The function returns a gain coefficient usable in the simulation. The function roughly emulates the taper and can be usad with the slider controls. Further work on a graphical user interface could provide the four position levers.
+
 
 \begin{equation}
 \label{eq:levertransfer}
@@ -179,17 +185,44 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 
 As described earlier in section \ref{section:sections}, Section II has controllable brightness. This is achieved through dividing each bus bar into two streams which are high-passed and low-passed separately. The streams derived from different bus bars are then mixed together into bright and dull streams. The brightness control is a simple balance control between the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically.
 
-% TODO:
-The high pass filtering is done ...
+\emph{This section is unfinished as the filters are still being analyzed and emulated}
 
 % TODO:
-Low pass filtering is ...
+The high pass filtering is done by a two stage rc filter with a resistor in parallel to the capacitor in the first filter. This makes the filter act as a shelfing high pass filter. The lowpass section is simply a two stage lowpass rc filter.
 
-INSERT FILTERING ONCE IT'S DONE
+% TODO:
+
+INSERT SPECTRUM ANALYSIS OF SECTION II VOICES (REAL AND EMULATED) ONCE IT'S DONE
 
 The section II drawbar levers are emulated as described in section \ref{section:section-I}.
 
 \section{Performance}
+
+Running this paraphonic synthesizer requires a much processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Fausts SMP features.
+
+The performance numbers shown here are measured using a modified version of the faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are bytes of audio data generated per second. The Faust benchmark uses this measurement as memory bandwidth on SMP systems is a precious commodity.
+
+Tests were ran on a Dell D820 laptop with a Core 2 Duo T7400 (2.16Ghz) processor in a 32 bit Ubuntu 9.10. The kernel was a standarad Ubuntu package, 2.6.31-19-generic and the used gcc version was 4.4.1-4ubuntu9.
+
+\begin{table}[h]
+ \begin{center}
+\begin{tabular}{|l|l|l|l|}
+
+      \hline
+      Frequency & (A)        &  (B)         & (C) \\
+      \hline\hline
+      5kHz     & 352 800     & 44 100       & 10 000\\
+      1kHz     & 352 800     & 44 100       &  2 000\\
+      500Hz    & 352 800     & 44 100       &  1 000\\
+      \hline
+
+\end{tabular}
+\caption{Amount of PolyBLEP calculations per second for a square wave at Fs = 44.1kHz. 
+(A) an implementation where per each frame the PolyBLEP is evaluated for both the previous and current sample for both discontinuities. The branched nature of the residual function multiplies this number further by a factor of two.
+(B) an ideal implementation without branching where only one PolyBLEP is evaluated per frame.
+(C) is the number of required PolyBLEP calculations.  }\label{table:polyblep-amount}
+ \end{center}
+\end{table}
 
 GCC flags.
 
@@ -199,7 +232,7 @@ How to measure?
 
 \section{Conclusions}
 
-While there is still some way to go for an accurate emulation of the YC-20, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20.  The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will not come cheap. The real organ also has considerable bleed which might be worth emulating.
+While there is still some way to go for an accurate emulation of the YC-20, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20.  The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will come at the expense of even more CPU cycles. The real organ also has considerable bleed and inconsitencies which might be worth emulating.
 
 \subsection{Benefits of Faust}
 
@@ -232,7 +265,7 @@ The stream concept also makes code reusable. When combining procedural code from
 
 Faust also allows automatic parallelization and vectorization of programs. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}.
 
-\subsection{Things Faust needs improvement in}
+\subsection{Improvements to Faust}
 
 As discussed in section \ref{section:tone-generation}, there is a strong case for truly branching operations. The semantics of Faust requires all of the processing graph to be evaluated for every frame. But the semantics are kept intact even if stateless functions, which are as non-selected branches of a select function, are not evaluated. This is because the next returned value of the function does not depend on previous evaluations. This leaves the Faust with a choice: either select calls with stateless functions as parameters are compiled as truly branching or a new branching select call is created. Both cases require the specification of rules on what a stateless function is and the compiler must check that the branched functions comply before allowing compilation of such code.
 
@@ -245,16 +278,17 @@ f(x) = (x>0) * (x^2-fmod(x,1.0))
 
 %Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
 
-The compiler error messages are often unhelpful. They do not always even specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. It is also worth examining if the errors could be formatted in a way editor and IDE integration could parse the messages.
+The compiler error messages are often unhelpful. They do not always even specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. One specific issue with the compiler messages is worth giving special attention. It is cases where the inputs and outputs of functions in a sequential composition do not match. In such cases Faust outputs a quite exhausting description of the functions in the compisition, instead of just the names of the functions. For example, if the YC-20 emulation would fail to cut the phase output of the last divider (dividers would then output 108 instead of 96 streams), the resulting error message is 67 kilobytes.
 
-%
-Compiler error messages.
+In the audio world, lack of support for fourier transforms is very unfortunate. As mentioned in section \ref{section:tone-generation}, the better band limiting method (BLEP) is not possible to implement in pure faust. Fourier transforms would naturally be useful for a variety of other tasks as well. Fortunately there has been promising news of multi rate support for Faust which would allow fourier transforms.
 
-DFT and inverse DFT. (I want better band-limiting.)
+As procedural programming is the prevailing model of programming, it is safe to say many potential users of Faust are familiar with only that model. This applies some pressure to good documentation. The current documentation should abbreviate the definitions of the more advanced features of the language. Mainly recursion and the rdtable and rwtable functions could benefit from better explanations. Currently the functions are almost side-stepped and only their function syntax is given.
 
-Size of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
+Implementing the matrix mixer required a lot of hand-crafting. Having a concept of indexable arrays would help such operations. If the 96 inputs of the keyboard mixer and the buttons representing the keys of the organ could be arranged into arrays, the mixing could be done algorithmically using the sum aggregate function. Such operations could surely open up possibilities of optimizing the created C++ code. As it stands, the keyboard mixing is compiled into a large amount of separate discrete multiplication and addition operations.
 
-Documentation on the more advanced functions could be a lot better: recursion, rdtable, rwtable.
+% DSP processors?
+
+%Size of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
 
 \section{Acknowledgements}
 
