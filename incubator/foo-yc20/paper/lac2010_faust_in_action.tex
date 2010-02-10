@@ -130,7 +130,7 @@ To be able to run this emulation in real time, I had to implement a true branchi
 
 The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters.
 
-%% TODO
+%% TODO: filtering is still not ok. simulation seems steeper than the real thing
 INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
 
 \subsection{Oscillator bias}
@@ -179,15 +179,15 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 
 As described earlier in section \ref{section:sections}, Section II has controllable brightness. This is achieved through dividing each bus bar into two streams which are high-passed and low-passed separately. The streams derived from different bus bars are then mixed together into bright and dull streams. The brightness control is a simple balance control between the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically.
 
+% TODO:
 The high pass filtering is done ...
 
+% TODO:
 Low pass filtering is ...
 
 INSERT FILTERING ONCE IT'S DONE
 
 The section II drawbar levers are emulated as described in section \ref{section:section-I}.
-
-% Brightness
 
 \section{Performance}
 
@@ -234,19 +234,27 @@ Faust also allows automatic parallelization and vectorization of programs. This 
 
 \subsection{Things Faust needs improvement in}
 
-As discussed in section \ref{section:tone-generation}, there is a strong case for truly branching operations. The semantics of Faust
+As discussed in section \ref{section:tone-generation}, there is a strong case for truly branching operations. The semantics of Faust requires all of the processing graph to be evaluated for every frame. But the semantics are kept intact even if stateless functions, which are as non-selected branches of a select function, are not evaluated. This is because the next returned value of the function does not depend on previous evaluations. This leaves the Faust with a choice: either select calls with stateless functions as parameters are compiled as truly branching or a new branching select call is created. Both cases require the specification of rules on what a stateless function is and the compiler must check that the branched functions comply before allowing compilation of such code.
 
-There are a few different paths Faust can take here, the first choice being whether to make the current select operations branch or create new branching operations in addition to the current implementations. The semantics of Faust mandate that 
+This logic could also be applied to functions using comparison operators in equations. Equation \ref{eq:comp-op} is an example of a function where the second (stateless) part of the first multiplication could be optimized out for values x less or equal to 0 as in those cases, the first part would be 0.
 
-Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
+\begin{equation}
+\label{eq:comp-op}
+f(x) = (x>0) * (x^2-fmod(x,1.0))
+\end{equation}
 
-Documentation on the more advanced functions could be a lot better: recursion, rdtable, rwtable.
+%Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
 
+The compiler error messages are often unhelpful. They do not always even specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. It is also worth examining if the errors could be formatted in a way editor and IDE integration could parse the messages.
+
+%
 Compiler error messages.
 
 DFT and inverse DFT. (I want better band-limiting.)
 
 Size of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
+
+Documentation on the more advanced functions could be a lot better: recursion, rdtable, rwtable.
 
 \section{Acknowledgements}
 
