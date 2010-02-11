@@ -25,25 +25,25 @@
 
 \begin{abstract}
 \begin{contentsmall}
-This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust, thus the process of writing this emulation highlighted some of Faust's strengths and shortcomings.
+This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust, thus the process of writing this emulation highlighted some of Faust's strengths and shortcomings which are discussed in the paper.
 
 \end{contentsmall}
 \end{abstract}
 
 \keywords{
 \begin{contentsmall}
-Faust, LV2, DSP, emulation
+Faust, synthesis, emulation
 \end{contentsmall}
 }
 
 \section{Introduction}
 
-Faust\cite{orlarey:09c} stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces a C++ class which is integrated into a chosen C++ "architecture". This architecture file provides a run-time environment, or wrapper, for the processing. This wrapper can be a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
+Faust\cite{orlarey:09c} stands for Functional AUdio STream and as the name implies it is a functional language designed for audio processing. The Faust compiler is an intermediary compiler, which produces source code for a C++ processor class which is integrated into a chosen C++ architecture. This architecture file provides a run-time environment, or wrapper, for the processor. This wrapper can be for example a stand-alone Linux Jack application, a LADSPA plugin or a VST plugin.
 
 %% TODO choose license
-This paper describes how an emulation of a 1970's combo-organ was written in Faust. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for gigging musicians. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. The emulation is written as open source as GPLv3. In the spirit of open source, the working principles and decisions taken during writing the emulation are described in this paper for all to read.
+This paper describes how an emulation of a 1970's combo-organ was written in Faust. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for musicians on the road. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. The emulation is released as open source using the GPLv3 license. In the spirit of open source, the working principles and decisions taken during writing the emulation are described in this paper for all to read.
 
-The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of parallel processes and components. This makes for a good test of Fausts performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it made possible to match the emulation quality against the original. 
+The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of fixed parallel processes and components. This makes for a good test of Fausts performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it makes it possible to match the emulation quality against the original. 
 
 \section{YC-20}
 \label{section:yc-20}
@@ -52,23 +52,25 @@ This section covers the operations of the organ in detail\cite{yamaha:yc20}. Thi
 
 \subsection{Features}
 
-The organ has one physical manual with 61 keys and two sound sections and a switchable bass manual. Instead of drawbars like Hammond organs, the sounds are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ sounds, I use it instead of lever. Each of the drawbar lever in the organ have four positions from off to full volume. 
+The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicing, I use that word in place of the more correct word lever. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
 
-Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass sounds with drawbars 16' and 8'. There are also controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
+Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass manual with drawbars 16' and 8'. There are also global controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
 
 % the style of controls? .. probably irrelevant
 \subsection{Tone generation}
 
-The synthesizer architecture comprises of 12 oscillators, one per each note on an octave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. These voices are then fed through a passive filter bank. The divided voices have both a high pass and low pass filters while the oscillator voices have only a high pass filter. This totals 180 resistor-capacitor networks. Filtered voices are connected to switches controlled by the keyboard. The keyboard is in fact a matrix mixer connecting the voices to bus bars. Keys feed each bus bar with the appropriate voice matching that key and octave or the matching harmonic voice for the 2-2/3' and 1-3/5' drawbars. 
+The synthesizer architecture comprises of 12 oscillators, one per each note in a TET-12 scale. The oscillators produce a sawtooth wave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. The dividers produce square waves. 
+
+These voices are next fed through a passive filter bank. The divided voices have both a high pass and low pass filters while the oscillator voices are only high pass filtered to remove bias. This totals 180 resistor-capacitor networks. Filtered voices are connected to switches on the actual keys of the keyboard. The keyboard is thus in fact a matrix mixer connecting the voices to bus bars. A key feeds each bus bar with the appropriate voice matching that key and octave, or the matching harmonic voice in case of the 2-2/3' and 1-3/5' bus bars. 
 
 \subsection{Sections}
 \label{section:sections}
-
-The drawbars are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with rc networks. One stream is low pass filtered with two stages while the other has two stages of high pass filtering. The low passed and high passed signals from different drawbars are then combined and buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
+% TODO: i am here..
+The drawbar controls are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with RC networks. One stream is low pass filtered with two stages while the other has two stages of high pass filtering. The low passed and high passed signals from different drawbars are then combined and buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
 
 The switches on the lowest 17 keys feed either the main bus bars or separate bass bus bars. This is controlled by the bass manual switch. When disabled, the bass bus bars contain no signal. When enabled, the bass keys have no effect on the main bus bars.
 
-Bass manual differs from the two main sections in that both bass manual drawbars (16' and 8') contain a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars, with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars are wired center-tap to source. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it varies the impedance of the signal. The varying impedance and capacitor after summing the drawbar signals makes the network into a fairly complex rc filter with a varying cutoff point and mix amount per bass bus bar.
+Bass manual differs from the two main sections in that both bass manual drawbars (16' and 8') contain a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars, with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars are wired center-tap to source. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it varies the impedance of the signal. The varying impedance and capacitor after summing the drawbar signals makes the network into a fairly complex RC filter with a varying cutoff point and mix amount per bass bus bar.
 
 \subsection{Percussion}
 
@@ -194,7 +196,7 @@ As described earlier in section \ref{section:sections}, Section II has controlla
 \emph{This section is unfinished as the filters are still being analyzed and emulated}
 
 % TODO:
-The high pass filtering is done by a two stage rc filter with a resistor in parallel to the capacitor in the first filter. This makes the filter act as a shelfing high pass filter. The lowpass section is simply a two stage lowpass rc filter.
+The high pass filtering is done by a two stage RC filter with a resistor in parallel to the capacitor in the first filter. This makes the filter act as a shelfing high pass filter. The lowpass section is simply a two stage lowpass RC filter.
 
 % TODO:
 
