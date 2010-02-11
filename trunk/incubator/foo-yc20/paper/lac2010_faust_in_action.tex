@@ -203,6 +203,15 @@ The section II drawbar levers are emulated as described in section \ref{section:
 % TODO:
 \emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section II voices of the emulation and the real organ.}
 
+
+\section{Percussion}
+
+The percussion uses the signal on the 1' bus bar to trigger an envelope generator. There is a root-mean-square envelope follower on the 1' bus bar and the envelope is triggered when the follower exceeds a set threshold. The envelope generator starts off with a signal where a one frame unit impulse is created at the trigger point. This impulse signal is low-pass filtered to match the measured percussion envelope. This envelope is then used to control the volume of a mix of the 1', 2-2/3' and 16' bus bars. Some bleed is added to the envelope generator output to emulate the bleed exhibited by the real organ.
+
+\section{Bass manual}
+
+\emph{This section is unfinished as the filters are still being analyzed and emulated.}
+
 \section{Performance}
 \label{section:performance}
 
