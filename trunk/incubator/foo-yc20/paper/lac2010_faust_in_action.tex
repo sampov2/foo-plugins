@@ -7,9 +7,9 @@
 \sloppy
 \newenvironment{contentsmall}{\small}
 
-\title{Faust in Action}
+\title{Emulating a combo organ using Faust}
+%\title{Faust in Action}
 
-%see lac2010.sty for how to format multiple authors!
 \author
 {Sampo Savolainen % SAVOLAINEN?
 \\ Foo-plugins
@@ -48,11 +48,11 @@ The YC-20 was chosen to be emulated as its architecture is very different from t
 \section{YC-20}
 \label{section:yc-20}
 
-This section covers the operations of the organ in detail\cite{yamaha:yc20}. This is section is later referred to when discussing the emulated parts.
+This section covers the operations of the organ in detail\cite{yamaha:yc20}. The information in this is section is later referred to and detailed further when discussing the emulated parts.
 
 \subsection{Features}
 
-The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicing, I use that word in place of the more correct word lever. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
+The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicings, the word is used in place of lever for the voice controls. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
 
 Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass manual with drawbars 16' and 8'. There are also global controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
 
@@ -65,38 +65,39 @@ These voices are next fed through a passive filter bank. The divided voices have
 
 \subsection{Sections}
 \label{section:sections}
-% TODO: i am here..
-The drawbar controls are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with RC networks. One stream is low pass filtered with two stages while the other has two stages of high pass filtering. The low passed and high passed signals from different drawbars are then combined and buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
 
-The switches on the lowest 17 keys feed either the main bus bars or separate bass bus bars. This is controlled by the bass manual switch. When disabled, the bass bus bars contain no signal. When enabled, the bass keys have no effect on the main bus bars.
+The drawbar controls are potentiometers which control how much of each bus bar is mixed the sections of the organ. While in section I, drawbars are simply mixed together using resistors, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with RC networks. One stream is low pass filtered while the other is high pass filtered. The low passed and high passed signals are mixed through resistors to combine into a bright and dull signals which are then buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
 
-Bass manual differs from the two main sections in that both bass manual drawbars (16' and 8') contain a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars, with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars are wired center-tap to source. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it varies the impedance of the signal. The varying impedance and capacitor after summing the drawbar signals makes the network into a fairly complex RC filter with a varying cutoff point and mix amount per bass bus bar.
+The key switches on the lowest 17 keys feed either separate bass bus bars. The bass manual switch controls whether these bus bars are kept separate or mixed with the main bus bars. Thus, with the switch disabled, the bass keys work exactly as the rest of the manual. With the switch enabled, the bass bus bars are separate and only feed the bass section. It is worth noting that the bass section effectively discards the signal of bass bus bars 2-2/3', 2', 1-3/5' and 1'.
+
+Bass section differs from the two main sections in that both bass manual drawbars (16' and 8') use a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars (16', 8' and 4'), with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars controls are wired center-tap to source with the other tip grounded and the other tip as the output. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it also varies the impedance of the signal. The different mixing resistors and the varying impedance of the drawbar, combined with a fixed capacitor to ground (after summing the drawbar signals) makes the network act as a fairly complex RC filter. This filter has a varying cutoff point and mix amount per bass bus bar.
 
 \subsection{Percussion}
 
-% Still a bit iffy
-Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. This sum is then ran through a VCA controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack and release timings are very fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato. However there is a substantial amount of bleed from the percussion section which is audible when all other drawbars are off.
+Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. This sum is then ran through a VCA controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack is instantaneous and the release timings is fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato. However there is a substantial amount of bleed from the percussion section which is audible when all other drawbars are off.
 
-% As the bass manual switch disengages bass keys from the main bus bars
+If the bass manual switch is enabled, it disengages the bass bus bars from the main bus bars. Thus the bass keys will not mix sounds onto the 1' bus bar. Therefore playing the bass manual will not trigger the percussion and percussion sounds will trigger even when bass keys are held down.
 
 \subsection{Main output}
 
-The main output of the device is a mix of sections I and II, the percussion part and the bass manual. The mix between sectioions I and II is controlled by the balance potentiometer. The amount of percussion mixed in is controlled by the percussion drawbar. Bass manual is summed into the main output via a potentiometer controlling its volume. This main output is preamplified and then can be attenuated by both the main volume potentiometer of the device and the volume pedal. The volume pedla works by a mechanical shutter and a light dependent resistor.
+The main output of the device is a mix of sections I and II, the percussion part and the bass manual. The mix between sections I and II is controlled by the balance lever (a potentiometer). The amount of percussion mixed in is controlled by the percussion drawbar. Bass manual is summed into the main output via a potentiometer controlling the bass volume. This combined signal is then preamplified. The preamplified output can then be attenuated by the main volume potentiometer of the device and the volume pedal. The volume pedal works by a mechanical shutter and a light dependent resistor.
 
 \section{The emulation} 
 
-I chose Faust to emulate the organ as the organ is effectively an "always on" design. Unlike with polyphonic synthesizers, all possible voices of the organ are always running. There is a large amount of streams transferred between the circuits and Faust's modus operandi fits this design well. The emulation tries not only to emulate the ideal circuit but also some of the inaccuracies and issues caused in the real instrument. 
+The emphasis was on creating a playable instrument which sounds as close to the original as possible. A playable emulation needs to be able to work at low latencies and it needs to be efficient enough to be ran on commodity hardware. The emulation tries not only to emulate the ideal circuit but also some of the inaccuracies in the real instrument. 
 
-The emphasis was on creating a playable instrument which sounds as close to the original as possible. A playable emulation needs to be able to work at low latencies and it needs to be efficient enough to be ran on fairly typical hardware.
+\subsection{Why Faust?}
+
+Instead of taking an approach where sounds are synthesized only when needed, this emulation keeps all oscillators, dividers and filters running all the time -- just like the real organ. Faust was chosen as the programming language to emulate the organ with, as Fausts functional semantics fit well with having everything running at all times. Faust also makes it trivial to have a large amount of streams flowing from one circuit to another. This emulation was also intended as a test of Faust in a real world use.
 
 \subsection{Tone generation}
 \label{section:tone-generation}
 
-The 12 oscillators are sawtooth oscillators with a varying bias voltage (see section \ref{section:oscillator-bias}). The main oscillator sounds are divided by an array of flip flops each dividing the frequency by half. The flip flops naturally produce square waves. This means each oscillator creates 8 phase-synchronized voices.
+The 12 main oscillators producing sawtooth waves. They share a common, varying bias voltage (see section \ref{section:oscillator-bias}) which affects the oscillator frequencies. The main oscillator voices are divided by an array of flip flop circuits each dividing the frequency in half and the next one dividing the previously divided voice. The flip flops produce square wave signals. This means each oscillator produces a total of  8 phase-synchronized voices, each one an octave down from the previous voice.
 
-As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing at typical sampling rates (44.1--96kHz). Naturally, also the dividers need to be band-limited as well. I evaluated different methods to band-limit the signals and chose the PolyBLEP\cite{antialiasing} method. While BLEP\cite{hardsync} would produce a less aliasing harmonics, it is computationally more expensive. More importantly, the BLEP response is currently impossible to calculate in Faust as it requires DFT and inverse-DFT functions. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to synchronized oscillators\cite{hardsync}.
+As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing when using typical sampling rates (44.1--96kHz). Naturally, also the dividers would suffer from aliasing as well. After evaluating different methods to band-limit the signals, the PolyBLEP\cite{antialiasing} method was chosen. While BLEP\cite{hardsync} would produce less aliasing harmonics, it is computationally more expensive. More importantly, the BLEP response is currently impossible to calculate in Faust as it requires fourier and inverse fourier transfer functions. The quality of BLIT-SWS\cite{blit} is good at high frequencies, but it produces sub-harmonics\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to hard synchronized oscillators\cite{hardsync}.
 
-I evaluated second, third and fourth order polynomial functions for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore the second order function did not create the sub-harmonics the third and fourth order functions caused. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
+Second, third, and fourth order polynomial residual functions were evaluated for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore the second order function did not create the sub-harmonics the third and fourth order functions caused. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
 
 \begin{equation}
 \label{eq:polyblep}
@@ -104,9 +105,9 @@ r(t) = \begin{cases} 	t^2/2  + t + 1/2, & \mbox{if } -1 \leq t \leq 0\\
 			-t^2/2 + t - 1/2, & \mbox{if } 0 < t \leq 1 \end{cases}
 \end{equation}
 
-The divider circuits emulated as slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
+The divider circuits are emulated as slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
 
-PolyBLEP works by adding the polynomial band-limited step function to two samples: the sample before and after a discontinuity in the signal. To achieve this, the Faust implementation delays its output by one sample. At each frame, the phase is inspected and if it has passed a discontinuity, the PolyBLEP function is calculated and added (rising wave) or subtracted (falling wave) for the previous sample and the current sample. As Faust lacks true branches, all possible branches of conditional statements are always calculated. Table \ref{table:polyblep-amount} shows that branching would allow an efficient solution. This is because without branching the amount of PolyBLEP evaluations is purely a function of the sampling rate while the amount of required evaluations is a function of the signal frequency. As the PolyBLEP function is stateless, the mathematical correctness of the implementation would be intact even as the function would be only conditionally evaluated.
+PolyBLEP works by adding the polynomial band-limited step function to two samples: the sample before and after a discontinuity in the signal. To achieve this, the implementation delays its output by one sample. At each frame, the phase is inspected. If the phase passed a discontinuity in the waveform, the PolyBLEP function is evaluated for and added (rising wave) or subtracted (falling wave) for the previous sample and the current sample. As Faust lacks true branches, all possible branches of conditional statements are always calculated. Table \ref{table:polyblep-amount} shows the amount residual function evaluations required under different conditions. The table shows that branching would be far superior to any non-branching solution. This is because without branching the amount of PolyBLEP evaluations done is purely a function of the sampling rate while the amount of required evaluations is a function of the signal frequency. 
 
 \begin{table}[h]
  \begin{center}
@@ -128,25 +129,26 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
  \end{center}
 \end{table}
 
-To be able to run this emulation in real time, I had to implement a true branching solution using an external C++ function. This is however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
+To be able to run the emulation in real time, a truly branching solution had to be developed as an external C++ function. This was however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
 
-The filter bank in the real organ consists of three neary identical circuits with slightly different capacitor values. These filters are emulated by a straightforward bank of digital RC filters.
+The filter bank contains custom filtering for each of the 96 voices produced by the oscillators and dividers. The main oscillators only have a single capacitor in series. This is emulated as a high-pass RC filter using an approximation of the next stage impedance as the load resistor value. The first four divided signals have a trivial RC low-pass filter before a single capacitor in series similar to the the main oscillator filter. The lowest three voices are filtered like the previous four, except that there is a resistor to ground after the series capacitor. This alters the next stage impedance compared to the other filters.
+
+Filtering is very complex to emulate exactly right, as one voice might be connected to multiple bus bars. This varies the high-pass filter load resistance and therefore affects the filter cutoff frequency depending on what keys are depressed. This is not emulated. Instead, the high-pass filter load is estimated based on the expectation there is only connection to a bus bar.
 
 % TODO: the filter is too steep
 
-\emph{This section is unfinished as the filters are still being analyzed and emulated}
+%\emph{This section is unfinished as the filters are still being analyzed and emulated. The completed paper should have comparative measurements from the voices real organ compared to the emulation.}
 
 %% TODO: filtering is still not ok. emulation seems steeper than the real thing
-INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
+%INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
 
 \subsection{Oscillator bias}
 \label{section:oscillator-bias}
 
-Every oscillator naturally produces a square wave at a different frequency. However all oscillators share a single bias voltage. This bias voltage is controlled by the vibrato circuit, touch vibrato and the master pitch potentiometer. The master pitch potentiometer is emulated with a simple slider widget with a DC output. Touch vibrato is controlled by horizontal movement of the keys. As such MIDI keyboards are rare\footnote{The only keyboard I found claiming such capability is the Yamaha STAGEA ELS-01C, which is itself a digital organ.} this feature was left out of the emulation.
+Each oscillator produces a saw wave at a different frequency. The frequencies are chosen from a TET-12 scale. However all oscillators share a single bias voltage affecting their frequency. This bias voltage is controlled by the vibrato circuit, touch vibrato and the master pitch potentiometer. The master pitch potentiometer is emulated by a simple slider widget with a DC output. Touch vibrato would be controlled by horizontal movement of the keys. As such MIDI keyboards are extremely rare\footnote{Only one keyboard was found claiming such capability: the Yamaha STAGEA ELS-01C.} this feature was left out of the emulation.
 
-Vibrato control voltage is created by a sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range, which was simply measured from the real device, is 5-8Hz. The vibrato depth is simply an attenuation control for the vibrato oscillator output.
+Vibrato control voltage is created by a simple sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range (5-8Hz) was simply measured from the real device. The vibrato depth is simply an attenuation control for the vibrato oscillator output. Vibrato depth range was empirically selected. The depth control deliberately never goes to zero, thus the vibrato always has an effect on the bias voltage.
 
-%% TODO. I am here!
 %However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
 %% TODO: (C) not done yet!
 
@@ -156,23 +158,22 @@ Vibrato control voltage is created by a sine wave oscillator. The vibrato speed 
 
 \subsection{Keyboard matrix mixer}
 
-The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when the it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button used as a multiplier for 7 different voices (one per bus bar). There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
+The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when the it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button used as a multiplier for 7 different voices (one per bus bar). So the signals on the emulated bus bars are the sum of $61*7 = 427$ discrete multiplications summed together. There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
 
-In procedural languages, the matrix mixer could be efficiently written as a set of floating point tables multiplied together. In Faust however, there is no such group operation. This results in a large number of separate multiplications which are difficult for the Faust compiler to optimize.
+The matrix mixer could be written as a set of floating point tables multiplied together. In Faust however, there is no such group operation. This results in a large number of separate multiplications and sums which are difficult for the Faust compiler to optimize as vector operations are unusable if the data is not in ordered buffers.
 
-Engaging and disengaging keys is not declicked (or band-limited). The key switches on the real organ are just simple switches connecting voices to bus bars. This operation causes clicks as switches open and close mid-wave. I have found the non-declicked sound of the emulation to match the original surprisingly well. This is something that could be looked at at a later stage.
+The key action is not band-limited. The key switches on the real organ are simple switches connecting voices to bus bars. This operation causes clicks in the real organ as switches open and close. The naive non-band-limited key action of the emulation matches the sound of the real organ surprisingly well. However, this is something that could be looked at at a later stage.
 
-Writing the keyboard matrix mixer also revealed an issue with the service manual. The service manual indicates wrong which voices are mixed in the harmonic bus bars (2-2/3' and 1-3/5'). The manual states that 2-2/3' is connected to a voice five semitones higher than the voice connected to 4' and 1-3/5' with a voice eight semitones higher than 2'. The real organ and, and thus the emulation, connects seven and and three semitones respectively.
-
-% lacks semantics for this..
+Writing the keyboard matrix mixer also revealed an issue with the service manual. The service manual indicates wrong which voices are connected to the harmonic bus bars (2-2/3' and 1-3/5'). The manual states that 2-2/3' is connected to a voice five semitones higher than the voice connected to 4' and 1-3/5' with a voice eight semitones higher than 2'. The real organ connects voices seven and and three semitones above respectively. The emulation follows the real organ instead of the service manual.
 
 \subsection{Section I}
 \label{section:section-I}
 
-Section I is just an unfiltered mix of bus bars mixed together through the drawbar potentiometers and additional resistors. Thus it requires only to emulate the drawbar potentiometer taper. The taper was measured from the real organ by playing a stable note with all drawbars off except one drawbar which tested all three positions. Compared to full volume, the two middle positions were measured at -12dB and -18dB.
+Section I is a mix of the main bus bars mixed together through the drawbar potentiometers and additional resistors. There is no extra filtering applied to the signal. Thus the only part left to emulate for section I voices is the drawbar controls.
 
-This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (fully engaged). The function returns a gain coefficient usable in the emulation. The function roughly emulates the taper and can be usad with the slider controls. Further work on a graphical user interface could provide the four position levers.
+The drawbar potentiometers do not follow the typical linear or logarithmic tapers. The real organ was measured while playing a stable note with all drawbars off except one drawbar which was tested in all three on positions. The off position is expected to be -inf. Compared to full volume, the two middle positions were measured at -12dB and -18dB.
 
+This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (full volume). The function returns a gain coefficient usable in the emulation. The function roughly emulates the taper and can be used with slider controls provided by the Faust architecture. Further work on a graphical user interface could provide the four position levers.
 
 \begin{equation}
 \label{eq:levertransfer}
@@ -186,32 +187,30 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 %\mbox{where }p\mbox{ is lever position from 0 (off) to 1}
 \end{equation}
 
-
-% TODO: this hasn't been implemented yet
+% TODO:
+\emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section I voices of the emulation and the real organ.}
 
 \subsection{Section II}
 
-As described earlier in section \ref{section:sections}, Section II has controllable brightness. This is achieved through dividing each bus bar into two streams which are high-passed and low-passed separately. The streams derived from different bus bars are then mixed together into bright and dull streams. The brightness control is a simple balance control between the two streams. The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically.
+As described earlier in section \ref{section:sections}, Section II has a controllable brightness feature. The variable brightness is done by dividing each bus bar into two streams, one of which is high-passed and the other low-passed. The streams derived from different bus bars are then mixed together into bright and dull streams. The brightness control is a simple balance control between the two streams. 
 
-\emph{This section is unfinished as the filters are still being analyzed and emulated}
+%The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically. The dip 
 
-% TODO:
-The high pass filtering is done by a two stage RC filter with a resistor in parallel to the capacitor in the first filter. This makes the filter act as a shelfing high pass filter. The lowpass section is simply a two stage lowpass RC filter.
-
-% TODO:
-
-INSERT SPECTRUM ANALYSIS OF SECTION II VOICES (REAL AND EMULATED) ONCE IT'S DONE
+The high pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. This makes the filter act as a shelfing high pass filter. The low-pass section is simply a two stage low-pass RC filter.
 
 The section II drawbar levers are emulated as described in section \ref{section:section-I}.
+
+% TODO:
+\emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section II voices of the emulation and the real organ.}
 
 \section{Performance}
 \label{section:performance}
 
-Running this paraphonic synthesizer requires a much processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Fausts SMP features.
+Running this paraphonic synthesizer requires a substantial amount of processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Fausts SMP features.
 
-The performance numbers shown here are measured using a modified version of the faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are bytes of audio data generated per second. The Faust benchmark uses this measurement as memory bandwidth on SMP systems is a precious commodity. In the case of the YC-20, the processing creates much more data than what is mixed into the output. Thus the figures can be only be really compared to each other.
+The performance numbers shown here are measured using a modified version of the Faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are in megabytes of audio data generated per second. The Faust benchmark uses this measurement, as memory bandwidth on SMP systems is a precious commodity. In the case of the YC-20, the processing creates much more data than what comes out of its single mono output. Thus the figures can only when compared to each other.
 
-Tests were ran on a Dell D820 laptop with a Core 2 Duo T7400 (2.16Ghz) processor using the internal soundcard. The operating system was 32 bit Ubuntu 9.10. Processor frequency governor was switched to performance on both cores before running the tests. The kernel was a standard Ubuntu package, 2.6.31-19-generic and the used gcc version was 4.4.1-4ubuntu9. Benchmarks were done one YC-20 code revision 227. (C) shows the impact of non-branching PolyBLEP calculations and is compiled with slight modifications to the same revision. The results are shown in table \ref{table:performance}.
+Tests were ran on a Dell D820 laptop with a Core 2 Duo T7400 (2.16Ghz) processor using the internal soundcard. The operating system was 32 bit Ubuntu 9.10. The processor frequency governor was switched to performance on both cores before running the tests. The kernel was a standard Ubuntu package, 2.6.31-19-generic and the used gcc version was 4.4.1-4ubuntu9. Benchmarks were done on YC-20 code revision 227\footnote{Subversion repository available at http://foo-plugins.googlecode.com/svn/trunk/}. Figures in column C are from a slightly modified version of the YC-20 code and it shows the performance impact of non-branching PolyBLEP calculations. The results are shown in table \ref{table:performance}.
 
 \begin{table}[h]
  \begin{center}
@@ -238,7 +237,7 @@ GCC was unable to compile the scheduler versions of the emulation with non-branc
  \end{center}
 \end{table}
 
-There was variance between consecutive test runs, so the only real results deductable from the tests shown in table \ref{table:performance} is that the scheduler mode seemed to give the best performance. However this data is backed by tests done by measuring the performance of the YC-20 emulation running as a real jack application. The measurements shown in table \ref{table:performance2} were done by running the emulation compiled with different flags and observing the DSP percentage meter in qjackctl. This meter tells how much of the time between jack engine callbacks is spent processing jack signal callbacks.
+There was notable variance between consecutive test runs, so the only real results deductable from the tests shown in table \ref{table:performance} is that the scheduler mode gives the best performance. This data is backed by tests done by measuring the performance of the YC-20 emulation running as a jack application. The measurements shown in table \ref{table:performance2} were done by running the emulation compiled with different flags and observing the DSP percentage meter in qjackctl. This meter tells how much of the time between jack engine callbacks is spent processing jack client callbacks.
 
 \begin{table}[h]
  \begin{center}
@@ -254,7 +253,8 @@ There was variance between consecutive test runs, so the only real results deduc
 
 \end{tabular}
 \caption{All tests were compiled with the following gcc flags: \\
--O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize. Jack was running realtime with a dummy backend simulating a 48kHz sample rate with 512 frame buffers.
+-O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize. \\
+Jack 1 was running realtime with a dummy backend simulating a 48kHz sample rate with 512 frame buffers.
 }\label{table:performance2}
  \end{center}
 \end{table}
@@ -263,18 +263,19 @@ There was variance between consecutive test runs, so the only real results deduc
 
 \section{Conclusions}
 
-While there is still some way to go for an accurate emulation of the YC-20, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20.  The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will come at the expense of even more CPU cycles. The real organ also has considerable bleed and inconsitencies which might be worth emulating.
+While there is still some way to go for an accurate emulation of the YC-20 organ, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20. The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will come at the expense of even more CPU cycles. The real organ also has considerable bleed and inconsitencies which might be worth emulating.
 
 \subsection{Benefits of Faust}
 
-Functional thinking suits audio applications very well, as solutions to problems can often be expressed as equations. This model sidesteps many of the issues procedural programs face, as the signal flow between processors can be expressed as such. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with tranferring buffers and interpreting offsets and buffer lengths.
+Functional thinking suits audio applications very well, as solutions to problems can often be expressed as mathematical equations. This model sidesteps many of the issues procedural programs face, as the processors can be expressed at a higher abstraction level. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with tranferring buffers and interpreting offsets and buffer lengths.
 
-In addition to the previously mentioned benefits, the created code is also more readable. The syntax offers good tools, such as sequential composition, which keep functions simple and concise. This is often beneficial when compared to typical C-style syntax where one needs to use with consecutive function calls or enclosed statements. See listings \ref{list:c-consec}, \ref{list:c-enclosed} and \ref{list:faust} for an example. While listing \ref{list:c-enclosed} is pretty readable, one should note that functions are presented to the reader in reverse order and it is also difficult to see to which function the multiplication is applied to.
+Faust code is easy to keep readable as the syntax offers tools, such as sequential composition, which help keep functions simple and concise. See listings \ref{list:c-consec}, \ref{list:c-enclosed} and \ref{list:faust} for an example. While listing \ref{list:c-enclosed} is pretty compact, one should note that functions are presented to the reader in reverse order and it is also difficult to see to which function return value the multiplication is applied to.
 
 \begin{lstlisting}[language=C,label=list:c-consec,caption=Consecutive calls]
 float dostuff(float f) {
 	f = func1(f);
-	f = func2(f) * 2.5;
+	f = func2(f);
+	f = f * 2.5;
 	f = func3(f);
 	return f;
 }
@@ -290,32 +291,38 @@ float dostuff(float f) {
 dostuff = func1 : func2 : *(2.5) : func3;
 \end{lstlisting}
 
-The SVG output of the Faust compiler is also worth mentioning. The compiler can create a hyperlinked SVG document which depicts the whole compiled process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyperlinked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
 
-The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it can promote the spread of good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
+The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
 
-Faust also allows automatic parallelization and vectorization of programs. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}.
+Faust also allows automatic parallelization and vectorization of programs. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}. Faust also allows the developer to easily test and compare different optimization methods without refactoring their code.
 
-\subsection{Improvements to Faust}
+\subsection{How to improve Faust}
 
-As discussed in section \ref{section:tone-generation} and shown in the results in section \ref{section:performance}, there is a strong case for a truly branching select operation. However, the semantics of Faust requires all of the processing graph to be evaluated for every frame. But the semantics are kept intact if the function or functions truly branching select clauses skip evaluating are stateless. This is because the next evaluation of the function does not depend on previous evaluations. This leaves the Faust with a choice: either select calls with stateless functions as parameters are compiled as truly branching automatically or a new branching select call is created. Both cases require the specification of rules on what a stateless function is. Also, the compiler must check whether the functions being skipped over comply to these specifications before allowing compilation of such code.
+As discussed in section \ref{section:tone-generation}, and shown in the results in section \ref{section:performance}, there is a strong case for a truly branching select operation. However, the semantics of Faust requires all of the processing graph to be evaluated for every frame. Truly branching operations would cause some function evaluations to be skipped. The operating semantics are however compatible with branching operations if the skipped functions are stateless. This is because if the function has no state, the next evaluation of the function does not depend on previous evaluations.
 
-This logic could also be applied to functions using comparison operators in equations. Equation \ref{eq:comp-op} is an example of a function where the second (stateless) part of the first multiplication could be optimized out for values x less or equal to 0 as in those cases, the first part would be 0.
+There are two ways truly branching operations can be added to Faust: either select2 and select3 calls with no stateful function branches are compiled automatically as truly branching or a new branching select call is created. Both cases require the specification of rules on what a stateless function is. Also, the compiler must check whether the functions being skipped over comply to these specifications before allowing compilation of such code.
+
+This logic could also be generalized to multiplication functions. Function $f(x)$ in equation \ref{eq:comp-op} is an example of a function where evaluating $t2(x)$ can be skipped if $x \leq 0$ as $t1(x)$ evaluates to 0 for $x \leq 0 $ and $t2$ is stateless.
 
 \begin{equation}
 \label{eq:comp-op}
-f(x) = (x>0) * (x^2-fmod(x,1.0))
+\begin{split}
+t1(x) &= (x>0) \\
+t2(x) &= x^2-fmod(x,1.0) \\
+f(x)  &= t1(x) * t2(x) \\
+\end{split}
 \end{equation}
 
 %Branchless select2 and select3 can very efficient in some cases, but sometimes true branches are required.
 
-The compiler error messages are often unhelpful. They do not always even specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. One specific issue with the compiler messages is worth giving special attention. It is cases where the inputs and outputs of functions in a sequential composition do not match. In such cases Faust outputs a quite exhausting description of the functions in the compisition, instead of just the names of the functions. For example, if the YC-20 emulation would fail to cut the phase output of the last divider (dividers would then output 108 instead of 96 streams), the resulting error message is 67 kilobytes.
+The compiler error messages are often unhelpful. They do not always specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. One specific issue with the compiler messages is worth giving special attention to. It is cases where the number of inputs and outputs of functions in a sequential composition do not match. In such cases Faust outputs a quite exhaustive description of the functions in the composition instead of just the names of the functions. For example, if the YC-20 emulation would fail to cut the phase output of the last divider (dividers would then output 108 instead of 96 streams), the resulting error message is 67 kilobytes.
 
-In the audio world, lack of support for fourier transforms is very unfortunate. As mentioned in section \ref{section:tone-generation}, the better band limiting method (BLEP) is not possible to implement in pure faust. Fourier transforms would naturally be useful for a variety of other tasks as well. Fortunately there has been promising news of multi rate support for Faust which would allow fourier transforms.
+For signal processing, the lack of support for fourier transforms restricts what problems can be solved. As mentioned in section \ref{section:tone-generation}, the better band-limiting method (BLEP) is not possible to implement in pure Faust. Fourier transforms would naturally be useful for a variety of other tasks as well. Fortunately there has been promising news of multi-rate support for Faust which would allow processing such as fourier transforms.
 
-As procedural programming is the prevailing model of programming, it is safe to say many potential users of Faust are familiar with only that model. This applies some pressure to good documentation. The current documentation should abbreviate the definitions of the more advanced features of the language. Mainly recursion and the rdtable and rwtable functions could benefit from better explanations. Currently the functions are almost side-stepped and only their function syntax is given.
+As procedural programming is the prevailing model of programming, it is safe to say many potential users of Faust are familiar with only that model. This applies pressure to the quality of documentation. The current documentation should abbreviate the definitions of the more advanced features of the language. Mainly recursion and the rdtable and rwtable functions could benefit from better explanations. Currently the functions are almost side-stepped and almost nothing but their function syntax is described.
 
-Implementing the matrix mixer required a lot of hand-crafting. Having a concept of indexable arrays would help such operations. If the 96 inputs of the keyboard mixer and the buttons representing the keys of the organ could be arranged into arrays, the mixing could be done algorithmically using the sum aggregate function. Such operations could surely open up possibilities of optimizing the created C++ code. As it stands, the keyboard mixing is compiled into a large amount of separate discrete multiplication and addition operations.
+Implementing the matrix mixer required a lot of hand-crafting. Having a concept of indexable arrays would help such operations. If the 96 inputs of the keyboard mixer and the buttons representing the keys of the organ could be arranged into arrays, the mixing could be done algorithmically using the aggregate functions such as sum. Such operations could surely open up possibilities of optimizing the created C++ code. As it stands, the keyboard mixing is compiled into a large amount of separate discrete multiplication and addition operations which can not be vectorized.
 
 % DSP processors?
 
@@ -323,7 +330,7 @@ Implementing the matrix mixer required a lot of hand-crafting. Having a concept 
 
 \section{Acknowledgements}
 
-Thanks to Petri Junno for all the help with analyzing the original organ. I would also like to thank Torben Hohn, Sakari Bergen for providing support and answering my sometimes naive questions. %Also thanks to Yann Orlarey for helpful com
+Thanks to Petri Junno for all the help with analyzing the original organ. I would also like to thank Torben Hohn and Sakari Bergen for providing support and answering my sometimes naive questions on irc. %Also thanks to Yann Orlarey for helpful com
 
 % Yann
 
