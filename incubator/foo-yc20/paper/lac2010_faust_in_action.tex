@@ -45,6 +45,8 @@ This paper describes how an emulation of a 1970's combo-organ was written in Fau
 
 The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of fixed parallel processes and components. This makes for a good test of Fausts performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it makes it possible to match the emulation quality against the original. 
 
+The contents of this paper is organized into four sections. The first section covers how the real organ operates. This is followed by a description of how the organ is emulated. The third section covers the performance aspects of the emulation. The last section offers analysis of Fausts strengths and gives proposals on how to improve the language.
+
 \section{YC-20}
 \label{section:yc-20}
 
@@ -70,11 +72,11 @@ The drawbar controls are potentiometers which control how much of each bus bar i
 
 The key switches on the lowest 17 keys feed either separate bass bus bars. The bass manual switch controls whether these bus bars are kept separate or mixed with the main bus bars. Thus, with the switch disabled, the bass keys work exactly as the rest of the manual. With the switch enabled, the bass bus bars are separate and only feed the bass section. It is worth noting that the bass section effectively discards the signal of bass bus bars 2-2/3', 2', 1-3/5' and 1'.
 
-Bass section differs from the two main sections in that both bass manual drawbars (16' and 8') use a mix of multiple bass bus bars. The 16' drawbar contains a mix of all three bass bus bars (16', 8' and 4'), with the 16' bass bus bar mixed with the lowest value resistor and the 4' bass bus bar with the highest value resistor. The 8' drawbar is a mix of the 8' bass bus bar with a lower value resistor and 4' bass bus bar with a higher value resistor. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars controls are wired center-tap to source with the other tip grounded and the other tip as the output. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it also varies the impedance of the signal. The different mixing resistors and the varying impedance of the drawbar, combined with a fixed capacitor to ground (after summing the drawbar signals) makes the network act as a fairly complex RC filter. This filter has a varying cutoff point and mix amount per bass bus bar.
+Bass section differs from the two main sections in that both bass manual drawbars (16' and 8') use a mix of multiple bass bus bars. The 16' drawbar is a mix of bass bus bars 16', 8' and 4'. The bus bars are mixed through different value resistors. 16' has the least resistance and 4' the highest resistance. The 8' drawbar is a mix of the 8' bass bus bar with lower resistance and 4' bass bus bar with higher resistance. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars controls are wired center-tap to source with the other tip grounded and the other tip as the output. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it also varies the impedance of the signal. The different mixing resistors and the varying impedance of the drawbar controls, combined with a fixed capacitor to ground (after summing the drawbar signals) makes the network act as a fairly complex RC filter. This filter has a varying cutoff point and mix amount per bass bus bar.
 
 \subsection{Percussion}
 
-Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistor on the 1' bus bar. The volume of this signal is controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack is instantaneous and the release timings is fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato. However there is a substantial amount of bleed from the percussion section which is audible when all other drawbars are off.
+Percussion manual sounds are created by mixing together bus bars 1', 2-2/3' and 16' via resistors. There is a substantially larger resistance on the 1' bus bar leading to less 1' voices in the percussion section. The volume of this signal is controlled by a simple envelope generator. This envelope generator is triggered by activity on the 1' bus bar. The envelope attack is instantaneous and the release timings is fast while the sustain level is near zero. This causes a fast attack sound, but the effect only works when no keys are pressed down before. In other words, the percussion effect is not heard, for example, when playing legato. However there is a substantial amount of bleed from the percussion section which is audible when all other drawbars are off.
 
 If the bass manual switch is enabled, it disengages the bass bus bars from the main bus bars. Thus the bass keys will not mix sounds onto the 1' bus bar. Therefore playing the bass manual will not trigger the percussion and percussion sounds will trigger even when bass keys are held down.
 
@@ -204,11 +206,11 @@ The section II drawbar levers are emulated as described in section \ref{section:
 \emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section II voices of the emulation and the real organ.}
 
 
-\section{Percussion}
+\subsection{Percussion}
 
 The percussion uses the signal on the 1' bus bar to trigger an envelope generator. There is a root-mean-square envelope follower on the 1' bus bar and the envelope is triggered when the follower exceeds a set threshold. The envelope generator starts off with a signal where a one frame unit impulse is created at the trigger point. This impulse signal is low-pass filtered to match the measured percussion envelope. This envelope is then used to control the volume of a mix of the 1', 2-2/3' and 16' bus bars. Some bleed is added to the envelope generator output to emulate the bleed exhibited by the real organ.
 
-\section{Bass manual}
+\subsection{Bass manual}
 
 \emph{This section is unfinished as the filters are still being analyzed and emulated.}
 
@@ -338,9 +340,7 @@ The stream concept also makes code reusable. When combining procedural code from
 Faust also provides automatic parallelization and vectorization. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}. Faust also allows the developer to easily test and compare different optimization methods without refactoring their code.
 \section{Acknowledgements}
 
-Thanks to Petri Junno for all the help with analyzing the original organ. I would also like to thank Torben Hohn, Sakari Bergen and Yann Orlarey for providing help and support. %Also thanks to Yann Orlarey for helpful com
-
-% Yann
+Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice.
 
 \bibliographystyle{acl}
 \bibliography{lac2010_faust_in_action}
