@@ -1,11 +1,11 @@
 
-all: lac2010_faust_in_action.pdf
+all: lac2010_yc20.pdf
 
-lac2010_faust_in_action.pdf: *.tex *.bib
-	pdflatex lac2010_faust_in_action
-	bibtex lac2010_faust_in_action
-	pdflatex lac2010_faust_in_action
-	pdflatex lac2010_faust_in_action
+lac2010_yc20.pdf: *.tex *.bib
+	pdflatex lac2010_yc20
+	bibtex lac2010_yc20
+	pdflatex lac2010_yc20
+	pdflatex lac2010_yc20
 
 clean:
 	rm -f *.aux *.bbl *.blg *.log *~

@@ -1,4 +1,5 @@
 set format x '%.0fHz'
 set format y '%.1fdB'
 coeff_db(x)=20*log10(x)
-plot 0, -3, -6, -9, -12, 'DATAFILE' using ($0*(SAMPLERATE/2.0/DATALENGTH)):(coeff_db($1)-MAXSAMPLE) with lines lt -1 title 'TITLE'
+set yrange [-20:0]
+plot 0 lt -1 notitle, -3 lt -1 notitle, -6 lt -1 notitle, -9 lt -1 notitle, -12 lt -1 notitle, 'DATAFILE' using ($0*(SAMPLERATE/2.0/DATALENGTH)):(coeff_db($1)-MAXSAMPLE) with lines lt -1 title 'TITLE'
