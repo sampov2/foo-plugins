@@ -7,7 +7,7 @@
 \sloppy
 \newenvironment{contentsmall}{\small}
 
-\title{Emulating a combo organ using Faust}
+\title{Emulating a Combo Organ Using Faust}
 
 \author
 {Sampo Savolainen % SAVOLAINEN?
@@ -24,7 +24,7 @@
 
 \begin{abstract}
 \begin{contentsmall}
-This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust, thus the process of writing this emulation highlighted some of Faust's strengths and shortcomings which are discussed in the paper.
+This paper describes the working principles of a 40 year old transistor organ and how it is emulated with software. The emulation presented in this paper is open source and written in a functional language called Faust. The architecture of the organ proved to be challenging for Faust, thus the process of writing this emulation highlighted some of Faust's strengths and helped identify ways how to improve the language.
 
 \end{contentsmall}
 \end{abstract}
@@ -42,9 +42,9 @@ Faust\cite{orlarey:09c} stands for Functional AUdio STream and as the name impli
 %% TODO choose license
 This paper describes how an emulation of a 1970's combo-organ was written in Faust. The Yamaha YC-20 is a fairly typical organ of its time, a transistor based relatively light instrument meant for musicians on the road. The organ can be classified as a paraphonic synthesizer. Its working principles are discussed in detail in section \ref{section:yc-20}. The emulation is released as open source using the GNU General Public License (v3). In the spirit of open source, the working principles and decisions taken during writing the emulation are described in this paper for all to read.
 
-The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of fixed parallel processes and components. This makes for a good test of Fausts performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it makes it possible to match the emulation quality against the original. 
+The YC-20 was chosen to be emulated as its architecture is very different from typical software and virtual analog synthesizers. Instead of the complex controllability and routability of typical synthesizers, the paraphonic organ requires a large number of fixed parallel processes and components. This makes for a good test of Faust's performance and parallelization capabilities. Access to an operational organ was also a factor in the choice, as it makes it possible to match the emulation quality against the original. 
 
-The contents of this paper is organized into four sections. The first section covers how the real organ operates. This is followed by a description of how the organ is emulated. The third section covers the performance aspects of the emulation. The last section offers analysis of Fausts strengths and gives proposals on how to improve the language.
+The contents of this paper is organized into four sections. The first section covers how the real organ operates. This is followed by a description of how the organ is emulated. The third section covers the performance aspects of the emulation. The last section offers analysis of Faust's strengths and gives proposals on how to improve the language.
 
 \section{YC-20}
 \label{section:yc-20}
@@ -53,7 +53,7 @@ This section covers the operations of the organ in detail\cite{yamaha:yc20}. The
 
 \subsection{Features}
 
-The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicings, the word is used in place of lever for the voice controls. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
+The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicing, the word is used in place of lever for the voice controls. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
 
 Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass manual with drawbars 16' and 8'. There are also global controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
 
@@ -89,14 +89,14 @@ The emphasis was on creating a playable instrument which sounds as close to the 
 
 \subsection{Why Faust?}
 
-Instead of taking an approach where sounds are synthesized only when needed, this emulation keeps all oscillators, dividers and filters running all the time -- just like the real organ. Faust was chosen as the programming language to emulate the organ with, as Fausts functional semantics fit well with having all processing running at all times. Faust also makes it trivial to have a large amount of streams flowing from one circuit to another. This emulation was also intended as a test of Faust in a real world use.
+Instead of taking an approach where sounds are synthesized only when needed, this emulation keeps all oscillators, dividers and filters running all the time -- just like the real organ. Faust was chosen as the programming language to emulate the organ with, as Faust's functional semantics fit well with having all processing running at all times. Faust also makes it trivial to have a large amount of streams flowing from one circuit to another. This emulation was also intended as a test of Faust in a real world use.
 
 \subsection{Tone generation}
 \label{section:tone-generation}
 
 The 12 main oscillators producing sawtooth waves. They share a common, varying bias voltage (see section \ref{section:oscillator-bias}) which affects the oscillator frequencies. The main oscillator voices are divided by an array of flip flop circuits each dividing the frequency in half and the next one dividing the previously divided voice. The flip flops produce square wave signals. This means each oscillator produces a total of  8 phase-synchronized voices, each one an octave down from the previous voice.
 
-As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing when using typical sampling rates (44.1--96kHz). Naturally, also the dividers would suffer from aliasing as well. After evaluating different methods to band-limit the signals, the PolyBLEP\footnote{BLEP = band-limited step function. PolyBLEP uses a step function derived from a simple polynomial}\cite{antialiasing} method was chosen. While BLEP\cite{hardsync} would produce less aliasing components, it is computationally more expensive. More importantly, the BLEP step function is currently impossible to calculate in Faust as it requires using fourier and inverse fourier transfer functions. The quality of BLIT-SWS\footnote{BLIT = band-limited impulse train, SWS refers to the use of windowed sinc functions}\cite{blit} is good at high frequencies, but it produces aliasing components below the fundamental frequency\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to band-limiting hard synchronized oscillators\cite{hardsync} which is one strategy to emulate the divider circuits.
+As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing when using typical sampling rates (44.1--96kHz). Naturally, also the dividers would suffer from aliasing as well. After evaluating different methods to band-limit the signals, the PolyBLEP\footnote{BLEP = band-limited step function. PolyBLEP uses a step function derived from a simple polynomial}\cite{antialiasing} method was chosen. While BLEP\cite{hardsync} would produce less aliasing components, it is computationally more expensive. More importantly, the BLEP step function is currently impossible to calculate in Faust as it requires using Fourier and inverse Fourier transfer functions. The quality of BLIT-SWS\footnote{BLIT = band-limited impulse train, SWS refers to the use of windowed sinc functions}\cite{blit} is good at high frequencies, but it produces aliasing components below the fundamental frequency\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to band-limiting hard synchronized oscillators\cite{hardsync} which is one strategy to emulate the divider circuits.
 
 Second, third, and fourth order polynomial residual functions were evaluated for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore a band-limited signal using the second order function has considerably less aliasing components below the fundamental frequency than compared to the third and fourth order functions. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
 
@@ -150,7 +150,7 @@ Each oscillator produces a saw wave at a different frequency. The frequencies ar
 
 Vibrato control voltage is created by a simple sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range (5-8Hz) was simply measured from the real device. The vibrato depth is simply an attenuation control for the vibrato oscillator output. Vibrato depth range was empirically selected. The depth control deliberately never goes to zero, thus the vibrato always has an effect on the bias voltage.
 
-%However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one secion I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated secion I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
+%However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one section I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated section I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
 %% TODO: (C) not done yet!
 
 %% TODO
@@ -197,7 +197,7 @@ As described earlier in section \ref{section:sections}, Section II has a control
 
 %The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically. The dip 
 
-The high pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. This makes the filter act as a shelfing high pass filter. The low-pass section is simply a two stage low-pass RC filter.
+The high pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. This makes the filter act as a shelving high pass filter. The low-pass section is simply a two stage low-pass RC filter.
 
 The section II drawbar levers are emulated as described in section \ref{section:section-I}.
 
@@ -216,11 +216,11 @@ The percussion uses the signal on the 1' bus bar to trigger an envelope generato
 \section{Performance}
 \label{section:performance}
 
-Running this paraphonic synthesizer requires a substantial amount of processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Fausts SMP features.
+Running this paraphonic synthesizer requires a substantial amount of processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Faust's SMP features.
 
-The performance numbers shown here are measured using a modified version of the Faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are in megabytes of audio data generated per second. The Faust benchmark uses this measurement, as memory bandwidth on SMP systems is a precious commodity. In the case of the YC-20, the processing creates much more data than what comes out of its single mono output. Thus the figures can only when compared to each other.
+The performance numbers shown here are measured using a modified version of the Faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are in megabytes of audio data generated per second. The Faust benchmark uses this measurement, as memory bandwidth on SMP systems is a precious commodity. In the case of the YC-20, the processing creates much more data than what comes out of its single mono output. Thus the figures can only be compared to each other.
 
-Tests were ran on a Dell D820 laptop with a Core 2 Duo T7400 (2.16Ghz) processor using the internal soundcard. The operating system was 32 bit Ubuntu 9.10. The processor frequency governor was switched to performance on both cores before running the tests. The kernel was a standard Ubuntu package, 2.6.31-19-generic and the used gcc version was 4.4.1-4ubuntu9. Benchmarks were done on YC-20 code revision 227\footnote{Subversion repository available at http://foo-plugins.googlecode.com/svn/trunk/}. Figures in column C are from a slightly modified version of the YC-20 code and it shows the performance impact of non-branching PolyBLEP calculations. The results are shown in table \ref{table:performance}.
+Tests were ran on a Dell D820 laptop with a Core 2 Duo T7400 (2.16GHz) processor using the internal sound interface. The operating system was 32 bit Ubuntu 9.10. The processor frequency governor was switched to performance on both cores before running the tests. The kernel was a standard Ubuntu package, 2.6.31-19-generic and the used gcc version was 4.4.1-4ubuntu9. Benchmarks were done on YC-20 code revision 227\footnote{Subversion repository available at http://foo-plugins.googlecode.com/svn/trunk/}. Figures in column C are from a slightly modified version of the YC-20 code and it shows the performance impact of non-branching PolyBLEP calculations. The results are shown in table \ref{table:performance}.
 
 \begin{table}[h]
  \begin{center}
@@ -247,7 +247,7 @@ GCC was unable to compile the scheduler versions of the emulation with non-branc
  \end{center}
 \end{table}
 
-There was notable variance between consecutive test runs, so the only real results deductable from the tests shown in table \ref{table:performance} is that the scheduler mode gives the best performance. This data is backed by tests done by measuring the performance of the YC-20 emulation running as a jack application. The measurements shown in table \ref{table:performance2} were done by running the emulation compiled with different flags and observing the DSP percentage meter in qjackctl. This meter tells how much of the time between jack engine callbacks is spent processing jack client callbacks.
+There was notable variance between consecutive test runs, so the only real results deductible from the tests shown in table \ref{table:performance} is that the scheduler mode gives the best performance. This data is backed by tests done by measuring the performance of the YC-20 emulation running as a jack application. The measurements shown in table \ref{table:performance2} were done by running the emulation compiled with different flags and observing the DSP percentage meter in qjackctl. This meter tells how much of the time between jack engine callbacks is spent processing jack client callbacks.
 
 \begin{table}[h]
  \begin{center}
@@ -264,7 +264,7 @@ There was notable variance between consecutive test runs, so the only real resul
 \end{tabular}
 \caption{All tests were compiled with the following gcc flags: \\
 -O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize. \\
-Jack 1 was running realtime with a dummy backend simulating a 48kHz sample rate with 512 frame buffers.
+Jack 1 was running real-time with a dummy back-end simulating a 48kHz sample rate with 512 frame buffers.
 }\label{table:performance2}
  \end{center}
 \end{table}
@@ -273,7 +273,7 @@ Jack 1 was running realtime with a dummy backend simulating a 48kHz sample rate 
 
 \section{Conclusions}
 
-While there is still some way to go for an accurate emulation of the YC-20 organ, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20. The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will come at the expense of even more CPU cycles. The real organ also has considerable bleed and inconsitencies which might be worth emulating.
+While there is still some way to go for an accurate emulation of the YC-20 organ, this work has created a usable combo-organ synthesizer which sounds very much like the real YC-20. The remaining work is mostly meticulous filter tuning. A better quality anti-aliasing method could be useful although the available methods will come at the expense of even more CPU cycles. The real organ also has considerable bleed and inconsistencies which might be worth emulating.
 
 \subsection{How to improve Faust}
 
@@ -296,7 +296,7 @@ f(x)  &= t1(x) * t2(x) \\
 
 The compiler error messages are often unhelpful. They do not always specify in which file the compilation error occurred. Optimally the compiler should identify the file name, line number and if possible, the name of the function the error occurred in. One specific issue with the compiler messages is worth giving special attention to. It is cases where the number of inputs and outputs of functions in a sequential composition do not match. In such cases Faust outputs a quite exhaustive description of the functions in the composition instead of just the names of the functions. For example, if the YC-20 emulation would fail to cut the phase output of the last divider (dividers would then output 108 instead of 96 streams), the resulting error message is 67 kilobytes.
 
-For signal processing, the lack of support for fourier transforms restricts what problems can be solved. As mentioned in section \ref{section:tone-generation}, the better band-limiting method (BLEP) is not possible to implement in pure Faust. Fourier transforms would naturally be useful for a variety of other tasks as well. Fortunately there has been promising news of multi-rate support for Faust which would allow processing such as fourier transforms.
+For signal processing, the lack of support for Fourier transforms restricts what problems can be solved. As mentioned in section \ref{section:tone-generation}, the better band-limiting method (BLEP) is not possible to implement in pure Faust. Fourier transforms would naturally be useful for a variety of other tasks as well. Fortunately there has been promising news of multi-rate support for Faust which would allow processing such as Fourier transforms.
 
 As procedural programming is the prevailing model of programming, it is safe to say many potential users of Faust are familiar with only that model. This applies pressure to the quality of documentation. The current documentation should abbreviate the definitions of the more advanced features of the language. Mainly recursion and the rdtable and rwtable functions could benefit from better explanations. Currently the functions are almost side-stepped and almost nothing but their function syntax is described.
 
@@ -308,7 +308,7 @@ Implementing the matrix mixer required a lot of hand-crafting. Having a concept 
 
 \subsection{Benefits of Faust}
 
-Functional thinking suits audio applications very well, as solutions to problems can often be expressed as mathematical equations. This model sidesteps many of the issues procedural programs face, as the processors can be expressed at a higher abstraction level. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with tranferring buffers and interpreting offsets and buffer lengths.
+Functional thinking suits audio applications very well, as solutions to problems can often be expressed as mathematical equations. This model sidesteps many of the issues procedural programs face, as the processors can be expressed at a higher abstraction level. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with transferring buffers and interpreting offsets and buffer lengths.
 
 Faust code is easy to keep readable as the syntax offers tools, such as sequential composition, which help keep functions simple and concise. See listings \ref{list:c-consec}, \ref{list:c-enclosed} and \ref{list:faust} for an example. While listing \ref{list:c-enclosed} is pretty compact, one should note that functions are presented to the reader in reverse order and it is also difficult to see to which function return value the multiplication is applied to.
 
@@ -332,7 +332,7 @@ float dostuff(float f) {
 dostuff = func1 : func2 : *(2.5) : func3;
 \end{lstlisting}
 
-The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyperlinked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
 
 The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
 
