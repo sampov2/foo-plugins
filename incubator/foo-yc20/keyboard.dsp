@@ -76,7 +76,7 @@ bass_engaged = hgroup("bass",hslider("[3]bass manual",0.0, 0.0, 1.0, 1.0));
 
 // This implementation uses every voice and has equal number of outputs
 // when compared to the "slow" (read "correct") version
-keyboard_quick
+keyboard_test
 	(c8,c7,c6,c5,c4,c3,c2,c1,
 	 C8,C7,C6,C5,C4,C3,C2,C1,
 	 d8,d7,d6,d5,d4,d3,d2,d1,
@@ -109,7 +109,7 @@ with
 
 // This function sums the 96 signals together using the above
 // defined "buttons"
-keyboard_slow(
+keyboard(
 	 c8,c7,c6,c5,c4,c3,c2,c1,
 	 C8,C7,C6,C5,C4,C3,C2,C1,
 	 d8,d7,d6,d5,d4,d3,d2,d1,
