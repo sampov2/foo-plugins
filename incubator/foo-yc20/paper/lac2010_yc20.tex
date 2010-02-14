@@ -10,7 +10,7 @@
 \title{Emulating a Combo Organ Using Faust}
 
 \author
-{Sampo Savolainen % SAVOLAINEN?
+{Sampo SAVOLAINEN
 \\ Foo-plugins
 \\ http://foo-plugins.googlecode.com/
 \\ sampo.savolainen@gmail.com
@@ -337,6 +337,7 @@ The SVG output of the Faust compiler is also worth mentioning. The compiler can 
 The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
 
 Faust also provides automatic parallelization and vectorization. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}. Faust also allows the developer to easily test and compare different optimization methods without refactoring their code.
+
 \section{Acknowledgements}
 
 Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice.
