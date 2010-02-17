@@ -1550,6 +1550,16 @@ idleTimeout(gpointer data)
 void
 GTKUI::doControlChanges(MidiCC *evt)
 {
+	// controls are defined in the order they are on the real thing
+
+	// no touch vibrato here
+	static std::string depth ("depth");
+	static std::string speed ("speed");
+
+	static std::string bass_16("16' b");
+	static std::string bass_8 ("8' b");
+	static std::string bass_sw("bass manual");
+
 	static std::string sect1_16("16' i");
 	static std::string sect1_8 ("8' i");
 	static std::string sect1_4 ("4' i");
@@ -1558,16 +1568,15 @@ GTKUI::doControlChanges(MidiCC *evt)
 	static std::string sect1_1p("1 3/5' i");
 	static std::string sect1_1 ("1' i");
 
+	static std::string balance ("balance");
+	static std::string brightness ("bright");
+
 	static std::string sect2_16 ("16' ii");
 	static std::string sect2_8  ("8' ii");
 	static std::string sect2_4  ("4' ii");
 	static std::string sect2_2  ("2' ii");
 
-	static std::string depth ("depth");
-	static std::string speed ("speed");
 
-	static std::string balance ("balance");
-	static std::string brightness ("brightness");
 
 	static std::string percussion ("percussion");
 	//std::cerr << "hitme: " << evt->cc << " = " << evt->value << std::endl;
@@ -1577,6 +1586,22 @@ GTKUI::doControlChanges(MidiCC *evt)
 	bool reverse = true;
 
 	switch(evt->cc) {
+		// Vibrato
+		case 12: control = adjustments.find(speed)->second;
+			 break;
+		case 13: control = adjustments.find(depth)->second;
+			 break;
+
+		// Bass section
+		case 14: drawbar = adjustments.find(bass_16)->second;
+			 reverse = false; break;
+		case 15: drawbar = adjustments.find(bass_8)->second;
+			 reverse = false; break;
+		
+		case 23: control = adjustments.find(bass_sw)->second;
+			 evt->value = (evt->value > 63 ? 127 : 0);
+			 reverse = false; break;
+		
 		// Section I drawbars
 		case 2:  drawbar = adjustments.find(sect1_16)->second;
 			 break;
@@ -1593,6 +1618,11 @@ GTKUI::doControlChanges(MidiCC *evt)
 		case 9:  drawbar = adjustments.find(sect1_1)->second;
 			 break;
 
+		case 16: control = adjustments.find(balance)->second;
+			 break;
+		case 17: control = adjustments.find(brightness)->second;
+			 reverse = false; break;
+
 			 // Section II drawbars
 		case 18: drawbar = adjustments.find(sect2_16)->second;
 			 reverse = false; break;
@@ -1603,10 +1633,9 @@ GTKUI::doControlChanges(MidiCC *evt)
 		case 21: drawbar = adjustments.find(sect2_2)->second;
 			 reverse = false; break;
 
-		case 12: control = adjustments.find(speed)->second;
-			 break;
-		case 13: control = adjustments.find(depth)->second;
-			 break;
+		case 22: drawbar = adjustments.find(percussion)->second;
+			 reverse = false; break;
+
 
 		default:
 			 if (evt->cc >= 23) {
@@ -1741,9 +1770,12 @@ int main(int argc, char *argv[] )
     }
     idleTimeoutGTKUI = dynamic_cast<GTKUI *>(interface);
 
-    g_timeout_add(50, idleTimeout, 0);
+    gint idleSignalTag = g_timeout_add(50, idleTimeout, 0);
 
     interface->run();
+
+    g_source_remove(idleSignalTag);
+
     jack_deactivate(client);
 
     sem_destroy(&controlChangeQueueSem); 
