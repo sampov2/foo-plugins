@@ -13,27 +13,41 @@ wave_transformers =
 	wave_transformer_I3;
 
 wave_transformer(C6, C5, C4, C3, C2, C1, C0) = (
-	// passive lp on the 1st drawbar is to emulate capacitance in the circuitry.
-	// otherwise it will be too shrill
-	//(passive_hp(next_stage_resistance, 0.039) : passive_lp(next_stage_resistance, 0.0002 )),
-	passive_hp(next_stage_resistance, 0.039),
-	(passive_lp(15000, C6) : passive_hp(next_stage_resistance + 15000, 0.039)),
-	(passive_lp(15000, C5) : passive_hp(next_stage_resistance + 15000, 0.039)),
-	(passive_lp(15000, C4) : passive_hp(next_stage_resistance + 15000, 0.039)),
-	(passive_lp(15000, C3) : passive_hp(next_stage_resistance + 15000, 0.039)),
-	(passive_lp(15000, C2) : passive_hp(R2 + 15000, 0.039)), 
-	(passive_lp(15000, C1) : passive_hp(R1 + 15000, 0.039)), 
-	(passive_lp(15000, C0) : passive_hp(R0 + 15000, 0.039)) 
+	passive_hp(bus_bar_impedance, 0.039),
+	(lopass(C6) : hipass(bus_bar_impedance)),
+	(lopass(C5) : hipass(bus_bar_impedance)),
+	(lopass(C4) : hipass(bus_bar_impedance)),
+	(lopass(C3) : hipass(bus_bar_impedance)),
+	(lopass(C2) : hipass(R2)),
+	(lopass(C1) : hipass(R1)),
+	(lopass(C0) : hipass(R0))
 	)
 with {
+	//lopass(C) = passive_lp(2500, C);
+	//lopass(C) = biquad_lp(400);
 
-	// TODO: This is still a guess. It could probably be looked up on the schematics
-	next_stage_resistance = 180000.0 + 1.0/( 1.0/10000.0 + 1.0/100000.0 );
+	// looked good on the fft, but sounded wrong..
+	//lopass(C) = _ <: passive_lp(input_impedance, C) + _*0.29;
 
-	// next stage resistance affects the high pass cutoff point
-	R2 = 1.0 / ( 1.0/next_stage_resistance + 1.0/180000.0 );
-	R1 = 1.0 / ( 1.0/next_stage_resistance + 1.0/82000.0  );
-	R0 = 1.0 / ( 1.0/next_stage_resistance + 1.0/56000.0  );
+	// empirically chosen, good with at least one note and 15k input_impedance :)
+	//lopass(C) = _ <: passive_lp(input_impedance, C) + _* 0.015;
+	//hipass(R) = passive_hp(R + input_impedance, 0.039);
+
+	// another go..
+	lopass(C) = _ <: passive_lp(input_impedance, C);
+
+	hipass(R) = passive_hp(R, 0.039);
+
+	input_impedance = 15000;
+
+	bus_bar_impedance   = 180000.0 + 1.0/( 1.0/10000.0 + 1.0/100000.0 );
+	// bus bar 16 has a 15K resistor instead of 10K, but we can't go to that level
+	// of detail, at least yet.
+
+	// bus bar impedance affects the high pass cutoff point
+	R2 = 1.0 / ( 1.0/bus_bar_impedance + 1.0/180000.0 );
+	R1 = 1.0 / ( 1.0/bus_bar_impedance + 1.0/82000.0  );
+	R0 = 1.0 / ( 1.0/bus_bar_impedance + 1.0/56000.0  );
 	
 };
 
