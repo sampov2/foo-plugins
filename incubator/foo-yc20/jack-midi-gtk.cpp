@@ -20,12 +20,16 @@
 #include <map>
 #include <set>
 
+#include <deque>
+#include <semaphore.h>
+
 #include <iostream>
 #include <fstream>
 
 #include <libgen.h>
 #include <jack/jack.h>
 #include <jack/midiport.h>
+
 
 
 using namespace std;
@@ -51,7 +55,19 @@ struct Meta : map<const char*, const char*>
     void declare (const char* key, const char* value) { (*this)[key]=value; }
 };
  
+class MidiCC 
+{
+public:
+	MidiCC(int a, int b) { cc = a; value = b;}
+
+	int cc;
+	int value;
+};
 	
+sem_t controlChangeQueueSem;
+std::deque<MidiCC *> controlChangeQueue;
+std::map<std::string, GtkObject *> adjustments;
+
 
 #define max(x,y) (((x)>(y)) ? (x) : (y))
 #define min(x,y) (((x)<(y)) ? (x) : (y))
@@ -164,6 +180,8 @@ class UI
 			(*g)->updateAllZones();
 		}
 	}
+
+	virtual void registerAdjustment(GtkObject *adj, const char *label) = 0;
         
         // -- active widgets
         
@@ -505,8 +523,12 @@ class GTKUI : public UI
     virtual void show();
     virtual void run();
     
+    void doControlChanges(MidiCC *evt);
+    virtual void registerAdjustment(GtkObject *adj, const char *label);
 };
 
+GTKUI *idleTimeoutGTKUI;
+gboolean idleTimeout(gpointer data);
 
 
 /******************************************************************************
@@ -1027,12 +1049,22 @@ static int precision(double n)
     else return 0;
 }
 
+void GTKUI::registerAdjustment(GtkObject *adj, const char *label)
+{
+	std::string tmp(label);
+	
+	std::cerr << "reg label " << tmp << std::endl;
+	adjustments.insert(make_pair(tmp, adj));
+	
+}
+
 // -------------------------- Vertical Slider -----------------------------------
 
 void GTKUI::addVerticalSlider(const char* label, float* zone, float init, float min, float max, float step)
 {
     *zone = init;
     GtkObject* adj = gtk_adjustment_new(init, min, max, step, 10*step, 0);
+    registerAdjustment(adj, label);
     
     uiAdjustment* c = new uiAdjustment(this, zone, GTK_ADJUSTMENT(adj));
 
@@ -1061,6 +1093,7 @@ void GTKUI::addHorizontalSlider(const char* label, float* zone, float init, floa
 {
     *zone = init;
     GtkObject* adj = gtk_adjustment_new(init, min, max, step, 10*step, 0);
+    registerAdjustment(adj, label);
     
     uiAdjustment* c = new uiAdjustment(this, zone, GTK_ADJUSTMENT(adj));
 
@@ -1288,7 +1321,6 @@ void GTKUI::run()
 
 
 
-
 //----------------------------------------------------------------
 //  Definition of an abstract signal processor
 //----------------------------------------------------------------
@@ -1462,6 +1494,16 @@ int process (jack_nframes_t nframes, void *arg)
 			/* note off */
 			note = *(event.buffer + 1) - 36;
 			value = 0.0;
+		} else if ( ((*(event.buffer)) & 0xf0) ==  0xb0) {
+			int cc    = *(event.buffer+1);
+			int value = *(event.buffer+2);
+
+			// while one shouldn't lock inside an RT thread, the 
+			// other party aquiring this lock is always O(1) in the
+			// locked state
+			sem_wait(&controlChangeQueueSem);
+			controlChangeQueue.push_back( new MidiCC(cc, value));
+			sem_post(&controlChangeQueueSem);
 		}
 
 		if (note >= 0 && note < 61) {
@@ -1480,6 +1522,129 @@ int process (jack_nframes_t nframes, void *arg)
 	return 0;
 }
 
+
+gboolean 
+idleTimeout(gpointer data)
+{
+	// lock
+	sem_wait(&controlChangeQueueSem);
+	while (!controlChangeQueue.empty()) {
+		// pop list
+		MidiCC *evt = controlChangeQueue.front();
+		controlChangeQueue.pop_front();
+		// unlock
+		sem_post(&controlChangeQueueSem);
+
+		// do the slow things
+		idleTimeoutGTKUI->doControlChanges(evt);
+		delete evt;
+
+		// lock again
+		sem_wait(&controlChangeQueueSem);
+	}
+	// unlock
+	sem_post(&controlChangeQueueSem);
+	return true;
+}
+
+void
+GTKUI::doControlChanges(MidiCC *evt)
+{
+	static std::string sect1_16("16' i");
+	static std::string sect1_8 ("8' i");
+	static std::string sect1_4 ("4' i");
+	static std::string sect1_2p("2 2/3' i");
+	static std::string sect1_2 ("2' i");
+	static std::string sect1_1p("1 3/5' i");
+	static std::string sect1_1 ("1' i");
+
+	static std::string sect2_16 ("16' ii");
+	static std::string sect2_8  ("8' ii");
+	static std::string sect2_4  ("4' ii");
+	static std::string sect2_2  ("2' ii");
+
+	static std::string depth ("depth");
+	static std::string speed ("speed");
+
+	static std::string balance ("balance");
+	static std::string brightness ("brightness");
+
+	static std::string percussion ("percussion");
+	//std::cerr << "hitme: " << evt->cc << " = " << evt->value << std::endl;
+
+	GtkObject *drawbar = 0;
+	GtkObject *control = 0;
+	bool reverse = true;
+
+	switch(evt->cc) {
+		// Section I drawbars
+		case 2:  drawbar = adjustments.find(sect1_16)->second;
+			 break;
+		case 3:  drawbar = adjustments.find(sect1_8)->second;
+			 break;
+		case 4:  drawbar = adjustments.find(sect1_4)->second;
+			 break;
+		case 5:  drawbar = adjustments.find(sect1_2p)->second;
+			 break;
+		case 6:  drawbar = adjustments.find(sect1_2)->second;
+			 break;
+		case 8:  drawbar = adjustments.find(sect1_1p)->second;
+			 break;
+		case 9:  drawbar = adjustments.find(sect1_1)->second;
+			 break;
+
+			 // Section II drawbars
+		case 18: drawbar = adjustments.find(sect2_16)->second;
+			 reverse = false; break;
+		case 19: drawbar = adjustments.find(sect2_8)->second;
+			 reverse = false; break;
+		case 20: drawbar = adjustments.find(sect2_4)->second;
+			 reverse = false; break;
+		case 21: drawbar = adjustments.find(sect2_2)->second;
+			 reverse = false; break;
+
+		case 12: control = adjustments.find(speed)->second;
+			 break;
+		case 13: control = adjustments.find(depth)->second;
+			 break;
+
+		default:
+			 if (evt->cc >= 23) {
+				 fprintf(stderr,"CC#%d = %d (button)\n",evt->cc,evt->value);
+				 // buttons
+			 } else {
+				 fprintf(stderr,"CC#%d = %d (slider/pot)\n",evt->cc,evt->value);
+			 }
+	}
+
+	if (drawbar) {
+		GtkAdjustment *adj = GTK_ADJUSTMENT(drawbar);
+		float dval = ((float)evt->value)/127.0;
+		if (reverse) dval = 1.0 - dval;
+
+		float rval;
+		if (dval > (5.0/6.0)) {
+			rval = 1;
+		} else if (dval > 0.5) {
+			rval = 2.0/3.0;
+		} else if (dval > (1.0/6.0)) {
+			rval = 1.0/3.0;
+		} else {
+			rval = 0;
+		}
+		gtk_adjustment_set_value(adj, rval);
+	}
+
+	if (control) {
+		GtkAdjustment *adj = GTK_ADJUSTMENT(control);
+		float dval = ((float)evt->value)/127.0;
+		if (reverse) dval = 1.0 - dval;
+
+		gtk_adjustment_set_value(adj, dval);
+	}
+
+
+}
 
 /******************************************************************************
 *******************************************************************************
@@ -1568,10 +1733,21 @@ int main(int argc, char *argv[] )
             jack_connect(client, jack_port_name(output_ports[i]), buf);
         }       
     }
-    
+
+    // Create a semaphore for controlChangeQueue locking
+    if (sem_init(&controlChangeQueueSem, 0, 1)) {
+	perror("sem_init");
+	return 1;
+    }
+    idleTimeoutGTKUI = dynamic_cast<GTKUI *>(interface);
+
+    g_timeout_add(50, idleTimeout, 0);
+
     interface->run();
     jack_deactivate(client);
-    
+
+    sem_destroy(&controlChangeQueueSem); 
+
     for (int i = 0; i < gNumInChans; i++) {
         jack_port_unregister(client, input_ports[i]);
     }
