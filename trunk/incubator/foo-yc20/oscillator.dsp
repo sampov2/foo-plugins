@@ -1,8 +1,10 @@
 tet12(note) = 440 * 2.0^(note / 12.0);
 
+saw_gain = 1.950; // +5.8dB
+
 oscillators = par(i, 12, polyblep_sawtooth_master(tet12(i + 39)));
 
-polyblep_sawtooth_master(f, bias) = (phase ~ _) <: polyblep_sawtooth_slave, _
+polyblep_sawtooth_master(f, bias) = (phase ~ _) <: polyblep_sawtooth_slave * saw_gain, _
 with {
 	freq = f * bias;
 

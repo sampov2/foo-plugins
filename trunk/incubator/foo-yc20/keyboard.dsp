@@ -170,11 +170,16 @@ with
 	            + key_c4*c6 + key_C4*C6 + key_d4*d6 + key_D4*D6 + key_e4*e6 + key_f4*f6 + key_F4*F6 + key_g4*g6 + key_G4*G6 + key_a4*a6 + key_A4*A6 + key_b4*b6
 		    + key_c5*c7;
 
-	bus_16    =  bass_keys_16 * (1.0 - bass_engaged)                        + key_f1*f2 + key_F1*F2 + key_g1*g2 + key_G1*G2 + key_a1*a2 + key_A1*A2 + key_b1*b2
+	bus_16b   = bass_keys_16 * (1.0 - bass_engaged)                         + key_f1*f2 + key_F1*F2 + key_g1*g2 + key_G1*G2 + key_a1*a2 + key_A1*A2 + key_b1*b2
 	            + key_c2*c3 + key_C2*C3 + key_d2*d3 + key_D2*D3 + key_e2*e3 + key_f2*f3 + key_F2*F3 + key_g2*g3 + key_G2*G3 + key_a2*a3 + key_A2*A3 + key_b2*b3
 	            + key_c3*c4 + key_C3*C4 + key_d3*d4 + key_D3*D4 + key_e3*e4 + key_f3*f4 + key_F3*F4 + key_g3*g4 + key_G3*G4 + key_a3*a4 + key_A3*A4 + key_b3*b4
 	            + key_c4*c5 + key_C4*C5 + key_d4*d5 + key_D4*D5 + key_e4*e5 + key_f4*f5 + key_F4*F5 + key_g4*g5 + key_G4*G5 + key_a4*a5 + key_A4*A5 + key_b4*b5
 		    + key_c5*c6;
+
+	// compensate for the different impedance on the 16' bus bar compared to other bus bars
+	//bus_16    = bus_16b * 1.928;
+	//bus_16    = bus_16b * 1.778;
+	bus_16    = bus_16b * 1.679; // 4.5dB of gain added
 
 	bass_bus_4  = bass_keys_4  * bass_engaged;
 	bass_bus_8  = bass_keys_8  * bass_engaged;
