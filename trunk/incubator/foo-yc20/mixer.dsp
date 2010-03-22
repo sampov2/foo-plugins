@@ -12,7 +12,11 @@ manual_i_4     = hgroup("i", vslider("[3]4' i",     1.0,  0.0, 1.0, 0.25)) : gai
 manual_i_8     = hgroup("i", vslider("[2]8' i",     1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 manual_i_16    = hgroup("i", vslider("[1]16' i",    0.5,  0.0, 1.0, 0.25)) : gain_transfer;
 
-brightness     = hgroup("ii", vslider("[1]bright",0.0,  0.0, 1.0, 0.25));
+brightness_c   = hgroup("ii", vslider("[1]bright",0.0,  0.0, 1.0, 0.25));
+// voltage divider based on estimated buffer impedance (x2) and the brightness potentiometer value
+// it is about -34dB
+brightness_bleed = 1.0/(50.0 + 1.0 + 1.0); 
+brightness     = brightness_bleed + brightness_c * (1.0 - 2.0*brightness_bleed);
 
 manual_ii_2    = hgroup("ii", vslider("[5]2' ii",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 manual_ii_4    = hgroup("ii", vslider("[4]4' ii",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
@@ -23,7 +27,7 @@ manual_bass_8  = hgroup("bass", vslider("[2]8' b",  1.0,  0.0, 1.0, 0.25)) : gai
 manual_bass_16 = hgroup("bass", vslider("[1]16' b", 1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 
 
-mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 0.99 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
+mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 2.99 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
 
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
 	= balance(manual_i, manual_ii) + percussion
@@ -38,37 +42,47 @@ with {
 		 + bus_8     * manual_i_8
 		 + bus_16    * manual_i_16;
 
-	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(4.0);
+	// TODO: is this low pass filter here or everywhere?
+	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(4.0) : biquad_lp(7500);
 
 	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
-		(bus_2    * manual_ii_2 <:
-			(passive_lp(10000, 0.039) : passive_lp(20000, 0.039)),
-			manual_ii_hp(39000.0, 0.022)),
-		(bus_4    * manual_ii_4 <:
-			(passive_lp(10000, 0.022) : passive_lp(20000, 0.022)),
-			manual_ii_hp(39000.0, 0.010)),
-		(bus_8    * manual_ii_8 <:
-			(passive_lp(10000, 0.010) : passive_lp(20000, 0.010)),
-			manual_ii_hp(39000.0, 0.0047)),
-		(bus_16   * manual_ii_16 <:
-			(passive_lp(10000, 0.0047) : passive_lp(20000, 0.0047)),
-			manual_ii_hp(39000.0, 0.0027));
-/*
-			(( _ <: passive_hp(39000, 0.0027) + *(shelf_mix) ) 
-				: passive_hp(39000, 0.0027)));
-*/
+		(bus_2    * manual_ii_2 <:  manual_ii_lp(10000.0, 0.0047), manual_ii_hp(39000.0, 0.0027)),
+		(bus_4    * manual_ii_4 <:  manual_ii_lp(10000.0, 0.010),  manual_ii_hp(39000.0, 0.0047)),
+		(bus_8    * manual_ii_8 <:  manual_ii_lp(10000.0, 0.022),  manual_ii_hp(39000.0, 0.010)),
+		(bus_16   * manual_ii_16 <: manual_ii_lp(10000.0, 0.039),  manual_ii_hp(39000.0, 0.022));
 
 	voltage_divider(R1, R2) = R1/(R2+R1);
+
+	manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
+/*
 	manual_ii_hp(R, C) =
 		_ <: passive_hp(R, C) + 
 		     _ * voltage_divider(33000.0, R)
 		     //passive_lp(R + 33000.0, C) * voltage_divider(33000.0, R)
-		   : passive_hp(R*2, C*2);
+		   : passive_hp(R*2, C*4) 
+		   : *(3.51); // ratio of the voltage dividers in the circuit
+		   //: *(10^(3*0.05)); //+3dB of gain
+*/
+//		   : passive_hp(R*2, C*4); // 16' seems ok with this
+
+	manual_ii_lp(R, C) = passive_lp(R / 2.0, C) : passive_lp(R, C);
+	// Without the extra output filtering, this is pretty close for 16' lp
+	//manual_ii_lp(R, C) = passive_lp(R * 2.0, C * 2.0) : passive_lp(R * 4.0, C * 2.0);
+	
+	//manual_ii_2_lp(R, C) = passive_lp(R * 2.0, C) : passive_lp(R * 4.0, C);
+
+
+	//manual_ii_16_lp(R, C) = passive_lp(R * 2.0, C * 2.0) : passive_lp(R * 4.0, C * 2.0) : biquad_lp(5000);
+
+	//manual_ii_lp(R, C) = passive_lp( 1.0/((1.0/R)*3.0), C) : passive_lp( R+R, C);
+
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
-			(lp2 + lp4 + lp8 + lp16);
+			((lp2 + lp4 + lp8 + lp16));
+			//((hp2 + hp4 + hp8 + hp16) : passive_hp(4400.0, 0.001)),
+			//((lp2 + lp4 + lp8 + lp16) : passive_hp(4400.0, 0.001));
 			//((hp2 + hp4 + hp8 + hp16) : passive_hp(110000, 4.7)), 
 			//((lp2 + lp4 + lp8 + lp16) : passive_hp(23500, 4.7));
 
