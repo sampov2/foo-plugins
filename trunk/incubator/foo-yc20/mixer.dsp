@@ -43,7 +43,10 @@ with {
 		 + bus_16    * manual_i_16;
 
 	// TODO: is this low pass filter here or everywhere?
-	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(4.0) : biquad_lp(7500);
+	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(4.0);
+// : passive_lp(7500.0, 0.010); 
+// : biquad_lp(10000);
+// : biquad_lp(75000); <- this was used on 22th March when dull side was near-perfected
 
 	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
@@ -54,7 +57,23 @@ with {
 
 	voltage_divider(R1, R2) = R1/(R2+R1);
 
-	manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
+	// Naive
+	//manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
+	// Basic
+	//manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
+
+	manual_ii_hp(R, C) = 
+		// The first stage has a resistor in parallel with the high pass capacitor
+		// this attempts to emulate that by mixing in the unfiltered signal. The
+		// amount G is controlled by the voltage divider created by R and the 33k
+		// parallel resistor. To compensate for the high frequencies passed by this
+		// voltage divisor, the first high pass filter stage is multiplied by 1-G.
+		// Thus gain at high frequencies approaches 0dB
+	     _ <: (passive_hp(R, C) * (1-G) + _*(G))
+		:  passive_hp(R / 2.0, C)
+	with {
+		G = voltage_divider(33000, R);
+	};
 /*
 	manual_ii_hp(R, C) =
 		_ <: passive_hp(R, C) + 
