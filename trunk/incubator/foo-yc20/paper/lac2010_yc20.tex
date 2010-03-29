@@ -1,6 +1,8 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage{lac2010}
 \usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{pstricks}
 
 \usepackage{listings}
 
@@ -49,7 +51,16 @@ The contents of this paper is organized into four sections. The first section co
 \section{YC-20}
 \label{section:yc-20}
 
-This section covers the operations of the organ in detail\cite{yamaha:yc20}. The information in this is section is later referred to and detailed further when discussing the emulated parts.
+This section covers the operations of the organ in detail\cite{yamaha:yc20}. The information in this is section is later referred to and detailed further when discussing the emulated parts. Figure \ref{fig:yc20block} shows a rough block diagram of the device.
+
+% TODO: this is crap!
+\begin{figure}[tbp]
+\label{fig:yc20block}
+\centering
+\includegraphics[width=80mm]{yc20-block.pdf}
+\caption{Block diagram of the YC-20}
+\label{fig:aNicePicture}
+\end{figure}
 
 \subsection{Features}
 
@@ -60,7 +71,7 @@ Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has
 % the style of controls? .. probably irrelevant
 \subsection{Tone generation}
 
-The synthesizer architecture comprises of 12 oscillators, one per each note in a 12-TET scale. The oscillators produce a sawtooth wave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. The dividers produce square waves. 
+The synthesizer architecture comprises of 12 oscillators, one per each note in a twelve-tone equal temperament (12-TET) scale. The oscillators produce a sawtooth wave. For each oscillator, there are 7 frequency divider stages so each oscillator produces 8 voices totalling 96 voices. The dividers produce square waves. 
 
 These voices are next fed through a passive filter bank. The divided voices have both a high pass and low pass filters while the oscillator voices are only high pass filtered to remove bias. This totals 180 resistor-capacitor (RC) filter networks. Filtered voices are connected to switches on the actual keys of the keyboard. The keyboard is thus in fact a matrix mixer connecting the voices to bus bars. A key feeds each bus bar with the appropriate voice matching that key and octave, or the matching harmonic voice in case of the 2-2/3' and 1-3/5' bus bars. 
 
