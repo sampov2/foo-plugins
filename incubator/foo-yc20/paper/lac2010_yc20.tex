@@ -51,15 +51,13 @@ The contents of this paper is organized into four sections. The first section co
 \section{YC-20}
 \label{section:yc-20}
 
-This section covers the operations of the organ in detail\cite{yamaha:yc20}. The information in this is section is later referred to and detailed further when discussing the emulated parts. Figure \ref{fig:yc20block} shows a rough block diagram of the device.
+This section covers the operations of the organ in detail\cite{yamaha:yc20}. The information in this is section is later referred to and detailed further when discussing the emulated parts. Figure \ref{fig:yc20block} shows a block diagram of the device.
 
-% TODO: this is crap!
 \begin{figure}[tbp]
-\label{fig:yc20block}
 \centering
 \includegraphics[width=80mm]{yc20-block.pdf}
 \caption{Block diagram of the YC-20}
-\label{fig:aNicePicture}
+\label{fig:yc20block}
 \end{figure}
 
 \subsection{Features}
@@ -343,7 +341,14 @@ float dostuff(float f) {
 dostuff = func1 : func2 : *(2.5) : func3;
 \end{lstlisting}
 
-The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code. Figure \ref{fig:svgoutput} shows an example of this output.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[height=60mm,angle=270]{manual_ii_hp.pdf}
+\caption{Faust SVG output of manual II high pass filtering for a single draw bar}
+\label{fig:svgoutput}
+\end{figure}
 
 The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
 
