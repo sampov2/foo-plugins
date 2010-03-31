@@ -23,23 +23,6 @@ wave_transformer(C6, C5, C4, C3, C2, C1, C0) = (
 	(passive_lp(input_impedance,C0) : passive_hp(R0, 0.039))
 	)
 with {
-	//lopass(C) = passive_lp(2500, C);
-	//lopass(C) = biquad_lp(400);
-
-	// looked good on the fft, but sounded wrong..
-	//lopass(C) = _ <: passive_lp(input_impedance, C) + _*0.29;
-
-	// empirically chosen, good with at least one note and 15k input_impedance :)
-	//lopass(C) = _ <: passive_lp(input_impedance, C) + _* 0.015;
-	//hipass(R) = passive_hp(R + input_impedance, 0.039);
-
-	// another go..
-	//lopass(C) = passive_lp(input_impedance, C);
-
-	hipass(R) = passive_hp(R, 0.039);
-
-	// ye olde good one
-	//input_impedance = 15000;
 	input_impedance = 10000;
 
 	bus_bar_impedance   = 180000.0 + 1.0/( 1.0/10000.0 + 1.0/100000.0 );
