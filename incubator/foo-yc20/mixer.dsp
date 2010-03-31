@@ -77,7 +77,7 @@ with {
 */
 //		   : passive_hp(R*2, C*4); // 16' seems ok with this
 
-	manual_ii_lp(R, C) = passive_lp(R, C) : passive_lp(R / 2.0, C);
+	manual_ii_lp(R, C) = passive_lp(R, C) : passive_lp(R, C);
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
