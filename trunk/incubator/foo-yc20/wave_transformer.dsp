@@ -14,13 +14,13 @@ wave_transformers =
 
 wave_transformer(C6, C5, C4, C3, C2, C1, C0) = (
 	passive_hp(bus_bar_impedance, 0.039),
-	(lopass(C6) : hipass(bus_bar_impedance)),
-	(lopass(C5) : hipass(bus_bar_impedance)),
-	(lopass(C4) : hipass(bus_bar_impedance)),
-	(lopass(C3) : hipass(bus_bar_impedance)),
-	(lopass(C2) : hipass(R2)),
-	(lopass(C1) : hipass(R1)),
-	(lopass(C0) : hipass(R0))
+	(passive_lp(input_impedance,C6) : passive_hp(bus_bar_impedance, 0.039)),
+	(passive_lp(input_impedance,C5) : passive_hp(bus_bar_impedance, 0.039)),
+	(passive_lp(input_impedance,C4) : passive_hp(bus_bar_impedance, 0.039)),
+	(passive_lp(input_impedance,C3) : passive_hp(bus_bar_impedance, 0.039)),
+	(passive_lp(input_impedance,C2) : passive_hp(R2, 0.039)),
+	(passive_lp(input_impedance,C1) : passive_hp(R1, 0.039)),
+	(passive_lp(input_impedance,C0) : passive_hp(R0, 0.039))
 	)
 with {
 	//lopass(C) = passive_lp(2500, C);
@@ -34,11 +34,13 @@ with {
 	//hipass(R) = passive_hp(R + input_impedance, 0.039);
 
 	// another go..
-	lopass(C) = _ <: passive_lp(input_impedance, C);
+	//lopass(C) = passive_lp(input_impedance, C);
 
 	hipass(R) = passive_hp(R, 0.039);
 
-	input_impedance = 15000;
+	// ye olde good one
+	//input_impedance = 15000;
+	input_impedance = 10000;
 
 	bus_bar_impedance   = 180000.0 + 1.0/( 1.0/10000.0 + 1.0/100000.0 );
 	// bus bar 16 has a 15K resistor instead of 10K, but we can't go to that level
