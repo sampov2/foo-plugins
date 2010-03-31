@@ -23,11 +23,12 @@ manual_ii_4    = hgroup("ii", vslider("[4]4' ii",    1.0,  0.0, 1.0, 0.25)) : ga
 manual_ii_8    = hgroup("ii", vslider("[3]8' ii",    1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 manual_ii_16   = hgroup("ii", vslider("[2]16' ii",   1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 
-manual_bass_8  = hgroup("bass", vslider("[2]8' b",  1.0,  0.0, 1.0, 0.25)) : gain_transfer;
-manual_bass_16 = hgroup("bass", vslider("[1]16' b", 1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_bass_8   = hgroup("bass", vslider("[2]8' b",  1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_bass_16  = hgroup("bass", vslider("[1]16' b", 1.0,  0.0, 1.0, 0.25)) : gain_transfer;
+manual_bass_vol = hgroup("bass", vslider("[3]bass volume", 1.0,  0.0, 1.0, 0.25));
 
 
-mixer = mixer_normal, mixer_bass :> +(_) : *(0.01 + 2.99 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
+mixer = mixer_normal, mixer_bass :> +(_) : *(0.001 + 0.09 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
 
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
 	= balance(manual_i, manual_ii) + percussion
@@ -43,10 +44,7 @@ with {
 		 + bus_16    * manual_i_16;
 
 	// TODO: is this low pass filter here or everywhere?
-	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(4.0);
-// : passive_lp(7500.0, 0.010); 
-// : biquad_lp(10000);
-// : biquad_lp(75000); <- this was used on 22th March when dull side was near-perfected
+	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(3.0);
 
 	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
@@ -54,13 +52,6 @@ with {
 		(bus_4    * manual_ii_4 <:  manual_ii_lp(10000.0, 0.010),  manual_ii_hp(39000.0, 0.0047)),
 		(bus_8    * manual_ii_8 <:  manual_ii_lp(10000.0, 0.022),  manual_ii_hp(39000.0, 0.010)),
 		(bus_16   * manual_ii_16 <: manual_ii_lp(10000.0, 0.039),  manual_ii_hp(39000.0, 0.022));
-
-	voltage_divider(R1, R2) = R1/(R2+R1);
-
-	// Naive
-	//manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
-	// Basic
-	//manual_ii_hp(R, C) = passive_hp(R / 2.0, C) : passive_hp(R, C);
 
 	manual_ii_hp(R, C) = 
 		// The first stage has a resistor in parallel with the high pass capacitor
@@ -72,6 +63,7 @@ with {
 	     _ <: (passive_hp(R, C) * (1-G) + _*(G))
 		:  passive_hp(R / 2.0, C)
 	with {
+		voltage_divider(R1, R2) = R1/(R2+R1);
 		G = voltage_divider(33000, R);
 	};
 /*
@@ -85,17 +77,7 @@ with {
 */
 //		   : passive_hp(R*2, C*4); // 16' seems ok with this
 
-	manual_ii_lp(R, C) = passive_lp(R / 2.0, C) : passive_lp(R, C);
-	// Without the extra output filtering, this is pretty close for 16' lp
-	//manual_ii_lp(R, C) = passive_lp(R * 2.0, C * 2.0) : passive_lp(R * 4.0, C * 2.0);
-	
-	//manual_ii_2_lp(R, C) = passive_lp(R * 2.0, C) : passive_lp(R * 4.0, C);
-
-
-	//manual_ii_16_lp(R, C) = passive_lp(R * 2.0, C * 2.0) : passive_lp(R * 4.0, C * 2.0) : biquad_lp(5000);
-
-	//manual_ii_lp(R, C) = passive_lp( 1.0/((1.0/R)*3.0), C) : passive_lp( R+R, C);
-
+	manual_ii_lp(R, C) = passive_lp(R, C) : passive_lp(R / 2.0, C);
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
@@ -106,7 +88,7 @@ with {
 			//((lp2 + lp4 + lp8 + lp16) : passive_hp(23500, 4.7));
 
 	percussion =
-		   bus_1 / 2.0 + bus_2_2p3 + bus_16 
+		   bus_1 * 0.25 + bus_2_2p3 + bus_16 * 0.5
 		: *(percussion_envelope(bus_1))
 		: *(percussion_control);
 };
@@ -120,9 +102,9 @@ with {
 	// This filter is tricky, the different buses are mixed with different
 	// resistors plus the mix potentiometers are connected so that they vary
 	// impedance to the filter. 10k is just a random stab in the (silent) dark.
-	filter = passive_lp(10000, 0.056);
+	filter = passive_lp(4500, 0.056);
 
-	// This should compensate for the relative quietness, also TODO: Bass volume!
-	gain = *(6.0);
+	// gain = 0.5 .. 5.0 (measured from the real organ)
+	gain = *(0.5+4.5*manual_bass_vol);
 };
 
