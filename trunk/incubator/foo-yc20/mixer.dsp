@@ -88,6 +88,8 @@ with {
 	// This filter is tricky, the different buses are mixed with different
 	// resistors plus the mix potentiometers are connected so that they vary
 	// impedance to the filter. 10k is just a random stab in the (silent) dark.
+
+	// However, this seems to work really well
 	filter = passive_lp(4500, 0.056);
 
 	// gain = 0.5 .. 5.0 (measured from the real organ)
