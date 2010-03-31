@@ -44,7 +44,7 @@ with {
 		 + bus_16    * manual_i_16;
 
 	// TODO: is this low pass filter here or everywhere?
-	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(3.0);
+	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(2.0);
 
 	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
@@ -81,7 +81,7 @@ with {
 
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
-			((lp2 + lp4 + lp8 + lp16));
+			((lp2 + lp4 + lp8 + lp16) * 0.75);
 			//((hp2 + hp4 + hp8 + hp16) : passive_hp(4400.0, 0.001)),
 			//((lp2 + lp4 + lp8 + lp16) : passive_hp(4400.0, 0.001));
 			//((hp2 + hp4 + hp8 + hp16) : passive_hp(110000, 4.7)), 
