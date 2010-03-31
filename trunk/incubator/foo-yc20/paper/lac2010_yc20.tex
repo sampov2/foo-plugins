@@ -159,13 +159,6 @@ Each oscillator produces a saw wave at a different frequency. The frequencies ar
 
 Vibrato control voltage is created by a simple sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range (5-8Hz) was simply measured from the real device. The vibrato depth is simply an attenuation control for the vibrato oscillator output. Vibrato depth range was empirically selected. The depth control deliberately never goes to zero, thus the vibrato always has an effect on the bias voltage.
 
-%However, measurements of the real oscillators suggest that the oscillators are modulation by a relatively low frequency source. Image XX shows a measurement of one section I voice from the real organ (A). The measurement is centered on the fundamental and does not show the harmonics. Alongside the fundamental are two XXXX peaks at -YYYdB. The the emulated section I voice without modulation is shown as (B) and the modulated oscillator (C). The modulation is emulated by mixing a rectified 50Hz sine wave to the oscillator bias.
-%% TODO: (C) not done yet!
-
-%% TODO
-%INSERT FFT PLOTS HIGHLIGHTING FUNDAMENTALS AND FREQ MODULATION
-
-
 \subsection{Keyboard matrix mixer}
 
 The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button is used as a multiplier for 7 different voices (one per bus bar). So the signals on the emulated bus bars are the sum of $61*7 = 427$ discrete multiplications summed together. There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
@@ -197,8 +190,19 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 %\mbox{where }p\mbox{ is lever position from 0 (off) to 1}
 \end{equation}
 
-% TODO:
-\emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section I voices of the emulation and the real organ.}
+% TODO: Add measurement here
+% Manual I, mid-c, 8'
+Figure \ref{fig:comp_manual_i} shows C2 played on manual I with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=80mm]{analysis/manual_i_compare.png}
+\caption{Comparison between emulated and real manual I drawbar 8' sounds.}
+% Manual
+\label{fig:comp_manual_i}
+\end{figure}
+
+
 
 \subsection{Section II}
 
@@ -206,13 +210,18 @@ As described earlier in section \ref{section:sections}, Section II has a control
 
 %The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically. The dip 
 
-The high pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. This makes the filter act as a shelving high pass filter. The low-pass section is simply a two stage low-pass RC filter.
+The high-pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. Thus the filter is effectively a shelving high pass filter. The shelf is emulated by calculating a voltage divider between the parallel resistor and the resistor in the RC high pass filter. The voltage divider gives a gain coefficient \emph{C} which is used to mix together the high-passed and unfiltered signals. Unfiltered signal is multiplied by \emph{C} while the filtered is multiplied by \emph{1-C} and the results are added together. This keeps gain at high frequencies at 0dB as with the original passive filter. The two passive filters also affect each other and cannot be emulated by simply chaining two digital filters. The load applied by two filter stages is emulated by dividing the resistance of one filter by two. This doubles the cutoff frequency of the filter. This method was found by trial and error. Figure \ref{fig:manual_ii_hp} shows the block diagram of the complete filter.
 
-The section II drawbar levers are emulated as described in section \ref{section:section-I}.
+The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. Thus the filter stage is just two digital RC low pass filters in series.
 
-% TODO:
-\emph{This section is unfinished as the filters are still being analyzed and emulated. There will be spectrum analysis comparisons between the section II voices of the emulation and the real organ.}
+Figure \ref{fig:comp_manual_ii} shows C3 played on a fully bright manual II with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings. This measurement was done at the same overall level as measurements in figure \ref{fig:comp_manual_i}. This shows that there are some overall volume issues between the two manuals, but the balance between harmonics in different sounds is well emulated.
 
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=80mm]{analysis/manual_ii_compare.png}
+\caption{Comparison between emulated and real bright manual II drawbar 8' sounds.}
+\label{fig:comp_manual_ii}
+\end{figure}
 
 \subsection{Percussion}
 
@@ -220,12 +229,12 @@ The percussion uses the signal on the 1' bus bar to trigger an envelope generato
 
 \subsection{Bass manual}
 
-\emph{This section is unfinished as the filters are still being analyzed and emulated.}
+Emulating the bass section perfectly is a complex task due resistor mixing and the variable impedances per drawbar for the RC filter. Measurements from the real organ however suggest that the low frequency fundamentals dominate the signal and an acceptable emulation is achieved by carefully controlling the mix of the bass bus bars and by using a single fixed RC lowpass filter. This one filter is applied to a mix of both bass draw bars.
 
 \section{Performance}
 \label{section:performance}
 
-Running this emulation requires a substantial amount of processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. The design can be parallelized easily and as such, it should work as a good real world test for Faust's SMP features.
+Running this emulation requires a substantial amount of processing power. There are 96 oscillators working all of the time and there are hundreds of filters being applied at many stages of the design. Faust is designed to easily harness multiple processing units in parallel. The design of the emulation has a lot of potential for parallelization and as such, it should work as a good real world test for Faust's SMP features.
 
 The performance numbers shown here are measured using a modified version of the Faust benchmarking suite. These numbers are estimates of achieved memory bandwidth and as such, the results are in megabytes of audio data generated per second. The Faust benchmark uses this measurement, as memory bandwidth on SMP systems is a precious commodity. In the case of the YC-20, the processing creates much more data than what comes out of its single mono output. Thus the figures can only be compared to each other.
 
@@ -311,6 +320,17 @@ As procedural programming is the prevailing model of programming, it is safe to 
 
 Implementing the matrix mixer required a lot of hand-crafting. Having a concept of indexable arrays would help such operations. If the 96 inputs of the keyboard mixer and the buttons representing the keys of the organ could be arranged into arrays, the mixing could be done algorithmically using the aggregate functions such as sum. Such operations could surely open up possibilities of optimizing the created C++ code. As it stands, the keyboard mixing is compiled into a large amount of separate discrete multiplication and addition operations which can not be vectorized.
 
+Sometimes work halted as the emulation started behaving unexpectedly. Debugging the issue revealed that Faust has no problem with using the same variable name twice. For instance a function definition with a \emph{with} clause can contain definitions under the same symbol name as parameters to the original functions.
+
+\begin{lstlisting}[language=C,label=list:c-consec,caption=Consecutive calls]
+f(x,y) = x + y
+with {
+	x = y * y;
+};
+\end{lstlisting}
+
+The above Faust code is ambiguous, but it is compiled without any warning. This can lead to anywhere from unexpected results to complete failure. It would be good form to at least warn the user of the situation.
+
 % DSP processors?
 
 %Size of created code: often used functions are rewritten leading to slow compilation and huge amounts of local variables.
@@ -341,13 +361,13 @@ float dostuff(float f) {
 dostuff = func1 : func2 : *(2.5) : func3;
 \end{lstlisting}
 
-The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code. Figure \ref{fig:svgoutput} shows an example of this output.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the whole process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code. Figure \ref{fig:manual_ii_hp} shows an example of this output.
 
 \begin{figure}[tbp]
 \centering
 \includegraphics[height=60mm,angle=270]{manual_ii_hp.pdf}
-\caption{Faust SVG output of manual II high pass filtering for a single draw bar}
-\label{fig:svgoutput}
+\caption{Faust SVG output of manual II high pass filtering for a single draw bar. The parameters for the filters are resistance in ohms and capacitance in microfarads.}
+\label{fig:manual_ii_hp}
 \end{figure}
 
 The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
