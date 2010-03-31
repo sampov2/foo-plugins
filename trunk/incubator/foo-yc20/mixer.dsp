@@ -43,10 +43,8 @@ with {
 		 + bus_8     * manual_i_8
 		 + bus_16    * manual_i_16;
 
-	// TODO: is this low pass filter here or everywhere?
 	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(2.0);
 
-	// TODO: Still lots to do, filter values are very naive
 	manual_ii_filter = 
 		(bus_2    * manual_ii_2 <:  manual_ii_lp(10000.0, 0.0047), manual_ii_hp(39000.0, 0.0027)),
 		(bus_4    * manual_ii_4 <:  manual_ii_lp(10000.0, 0.010),  manual_ii_hp(39000.0, 0.0047)),
@@ -66,26 +64,14 @@ with {
 		voltage_divider(R1, R2) = R1/(R2+R1);
 		G = voltage_divider(33000, R);
 	};
-/*
-	manual_ii_hp(R, C) =
-		_ <: passive_hp(R, C) + 
-		     _ * voltage_divider(33000.0, R)
-		     //passive_lp(R + 33000.0, C) * voltage_divider(33000.0, R)
-		   : passive_hp(R*2, C*4) 
-		   : *(3.51); // ratio of the voltage dividers in the circuit
-		   //: *(10^(3*0.05)); //+3dB of gain
-*/
-//		   : passive_hp(R*2, C*4); // 16' seems ok with this
 
+	// Now that was easy
 	manual_ii_lp(R, C) = passive_lp(R, C) : passive_lp(R, C);
 
+	// *0.75 compensates for measured difference in overall volume
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
 			((lp2 + lp4 + lp8 + lp16) * 0.75);
-			//((hp2 + hp4 + hp8 + hp16) : passive_hp(4400.0, 0.001)),
-			//((lp2 + lp4 + lp8 + lp16) : passive_hp(4400.0, 0.001));
-			//((hp2 + hp4 + hp8 + hp16) : passive_hp(110000, 4.7)), 
-			//((lp2 + lp4 + lp8 + lp16) : passive_hp(23500, 4.7));
 
 	percussion =
 		   bus_1 * 0.25 + bus_2_2p3 + bus_16 * 0.5
