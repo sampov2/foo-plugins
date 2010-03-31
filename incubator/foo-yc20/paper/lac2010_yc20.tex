@@ -212,9 +212,9 @@ As described earlier in section \ref{section:sections}, Section II has a control
 
 The high-pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. Thus the filter is effectively a shelving high pass filter. The shelf is emulated by calculating a voltage divider between the parallel resistor and the resistor in the RC high pass filter. The voltage divider gives a gain coefficient \emph{C} which is used to mix together the high-passed and unfiltered signals. Unfiltered signal is multiplied by \emph{C} while the filtered is multiplied by \emph{1-C} and the results are added together. This keeps gain at high frequencies at 0dB as with the original passive filter. The two passive filters also affect each other and cannot be emulated by simply chaining two digital filters. The load applied by two filter stages is emulated by dividing the resistance of one filter by two. This doubles the cutoff frequency of the filter. This method was found by trial and error. Figure \ref{fig:manual_ii_hp} shows the block diagram of the complete filter.
 
-The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. Thus the filter stage is just two digital RC low pass filters in series.
+The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. Thus the filter stage is just two digital RC low pass filters.
 
-Figure \ref{fig:comp_manual_ii} shows C3 played on a fully bright manual II with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings. This measurement was done at the same overall level as measurements in figure \ref{fig:comp_manual_i}. This shows that there are some overall volume issues between the two manuals, but the balance between harmonics in different sounds is well emulated.
+Figure \ref{fig:comp_manual_ii} shows C3 played on a fully bright manual II with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings. This measurement was done at the same overall level as measurements in figure \ref{fig:comp_manual_i}. This shows that there are some overall volume issues between the two manuals, but the balance between harmonics of the sound is well emulated.
 
 \begin{figure}[tbp]
 \centering
@@ -320,16 +320,16 @@ As procedural programming is the prevailing model of programming, it is safe to 
 
 Implementing the matrix mixer required a lot of hand-crafting. Having a concept of indexable arrays would help such operations. If the 96 inputs of the keyboard mixer and the buttons representing the keys of the organ could be arranged into arrays, the mixing could be done algorithmically using the aggregate functions such as sum. Such operations could surely open up possibilities of optimizing the created C++ code. As it stands, the keyboard mixing is compiled into a large amount of separate discrete multiplication and addition operations which can not be vectorized.
 
-Sometimes work halted as the emulation started behaving unexpectedly. Debugging the issue revealed that Faust has no problem with using the same variable name twice. For instance a function definition with a \emph{with} clause can contain definitions under the same symbol name as parameters to the original functions.
+The Faust code shown as equation \ref{eq:ambiguous} is ambiguous, but can be compiled without any warning. This can lead to anywhere from unexpected results to complete failure. It would be good form for the Faust compiler to at least warn the user of the situation.
 
-\begin{lstlisting}[language=C,label=list:c-consec,caption=Consecutive calls]
-f(x,y) = x + y
-with {
-	x = y * y;
-};
-\end{lstlisting}
+\begin{equation}
+\label{eq:ambiguous}
+\begin{split}
+f(x , y) = x + y\\
+with \{ x = y * y; \};\\
+\end{split}
+\end{equation}
 
-The above Faust code is ambiguous, but it is compiled without any warning. This can lead to anywhere from unexpected results to complete failure. It would be good form to at least warn the user of the situation.
 
 % DSP processors?
 
