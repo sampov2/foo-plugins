@@ -43,7 +43,7 @@ with {
 		 + bus_8     * manual_i_8
 		 + bus_16    * manual_i_16;
 
-	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(2.0);
+	manual_ii = manual_ii_filter : manual_ii_mix : *(brightness) + *(1-brightness) : *(2.5);
 
 	manual_ii_filter = 
 		(bus_2    * manual_ii_2 <:  manual_ii_lp(10000.0, 0.0047), manual_ii_hp(39000.0, 0.0027)),
@@ -71,7 +71,7 @@ with {
 	// *0.75 compensates for measured difference in overall volume
 	manual_ii_mix(lp2, hp2, lp4, hp4, lp8, hp8, lp16, hp16) = 
 			(hp2 + hp4 + hp8 + hp16),
-			((lp2 + lp4 + lp8 + lp16) * 0.75);
+			((lp2 + lp4 + lp8 + lp16) * 0.60);
 
 	percussion =
 		   bus_1 * 0.25 + bus_2_2p3 + bus_16 * 0.5
