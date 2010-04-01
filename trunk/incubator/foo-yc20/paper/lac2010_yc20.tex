@@ -78,7 +78,7 @@ These voices are next fed through a passive filter bank. The divided voices have
 
 The drawbar controls are potentiometers which control how much of each bus bar is mixed to each section of the organ. While in section I, drawbars are simply mixed together using resistors, Section II drawbars have more complex filtering. Each section II drawbar is divided into two streams, each filtered separately with RC networks. One stream is low pass filtered while the other is high pass filtered. The low passed and high passed signals are mixed through resistors to combine into bright and dull signals which are then buffered. The brightness potentiometer controls a mix of the two which, after further buffering, is the output of section II. 
 
-The key switches on the lowest 17 keys feed either separate bass bus bars. The bass manual switch controls whether these bus bars are kept separate or mixed with the main bus bars. Thus, with the bass feature disabled, the bass keys work exactly as the rest of the manual. With the switch enabled, the bass bus bars are separate and only feed the bass section. It is worth noting that the bass section effectively discards the signal of bass bus bars 2-2/3', 2', 1-3/5' and 1'.
+The key switches on the lowest 17 keys feed separate bass bus bars. The bass manual switch controls whether these bus bars are kept separate or mixed with the main bus bars. Thus, with the bass feature disabled, the bass keys work exactly as the rest of the manual. With the switch enabled, the bass bus bars are separate and only feed the bass section. It is worth noting that the bass section effectively discards the signal of bass bus bars 2-2/3', 2', 1-3/5' and 1'.
 
 Bass section differs from the two main sections in that both bass manual drawbars (16' and 8') use a mix of multiple bass bus bars. The 16' drawbar is a mix of bass bus bars 16', 8' and 4'. The bus bars are mixed through different value resistors. 16' has the least resistance and 4' the highest resistance. The 8' drawbar is a mix of the 8' bass bus bar with lower resistance and 4' bass bus bar with higher resistance. While section I and section II drawbar control potentiometers are wired in a standard volume configuration, the bass manual drawbars controls are wired center-tap to source with the other tip grounded and the other tip as the output. This configuration makes the drawbar control not only affect how much of the drawbar is mixed in, but it also varies the impedance of the signal source. The different mixing resistors and the varying impedance of the drawbar controls, combined with a fixed capacitor to ground (after summing the drawbar signals) makes the network act as a fairly complex RC filter. This filter has a varying cutoff point and mix amount per bass bus bar.
 
@@ -191,14 +191,13 @@ This can be translated into a continuous transfer function (see equation \ref{eq
 \end{equation}
 
 % TODO: Add measurement here
-% Manual I, mid-c, 8'
-Figure \ref{fig:comp_manual_i} shows C2 played on manual I with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings.
+% Section I, mid-c, 8'
+Figure \ref{fig:comp_manual_i} shows C2 played on section I with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings.
 
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=80mm]{analysis/manual_i_compare.png}
 \caption{Comparison between emulated and real manual I drawbar 8' sounds.}
-% Manual
 \label{fig:comp_manual_i}
 \end{figure}
 
@@ -214,12 +213,16 @@ The high-pass filtering is done by a two stage RC filter with a resistor in para
 
 The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. Thus the filter stage is just two digital RC low pass filters.
 
-Figure \ref{fig:comp_manual_ii} shows C3 played on a fully bright manual II with only the 8' draw bar engaged. The line depicts the frequency spectrum of the emulation output. The crosses show peaks measured from a YC-20 organ using the same settings. This measurement was done at the same overall level as measurements in figure \ref{fig:comp_manual_i}. This shows that there is an overall volume difference between the two manuals, but the balance between harmonics of the sound is well emulated.
+% Second attempt, C2 
+
+Figure \ref{fig:comp_manual_ii} shows C2 played on a fully bright section II with only the 8' draw bar engaged. This measurement was done at the same overall level as measurements in figure \ref{fig:comp_manual_i}. There is a slight overall volume difference, but the measurement also shows the section II filters are not perfect. However, while C2 harmonics do not line up perfectly, the balance between harmonics of some other notes (for example C3) match perfectly to the real organ.
+
+%This shows that there is an overall volume difference between the two sections, but the balance between harmonics of the sound is well emulated.
 
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=80mm]{analysis/manual_ii_compare.png}
-\caption{Comparison between emulated and real bright manual II drawbar 8' sounds.}
+\caption{Comparison between emulated and real bright section II drawbar 8' sounds.}
 \label{fig:comp_manual_ii}
 \end{figure}
 
@@ -366,7 +369,7 @@ The SVG output of the Faust compiler is also worth mentioning. The compiler can 
 \begin{figure}[tbp]
 \centering
 \includegraphics[height=60mm,angle=270]{manual_ii_hp.pdf}
-\caption{Faust SVG output of manual II high pass filtering for a single draw bar. The parameters for the filters are resistance in ohms and capacitance in microfarads.}
+\caption{Faust SVG output of section II high pass filtering for a single draw bar. The parameters for the filters are resistance in ohms and capacitance in microfarads.}
 \label{fig:manual_ii_hp}
 \end{figure}
 
