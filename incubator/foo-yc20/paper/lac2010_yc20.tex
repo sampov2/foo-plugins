@@ -292,9 +292,9 @@ The software presented in this paper emulates the YC-20 organ well. While some p
 
 \subsection{How to improve Faust}
 
-As discussed in section \ref{section:tone-generation}, and shown in the results in section \ref{section:performance}, there is a strong case for a truly branching select operation. However, the semantics of Faust requires all of the processing graph to be evaluated for every frame. Truly branching operations would cause some function evaluations to be skipped. The operating semantics are however compatible with branching operations if the skipped functions are stateless. This is because if the function has no state, the next evaluation of the function does not depend on previous evaluations.
+As discussed in section \ref{section:tone-generation}, and shown in the benchmarks in section \ref{section:performance}, there is a strong case for a truly branching select operation. However, the semantics of Faust requires all of the processing graph to be evaluated for every frame. Truly branching operations would cause some function evaluations to be skipped. The operating semantics are however compatible with branching operations if the skipped functions are stateless. This is because if the function has no state, the next evaluation of the function does not depend on previous evaluations.
 
-There are two ways truly branching operations can be added to Faust: either select2 and select3 calls with no stateful function branches are compiled automatically as truly branching or a new branching select call is created. Both cases require the specification of rules on what a stateless function is. Also, the compiler must check whether the functions being skipped over comply to these specifications before allowing compilation of such code.
+There are two ways truly branching operations could be added to Faust: either select2 and select3 calls with no stateful function branches are compiled automatically as truly branching or a new branching select call is created. Both cases require the specification of rules on what a stateless function is. Also, the compiler must check whether the functions being skipped over comply to these specifications before allowing compilation of such code.
 
 This logic could also be generalized to multiplication functions. Function $f(x)$ in equation \ref{eq:comp-op} is an example of a function where evaluating $t2(x)$ can be skipped if $x \leq 0$ as $t1(x)$ evaluates to 0 for $x \leq 0 $ and $t2$ is stateless.
 
@@ -334,7 +334,10 @@ with \{ x = y * y; \};\\
 
 \subsection{Benefits of Faust}
 
-Functional thinking suits audio applications very well as solutions to problems can often be expressed as mathematical equations. This model sidesteps many of the issues procedural programs face, as the processes can be expressed at a higher abstraction level. Unlike with procedural languages, Faust allows programmers to not worry about buffers, their lengths or offsets or loop structures. This also saves time as the programmer can concentrate on processing instead of debugging issues with transferring buffers and interpreting offsets and buffer lengths.
+Functional thinking suits audio applications very well as solutions to problems can often be expressed as mathematical equations. This model sidesteps many of the issues procedural programs face, as the processes can be written at a higher abstraction level. Unlike with procedural languages, Faust allows signal processing programmers to not worry about buffers, their lengths or loop structures or real-time thread constraints. This also saves time for the programmer as less time is spent debugging issues not directly connected with the signal processing task at hand.
+
+%This also saves time as the programmer can concentrate on processing instead of debugging issues not directly connected with the signal processing task at hand.
+
 
 Faust code is easy to keep readable as the syntax offers tools, such as sequential composition, which help keep functions simple and concise. See listings \ref{list:c-consec}, \ref{list:c-enclosed} and \ref{list:faust} for an example. While listing \ref{list:c-enclosed} is pretty compact, one should note that functions are presented to the reader in reverse order and it is also difficult to see to which function return value the multiplication is applied to.
 
@@ -358,7 +361,7 @@ float dostuff(float f) {
 dostuff = func1 : func2 : *(2.5) : func3;
 \end{lstlisting}
 
-The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the compiled code. Figure \ref{fig:manual_ii_hp} shows an example of this output.
+The SVG output of the Faust compiler is also worth mentioning. The compiler can create hyper-linked SVG documents which depict the process function. This document can be an excellent learning and debugging tool as it shows how the compiler understood the source code. Figure \ref{fig:manual_ii_hp} shows an example of this output.
 
 \begin{figure}[tbp]
 \centering
@@ -367,13 +370,14 @@ The SVG output of the Faust compiler is also worth mentioning. The compiler can 
 \label{fig:manual_ii_hp}
 \end{figure}
 
-The stream concept also makes code reusable. When combining procedural code from multiple parties you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it make easy to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
+The stream concept also makes code reusable. When combining procedural code from multiple sources you often need to either convert data types between the different modules or refactor the modules to match. Faust processors naturally fit with each other. This model works very well with open source as it makes it easier to spread good ideas and implementations. It might even lead to a resource library of truly reusable components usable with any Faust project -- as long as the licenses are compatible.
 
-Faust also provides automatic parallelization and vectorization. This allows access to these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}. Faust also allows the developer to easily test and compare different optimization methods without refactoring their code.
+
+Faust also provides automatic parallelization and vectorization. This allows all Faust programs to benefit from these advanced optimization methods which usually require expert programming skills to implement. These capabilities have been discussed in detail by Orlarey, Fober and Letz\cite{orlarey:09a}. Faust also allows the developer to easily test and compare different optimization methods without refactoring their code.
 
 \section{Acknowledgements}
 
-Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice. Thanks also to Fons Adriaensen for Japa which was an excellent tool when comparing the emulation to the real organ.
+Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice. Thanks also to Fons Adriaensen for Japa which was an excellent tool for comparing the emulation to the real organ.
 
 \bibliographystyle{acl}
 \bibliography{lac2010_yc20}
