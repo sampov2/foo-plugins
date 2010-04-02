@@ -64,7 +64,7 @@ This section covers the operations of the organ in detail\cite{yamaha:yc20}. The
 
 The organ has one physical manual with 61 keys with a switchable 17 key bass manual and two voice sections. Instead of drawbars like Hammond organs, the voices are controlled by a lever system used in Yamaha organs of the time. As the word drawbar is commonplace when discussing organ voicing, the word is used in place of lever for the voice controls. While the controls are potentiometers, they have notches to help the user achieve repeatable settings. Each drawbar lever in the organ has four positions (end stops and two notches) from off to full volume. 
 
-Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass section sounds with drawbars 16' and 8'. There are global controls for pitch, volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single global percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four positions.
+Section I has drawbars 16', 8', 4', 2-2/3', 2', 1-3/5' and 1' and section II has drawbars 16', 8', 4', 2' and a continuous brightness lever. The sections can be selected or mixed together using a continuous balance lever. Enabling the bass manual switches the lowest 17 keys (white on black) to bass section sounds with drawbars 16' and 8'. There are controls for pitch, overall volume, bass volume, vibrato depth, vibrato speed and an obscure "touch vibrato" feature. The organ also has a single percussion drawbar and an integrated volume pedal. Like the drawbars, all vibrato controls have four notches.
 
 % the style of controls? .. probably irrelevant
 \subsection{Tone generation}
@@ -90,7 +90,7 @@ If the bass manual is enabled, it disengages the bass bus bars from the main bus
 
 \subsection{Main output}
 
-The main output of the device is a mix of sections I and II, the percussion part and the bass manual. The mix between sections I and II is controlled by the balance lever (a potentiometer). The amount of percussion mixed in is controlled by the percussion drawbar. Bass manual is summed into the main output via a potentiometer controlling the bass volume. This combined signal is then preamplified. The preamplified output can then be attenuated by the main volume potentiometer of the device and the volume pedal. The volume pedal works by a mechanical shutter and a light dependent resistor.
+The main output of the device is a mix of sections I and II, the percussion part and the bass manual. The mix between sections I and II is controlled by the balance lever (a potentiometer). The amount of percussion mixed in is controlled by the percussion drawbar. Bass manual is summed into the main output via a potentiometer controlling the bass volume. This combined signal is then preamplified. The preamplified output can then be attenuated by the main volume potentiometer of the device and the volume pedal. The volume pedal action controls a mechanical shutter between a small light bulb and a light dependent resistor.
 
 \section{The emulation} 
 
@@ -107,7 +107,7 @@ The 12 main oscillators produce sawtooth waves. They share a common, varying bia
 
 As the main oscillator frequencies are high (4--8kHz), a naive oscillator implementation would suffer massively from aliasing when using typical sampling rates (44.1--96kHz). Naturally, also the dividers would suffer from aliasing as well. After evaluating different methods to band-limit the signals, the PolyBLEP\footnote{BLEP = band-limited step function. PolyBLEP uses a step function derived from a simple polynomial}\cite{antialiasing} method was chosen. While BLEP\cite{hardsync} would produce less aliasing components, it is computationally more expensive. More importantly, the BLEP step function is currently impossible to calculate in Faust as it requires using Fourier and inverse Fourier transfer functions. The quality of BLIT-SWS\footnote{BLIT = band-limited impulse train, SWS refers to the use of windowed sinc functions}\cite{blit} is good at high frequencies, but it produces aliasing components below the fundamental frequency\cite{antialiasing}. Also, BLIT-SWS is problematic when it comes to band-limiting hard synchronized oscillators\cite{hardsync} which is one strategy to emulate the divider circuits.
 
-Second, third, and fourth order polynomial residual functions were evaluated for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly compared to the second order function. Furthermore a band-limited signal using the second order function has considerably less aliasing components below the fundamental frequency when compared to the third and fourth order functions. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
+Second, third, and fourth order polynomial residual functions were evaluated for the PolyBLEP. The higher order residual functions reduced high frequency aliasing only slightly more compared to the second order function. Furthermore a band-limited signal using the second order function has considerably less aliasing components below the fundamental frequency when compared to the third and fourth order functions. This confirmed previous findings\cite{pekonen}. The chosen second order polynomial residual function \emph{r(t)} is shown as equation \ref{eq:polyblep}.
 
 \begin{equation}
 \label{eq:polyblep}
@@ -115,7 +115,7 @@ r(t) = \begin{cases} 	t^2/2  + t + 1/2, & \mbox{if } -1 \leq t \leq 0\\
 			-t^2/2 + t - 1/2, & \mbox{if } 0 < t \leq 1 \end{cases}
 \end{equation}
 
-The divider circuits are emulated as slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The divider circuit for one oscillator is seven such divisor functions piggybacked.
+The divider circuits are emulated as slaved oscillators. The main oscillator function outputs both the signal and phase information. One divisor function divides the phase and feeds this to a slave oscillator. The slave again produces both a signal and phase information. The complete divider circuit for one oscillator is seven such divisor functions piggybacked.
 
 PolyBLEP works by adding the polynomial band-limited step function to two samples: the sample before and after a discontinuity in the signal. To achieve this, the implementation delays its output by one sample. At each frame, the phase is inspected. If the phase passed a discontinuity in the waveform, the PolyBLEP function is evaluated for and added (rising wave) or subtracted (falling wave) for the previous sample and the current sample. As Faust lacks true branches, all possible branches of conditional statements are always calculated. Table \ref{table:polyblep-amount} shows the amount of residual function evaluations required under different conditions. The table shows that branching would be far superior to any non-branching solution. This is because without branching the amount of PolyBLEP evaluations done is purely a function of the sampling rate while the amount of required evaluations is a function of the signal frequency. 
 
@@ -141,29 +141,22 @@ PolyBLEP works by adding the polynomial band-limited step function to two sample
 
 To be able to run the emulation in real time, a truly branching solution had to be developed as an external C++ function. This was however easy to integrate with the Faust processing as the \emph{ffunction} operator lets one use externals just as native functions.
 
-The filter bank contains custom filtering for each of the 96 voices produced by the oscillators and dividers. The main oscillators only have a single capacitor in series. This is emulated as a high-pass RC filter using an approximation of the next stage impedance as the load resistor value. The first four divided signals have a trivial RC low-pass filter before a single capacitor in series similar to the the main oscillator filter. The lowest three voices are filtered like the previous four, except that there is a resistor to ground after the series capacitor. This alters the next stage impedance compared to the other filters.
+The filter bank contains tailored filtering for each of the 96 voices produced by the oscillators and dividers. The main oscillators only have a single capacitor in series. This is emulated as a high-pass RC filter using an approximation of the next stage impedance as the load resistor value. The first four divided signals have a trivial RC low-pass filter before a single capacitor in series similar to the the main oscillator filter. The lowest three voices are filtered like the previous four, except that there is a resistor to ground after the series capacitor. This alters the next stage impedance compared to the other filters.
 
 Filtering is very complex to emulate exactly right, as one voice might be connected to multiple bus bars. This varies the high-pass filter load resistance and therefore affects the filter cutoff frequency depending on what keys are depressed. This is not emulated. Instead, the high-pass filter load is estimated based on the expectation that there is only one connection to a bus bar.
-
-% TODO: the filter is too steep
-
-%\emph{This section is unfinished as the filters are still being analyzed and emulated. The completed paper should have comparative measurements from the voices real organ compared to the emulation.}
-
-%% TODO: filtering is still not ok. emulation seems steeper than the real thing
-%INSERT FULL BANDWIDTH FFT MEASUREMENTS HERE.
 
 \subsection{Oscillator bias}
 \label{section:oscillator-bias}
 
 Each oscillator produces a saw wave at a different frequency. The frequencies are chosen from a 12-TET scale. However all oscillators share a single bias voltage affecting their frequency. This bias voltage is controlled by the vibrato circuit, touch vibrato and the master pitch potentiometer. The master pitch potentiometer is emulated by a simple slider widget with a DC output. Touch vibrato would be controlled by horizontal movement of the keys. As such MIDI keyboards are extremely rare\footnote{Only one keyboard was found claiming such capability: the Yamaha STAGEA ELS-01C.} this feature was left out of the emulation.
 
-Vibrato control voltage is created by a simple sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range (5-8Hz) was measured from the real device. The vibrato depth is simply an attenuation control for the vibrato oscillator output. Vibrato depth range was empirically selected. The depth control deliberately never goes to zero, thus the vibrato always has an effect on the bias voltage.
+Vibrato control voltage is created by a simple sine wave oscillator. The vibrato speed controls the speed of this oscillator. The vibrato speed range (5-8Hz) was measured from the real device. The vibrato depth is simply an attenuation control for the vibrato oscillator output. Vibrato depth range was empirically selected. The depth control deliberately never goes to zero, thus the vibrato has a miniscule effect on the bias voltage even when turned down.
 
 \subsection{Keyboard matrix mixer}
 
-The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button is used as a multiplier for 7 different voices (one per bus bar). So the signals on the emulated bus bars are the sum of $61*7 = 427$ discrete multiplications summed together. There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
+The keyboard matrix mixing, while a relatively simple part, contains many separate operations. Each key is a Faust button\footnote{Button output signal is 1 when it is being pressed down and otherwise 0.} connecting multiple voices to different bus bars. This means each key button is used as a multiplier for 7 different voices (one per bus bar). So the signals on the emulated bus bars are the outcome of $61*7 = 427$ discrete multiplications summed to appropriate busses. There is also added logic for the bass manual where the resulting downmixes from the 17 bottom keys are fed to either the main bus bars or the bass bus bars.
 
-The matrix mixer could be written as a set of floating point tables multiplied together. In Faust however, there is no such group operation. This results in a number of separate multiplications and sums which are difficult for the Faust compiler to optimize as vector operations are unusable if the data is not in ordered buffers.
+The matrix mixer could be written as sets of floating point tables multiplied together. In Faust however, there are no such array operators. This results in a number of separate multiplications and sums which are difficult for the Faust compiler to optimize, as vector operations are unusable if the data is not in ordered arrays.
 
 The key action is not band-limited. The key switches on the real organ are simple switches connecting voices to bus bars. This operation causes clicks in the real organ as switches open and close. The naive non-band-limited key action of the emulation matches the sound of the real organ surprisingly well. However, this is something that could be improved at a later stage.
 
@@ -172,11 +165,11 @@ Writing the keyboard matrix mixer also revealed an issue with the service manual
 \subsection{Section I}
 \label{section:section-I}
 
-Section I is a mix of the main bus bars mixed together through the drawbar potentiometers and additional resistors. There is no extra filtering applied to the signal. Thus the only part left to emulate for section I voices is the drawbar controls.
+Section I is a mix of the main bus bars mixed together through the drawbar potentiometers and additional resistors. There is no extra filtering applied to the signal. Thus the only part left to emulate for section I sounds is the drawbar controls.
 
 The drawbar potentiometers do not follow the typical linear or logarithmic tapers. The real organ was measured while playing a stable note with all drawbars off except one drawbar which was tested in all three on positions. The off position is expected to be -inf. Compared to full volume, the two middle positions were measured at -12dB and -18dB.
 
-This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (full volume). The function returns a gain coefficient usable in the emulation. The function roughly emulates the taper and can be used with slider controls provided by the Faust architecture. Further work on a graphical user interface could provide the four position levers.
+This can be translated into a continuous transfer function (see equation \ref{eq:levertransfer}). \emph{p} is the position of the lever from 0 (off) to 1 (full volume). The function returns a gain coefficient usable in the emulation. The function emulates the taper and can be used with slider controls provided by the Faust architecture. Further work on a graphical user interface should provide four position levers.
 
 \begin{equation}
 \label{eq:levertransfer}
@@ -209,9 +202,9 @@ As described earlier in section \ref{section:sections}, Section II has a control
 
 %The original organ has a slight -3dB dip at the center of the control which is not emulated as it reduces the use of center positions dramatically. The dip 
 
-The high-pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. Thus the filter is effectively a shelving high pass filter. The shelf is emulated by calculating a voltage divider between the parallel resistor and the resistor in the RC high pass filter. The voltage divider gives a gain coefficient \emph{C} which is used to mix together the high-passed and unfiltered signals. Unfiltered signal is multiplied by \emph{C} while the filtered is multiplied by \emph{1-C} and the results are added together. This keeps gain at high frequencies at 0dB as with the original passive filter. The two passive filters also affect each other and cannot be emulated by simply chaining two digital filters. The load applied by two filter stages is emulated by dividing the resistance of one filter by two. This doubles the cutoff frequency of the filter. This method was found by trial and error. Figure \ref{fig:manual_ii_hp} shows the block diagram of the complete filter.
+The high-pass filtering is done by a two stage RC filter with a resistor in parallel with the capacitor of the first filter. Thus the filter is effectively a shelving high pass filter. The shelf is emulated by calculating a voltage divider between the parallel resistor and the resistor in the RC high pass filter. The voltage divider gives a gain coefficient \emph{C} which is used to mix together the high-passed and unfiltered signals. Unfiltered signal is multiplied by \emph{C} while the filtered is multiplied by \emph{1-C} and the results are added together. This keeps gain at high frequencies at 0dB as with the original passive filter. The two passive filters also affect each other and could not be emulated by simply chaining two digital filters. The load applied by two filter stages is emulated by dividing the resistance of the second filter by two. This doubles the cutoff frequency of the filter. This method was found by trial and error. Figure \ref{fig:manual_ii_hp} shows the block diagram of the complete filter.
 
-The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. Thus this filter stage is emulated by two digital RC low pass filters in series.
+The low-pass stage is much more straightforward. Filtering consists of two chained RC low-pass filters. However, the best match with the original organ was achieved by not compensating for load posed by the chained filters. This filter stage is emulated by two digital RC low pass filters in series.
 
 % Second attempt, C2 
 
@@ -230,7 +223,7 @@ The percussion uses the signal on the 1' bus bar to trigger an envelope generato
 
 \subsection{Bass manual}
 
-Emulating the bass section perfectly is a complex task due to how mixing resistors and the variable impedances of the drawbars affect the RC filter. Measurements from the real organ however suggest that the low frequency fundamentals dominate the signal and an acceptable emulation is achieved by carefully controlling the mix of the bass bus bars and by using a single fixed RC lowpass filter. This one filter is applied to a mix of both bass drawbars.
+Emulating the bass section perfectly is a complex task due to how mixing resistors and the variable impedances of the potentiometers affect the RC filter. Measurements from the real organ however suggest that the low frequency fundamentals dominate the signal and an acceptable emulation is achieved by carefully controlling the mix of the bass bus bars and by using a single fixed RC lowpass filter. This one filter is applied to a mix of both bass drawbars.
 
 \section{Performance}
 \label{section:performance}
@@ -377,7 +370,7 @@ Faust also provides automatic parallelization and vectorization. This allows acc
 
 \section{Acknowledgements}
 
-Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice.
+Thanks to Petri Junno for support and all the help with analyzing the original organ. I would also like to thank Sakari Bergen, Torben Hohn and Yann Orlarey for providing advice. Thanks also to Fons Adriaensen for Japa which was an excellent tool when comparing the emulation to the real organ.
 
 \bibliographystyle{acl}
 \bibliography{lac2010_yc20}
