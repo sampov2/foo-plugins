@@ -52,17 +52,18 @@ load_png(std::string file)
 class Lever : public Wdgt::Object
 {
 	public:
-		Lever()
+		Lever(bool notches)
 		{
+			notched = notches;
 			setValue(0);
 		}
 
-		void setValueFromDrag(float prevValue, float startY, float y)
+		bool setValueFromDrag(float prevValue, float startY, float y)
 		{
-			setValue(prevValue + (y-startY)/((y2-y1)/2.0));
+			return setValue(prevValue + (y-startY)/((y2-y1)/2.0));
 		}
 
-		void setValue(float v)
+		virtual bool setValue(float v)
 		{
 			if (v < 0.0) {
 				v = 0.0;
@@ -71,7 +72,22 @@ class Lever : public Wdgt::Object
 			}
 
 			imageNum = round(3.0*v);
-			value = (float)imageNum / 3.0;
+
+			float newvalue;
+
+			if (notched) {
+				newvalue = (float)imageNum / 3.0;
+			} else {
+				newvalue = v;
+			}
+			
+			if (value == newvalue) {
+				return false;
+			}
+
+			value = newvalue;
+			return true;
+			//std::cerr << "value = " << value << ", image = " << imageNum << std::endl;
 		}
 
 		float getValue() const 
@@ -85,7 +101,6 @@ class Lever : public Wdgt::Object
 			y1 = posY;
 			x2 = x1 + 40;
 			y2 = y1 + 85;
-			setValue(0.0);
 		}
 
 		void drawEmphasis(bool hover, cairo_t *cr) const
@@ -99,6 +114,7 @@ class Lever : public Wdgt::Object
 		}
 
 	protected:
+		bool notched;
 		float value;
 		int imageNum;
 
@@ -108,6 +124,7 @@ class DrawbarWhite : public Lever
 {
 	public:
 		DrawbarWhite(float posX, float posY) 
+			: Lever(true)
 		{
 			setPosition(posX, posY);
 		}
@@ -128,7 +145,8 @@ class DrawbarWhite : public Lever
 class DrawbarBlack : public Lever
 {
 	public:
-		DrawbarBlack(float posX, float posY) 
+		DrawbarBlack(float posX, float posY, bool notches) 
+			: Lever(notches)
 		{
 			setPosition(posX, posY);
 		}
@@ -150,6 +168,7 @@ class DrawbarGreen : public Lever
 {
 	public:
 		DrawbarGreen(float posX, float posY) 
+			: Lever(true)
 		{
 			setPosition(posX, posY);
 		}
@@ -168,6 +187,25 @@ class DrawbarGreen : public Lever
 
 };
 
+
+class SwitchBlack : public DrawbarBlack
+{
+	public:
+		SwitchBlack(float posX, float posY)
+			: DrawbarBlack(posX, posY, false)
+		{
+		}
+
+		virtual bool setValue(float v)
+		{
+			if (v < 0.5) {
+				v = 0.0;
+			} else {
+				v = 1.0;
+			}
+			return DrawbarBlack::setValue(v);
+		}
+};
 
 
 };

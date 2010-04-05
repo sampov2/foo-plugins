@@ -2,6 +2,17 @@
 #include <math.h>
 #include <stdio.h>
 
+inline float calculate_polyblep_perftest(float t)
+{
+	return 0;
+}
+
+
+inline float calculate_polyblep_valimaki_huovilainen_orlarey(float t)
+{
+	return t + (0.5 - (t>0) ) * (t*t + 1);
+}
+
 inline float calculate_polyblep_valimaki_huovilainen(float t)
 {
 	if (t>0) {
@@ -39,11 +50,13 @@ inline float calculate_polyblep_savolainen(float t)
 	return  t * (1.0-fabsf(t) * 0.5) + 0.5 - 1*(t>0);
 }
 
-//#define polyblep_it(x) calculate_polyblep_savolainen((x))
+//#define polyblep_it(x) calculate_polyblep_perftest((x))
+//#define polyblep_it(x) calculate_polyblep_valimaki_huovilainen_orlarey((x))
 #define polyblep_it(x) calculate_polyblep_valimaki_huovilainen((x))
 
 //#define polyblep_it(x) calculate_polyblep_pekonen((x))
 //#define polyblep_it(x) calculate_polyblep_pekonen2((x))
+//#define polyblep_it(x) calculate_polyblep_savolainen((x))
 
 float square_blep_x(int select, float x, float ph, float q)
 {

@@ -49,12 +49,12 @@ class YC20UI :  public UI
 
 		Gtk::Widget *getWidget() { return &_drawingArea; }
 
-	// from Faust UI
+		// from Faust UI
 		void addButton(const char* label, float* zone) {};
 		void addToggleButton(const char* label, float* zone) {};
 		void addCheckButton(const char* label, float* zone) {};
-		void addVerticalSlider(const char* label, float* zone, float init, float min, float max, float step) {};
-		void addHorizontalSlider(const char* label, float* zone, float init, float min, float max, float step) {};
+		void addVerticalSlider(const char* label, float* zone, float init, float min, float max, float step);
+		void addHorizontalSlider(const char* label, float* zone, float init, float min, float max, float step);
 		void addNumEntry(const char* label, float* zone, float init, float min, float max, float step) {};
 
 		void openFrameBox(const char* label) {};
@@ -65,6 +65,7 @@ class YC20UI :  public UI
 
 		void declare(float* zone, const char* key, const char* value) {};
 
+		void controlChanged(Wdgt::Object *);
 	
 
 	private:
@@ -93,6 +94,8 @@ class YC20UI :  public UI
 		float _predrag_value;
 
 		std::list<Wdgt::Object *> wdgts;
+
+		std::map<std::string, float *> processorValuePerLabel;
 
 
 		bool _ready_to_draw;
@@ -129,11 +132,16 @@ YC20UI::YC20UI()
 	float y = 15.0;
 
 	// Vibrato
-	Wdgt::DrawbarBlack *touch   = new Wdgt::DrawbarBlack(x, y);
+	Wdgt::SwitchBlack *touch    = new Wdgt::SwitchBlack(x, y);
+	touch->setName("touch vibrato");
 	x += 40.0 + pitch_x;
-	Wdgt::DrawbarBlack *vibrato = new Wdgt::DrawbarBlack(x, y);
+
+	Wdgt::DrawbarBlack *vibrato = new Wdgt::DrawbarBlack(x, y, true);
+	vibrato->setName("depth");
 	x += 40.0 + pitch_x;
-	Wdgt::DrawbarBlack *v_speed = new Wdgt::DrawbarBlack(x, y);
+
+	Wdgt::DrawbarBlack *v_speed = new Wdgt::DrawbarBlack(x, y, true);
+	v_speed->setName("speed");
 	x += 40.0 + pitch_x_longest;
 
 	wdgts.push_back(touch);
@@ -142,10 +150,15 @@ YC20UI::YC20UI()
 
 	// Bass
 	Wdgt::DrawbarWhite *bass_16  = new Wdgt::DrawbarWhite(x, y);
+	bass_16->setName("16' b");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *bass_8   = new Wdgt::DrawbarWhite(x, y);
+	bass_8->setName("8' b");
 	x += 40.0 + pitch_x;
-	Wdgt::DrawbarBlack *bass_man = new Wdgt::DrawbarBlack(x, y);
+
+	Wdgt::SwitchBlack *bass_man = new Wdgt::SwitchBlack(x, y);
+	bass_man->setName("bass manual");
 	x += 40.0 + pitch_x_longest;
 
 	wdgts.push_back(bass_16);
@@ -154,18 +167,31 @@ YC20UI::YC20UI()
 
 	// Section I
 	Wdgt::DrawbarWhite *sect1_16    = new Wdgt::DrawbarWhite(x, y);
+	sect1_16->setName("16' i");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect1_8     = new Wdgt::DrawbarWhite(x, y);
+	sect1_8->setName("8' i");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect1_4     = new Wdgt::DrawbarWhite(x, y);
+	sect1_4->setName("4' i");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect1_2_2p3 = new Wdgt::DrawbarWhite(x, y);
+	sect1_2_2p3->setName("2 2/3' i");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect1_2     = new Wdgt::DrawbarWhite(x, y);
+	sect1_2->setName("2' i");
 	x += 40.0 + pitch_x;
-	Wdgt::DrawbarWhite *sect1_1_1p5 = new Wdgt::DrawbarWhite(x, y);
+
+	Wdgt::DrawbarWhite *sect1_1_3p5 = new Wdgt::DrawbarWhite(x, y);
+	sect1_1_3p5->setName("1 3/5' i");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect1_1     = new Wdgt::DrawbarWhite(x, y);
+	sect1_1->setName("1' i");
 	x += 40.0 + pitch_x_long;
 
 	wdgts.push_back(sect1_16);
@@ -173,13 +199,16 @@ YC20UI::YC20UI()
 	wdgts.push_back(sect1_4);
 	wdgts.push_back(sect1_2_2p3);
 	wdgts.push_back(sect1_2);
-	wdgts.push_back(sect1_1_1p5);
+	wdgts.push_back(sect1_1_3p5);
 	wdgts.push_back(sect1_1);
 
 	// Balance & Brightness
-	Wdgt::DrawbarBlack *balance    = new Wdgt::DrawbarBlack(x, y);
+	Wdgt::DrawbarBlack *balance    = new Wdgt::DrawbarBlack(x, y, false);
+	balance->setName("balance");
 	x += 40.0 + pitch_x_long;
-	Wdgt::DrawbarBlack *brightness = new Wdgt::DrawbarBlack(x, y);
+
+	Wdgt::DrawbarBlack *brightness = new Wdgt::DrawbarBlack(x, y, false);
+	brightness->setName("bright");
 	x += 40.0 + pitch_x_long;
 
 	wdgts.push_back(balance);
@@ -187,12 +216,19 @@ YC20UI::YC20UI()
 
 	// Section II
 	Wdgt::DrawbarWhite *sect2_16 = new Wdgt::DrawbarWhite(x, y);
+	sect2_16->setName("16' ii");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect2_8  = new Wdgt::DrawbarWhite(x, y);
+	sect2_8->setName("8' ii");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect2_4  = new Wdgt::DrawbarWhite(x, y);
+	sect2_4->setName("4' ii");
 	x += 40.0 + pitch_x;
+
 	Wdgt::DrawbarWhite *sect2_2  = new Wdgt::DrawbarWhite(x, y);
+	sect2_2->setName("2' ii");
 	x += 40.0 + pitch_x_long;
 
 	sect2_16->setValue(1.0);
@@ -207,8 +243,34 @@ YC20UI::YC20UI()
 
 	// Percussion
 	Wdgt::DrawbarGreen *percussion = new Wdgt::DrawbarGreen(x, y);
+	percussion->setName("percussion");
 
 	wdgts.push_back(percussion);
+}
+
+void
+YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min, float max, float step)
+{
+	std::string name(label);
+
+	processorValuePerLabel[name] = zone;
+
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
+                Wdgt::Lever *obj = dynamic_cast<Wdgt::Lever *>(*i);
+		if (obj != NULL && obj->getName() == name) {
+			obj->setValue( init);
+		
+			break;
+		}
+
+                ++i;
+        }
+}
+
+void
+YC20UI::addHorizontalSlider(const char* label, float* zone, float init, float min, float max, float step)
+{
+	addVerticalSlider(label, zone, init, min, max, step);
 }
 
 void
@@ -233,6 +295,26 @@ YC20UI::identifyWdgt(GdkEventMotion *evt)
 	return NULL;
 }
 
+void
+YC20UI::controlChanged(Wdgt::Object *control)
+{
+	Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(_dragWdgt);
+	if (lever == NULL) {
+		return;
+	}
+
+	std::map<std::string, float *>::iterator i = processorValuePerLabel.find(lever->getName());
+
+	if (i == processorValuePerLabel.end()) {
+		std::cerr << "ERROR: could not find processor for control " << lever->getName() << std::endl;
+		return;
+	}
+
+	*(i->second) = lever->getValue();
+
+	//std::cerr << lever->getName() << ", zone: " << i->second << std::endl;
+}
+
 bool 
 YC20UI::motion_notify_event(GdkEventMotion *evt)
 {
@@ -244,7 +326,10 @@ YC20UI::motion_notify_event(GdkEventMotion *evt)
 			return true;
 		}
 
-		lever->setValueFromDrag(_predrag_value, _dragStartY, evt->y);
+		if (!lever->setValueFromDrag(_predrag_value, _dragStartY, evt->y)) {
+			return true;
+		}
+		controlChanged(lever);
 	
 		exposeWdgt(lever);
 		return true;

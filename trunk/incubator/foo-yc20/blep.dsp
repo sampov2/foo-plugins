@@ -127,7 +127,7 @@ pure_noise_amount = 0.0015;
 ac = sine(50) : abs : *(log(1+ac_bias_amount));
 
 
-process = polyblep_square_master(tet12(2), 1.0);
+//process = polyblep_square_master(tet12(2), 1.0);
 //process = polyblep_square_master(tet12(2), 1.0) : divider 
 /*
 process = polyblep_square_master(tet12(2), entropy + ac) : divider 
@@ -136,3 +136,24 @@ process = polyblep_square_master(tet12(2), entropy + ac) : divider
 	: par(i, 8, *(0.2));
 //	: par(i, 8, *(button("on_off")));
 */
+
+
+import ("percussion.dsp");
+import ("rc_filter.dsp");
+
+
+testphase = (+(350/float(SR)) ~ fmod(_,1.0));
+
+
+//process = testphase : -(0.5) : *(2) <: percussion_envelope, _;
+
+
+//div7_hp_resistance = (1/56000) + (1/ (180000 + (1/((1/15000)+(1/100000))))) : 1/_;
+
+
+//process = noise : (passive_lp(15000, 0.047));
+
+
+process = _, _;
+
+
