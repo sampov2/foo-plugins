@@ -1,17 +1,37 @@
 PREFIX=/usr/local
 CXX=g++
 #CFLAGS=-O3 -mfpmath=sse -msse -msse2 -ffast-math
-CFLAGS=-O3 -fgcse-sm -march=core2 -funsafe-math-optimizations -Wall
+#CFLAGS=-O3 -fgcse-sm -march=core2 -funsafe-math-optimizations -Wall
+
+MYGCCFLAGS := -O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize
+#MYGCCFLAGS := -O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize
+VSIZE := 256
+
+CFLAGS=-O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize
+
 
 CFLAGS_LV2=$(CFLAGS) -Wall -fPIC -DPIC `pkg-config --cflags lv2-plugin`
 LDFLAGS_LV2=-shared -Wl,-Bdynamic `pkg-config --libs lv2-plugin`
 
-all: foo-yc20-jack
+all: foo-yc20
+
+
+foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
+	faust -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
+	$(CXX) -I. $(CFLAGS) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
 
 foo-yc20-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
 	rm -rf yc20-svg
 	faust -svg -a jack-midi-gtk.cpp yc20.dsp > gen/yc20.cpp
 	$(CXX) -I. $(CFLAGS) gen/yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20-jack
+
+foo-yc20gv-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
+	faust -a jack-midi-gtk.cpp -vec -vs 32 yc20.dsp > gen/yc20gv.cpp
+	$(CXX) -I. $(MYGCCFLAGS) gen/yc20gv.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20gv-jack
+
+foo-yc20gp-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
+	faust -a jack-midi-gtk.cpp -sch -g -vs 256 yc20.dsp > gen/yc20gp.cpp
+	$(CXX) -I. $(MYGCCFLAGS) gen/yc20gp.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20gp-jack
 
 yc20-plotter: *.dsp polyblep.cpp
 	faust -a plot.cpp yc20.dsp > gen/yc20-plot.cpp
@@ -28,4 +48,23 @@ blep-jack: blep.dsp polyblep.cpp
 	faust -svg -a jack-gtk.cpp blep.dsp > gen/blep-jack.cpp
 	$(CXX) -I. $(CFLAGS) gen/blep-jack.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o blep-jack
 
+filtdesign: foo
+
+filtdesign-jack: filtdesign.dsp 
+	rm -rf filtdesign-svg
+	faust -svg -a jack-console.cpp filtdesign.dsp > gen/filtdesign-jack.cpp
+	$(CXX) -I. $(CFLAGS) -ljack gen/filtdesign-jack.cpp -o filtdesign-jack
+
+
+
+filtdesign-plot: filtdesign.dsp 
+	rm -rf filtdesign-svg
+	faust -svg -a plot.cpp filtdesign.dsp > gen/filtdesign-plot.cpp
+	$(CXX) -I. $(CFLAGS) gen/filtdesign-plot.cpp -o filtdesign-plotter
+
+
+filtdesign-octave: filtdesign.dsp 
+	rm -rf filtdesign-svg
+	faust -svg -a octave.cpp filtdesign.dsp > gen/filtdesign-octave.cpp
+	$(CXX) -I. $(CFLAGS) gen/filtdesign-octave.cpp -o filtdesign-octave
 
