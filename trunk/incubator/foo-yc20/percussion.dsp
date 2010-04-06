@@ -2,24 +2,17 @@
 
 percussion_envelope = detect : apply_envelope : max(0.01357) : *(4.5)
 with {
-	rms(n) = square : mean(n) : sqrt ;
-	square(x) = x * x;
+	rms_approx(n) = square : (sumit ~ _) : sqrt
+	with {
+		square(x) = x * x;
+		sumit(x,prev) = prev *((n-1)/n) + x / n;
+	};
 
-	mean(n) = float2fix : integrate(n) : fix2float : /(n);
+	rms_detect_speed = int(max(22050,min(192000,SR)) * 0.020);
 
-	integrate(n,x) = x - x@n : +~_ ;
+	threshold = 0.000001;
 
-	float2fix(x) = int(x*(1<<20));
-	fix2float(x) = float(x)/(1<<20);
-
-
-
-	//rms_detect_speed = int(max(22050,min(192000,SR)) * 0.035);
-	rms_detect_speed = int(max(22050,min(192000,SR)) * 0.010);
-
-	threshold = 0.2;
-
-	detect = rms(rms_detect_speed) : detect_rise;
+	detect = rms_approx(rms_detect_speed) : detect_rise;
 
 	detect_rise(sig) =
 		select2( sig  > threshold, 0,
