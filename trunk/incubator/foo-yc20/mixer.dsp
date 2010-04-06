@@ -33,7 +33,7 @@ mixer = mixer_normal, mixer_bass :> +(_) : *(0.001 + 0.09 * hslider("volume", 0.
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
 	= balance(manual_i, manual_ii) + percussion
 with {
-	balance = (_ * balance_control) + (_ * (balance_control-1));
+	balance = (_ * (1-balance_control)) + (_ * balance_control);
 
 	manual_i = bus_1     * manual_i_1
 		 + bus_1_3p5 * manual_i_1_3p5
