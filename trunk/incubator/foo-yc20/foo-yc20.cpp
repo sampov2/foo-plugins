@@ -71,6 +71,8 @@ namespace Wdgt {
 		load_png("green_1.png"), 
 		load_png("green_2.png"), 
 		load_png("green_3.png") };
+	cairo_surface_t *Potentiometer::image =
+		load_png("potentiometer.png");
 };
 
 mydsp         *yc20 = NULL;
@@ -107,7 +109,7 @@ class YC20UI :  public UI
 
 		void declare(float* zone, const char* key, const char* value) {};
 
-		void controlChanged(Wdgt::Object *);
+		void controlChanged(Wdgt::Draggable *);
 	
 
 	private:
@@ -128,7 +130,7 @@ class YC20UI :  public UI
 		Wdgt::Object *identifyWdgt(GdkEventMotion *);
 
 		Wdgt::Object *_hoverWdgt;
-		Wdgt::Lever *_dragWdgt;
+		Wdgt::Draggable *_dragWdgt;
 		Wdgt::Object *_buttonPressWdgt;
 
 		int _dragStartX;
@@ -172,6 +174,23 @@ YC20UI::YC20UI()
 
 	float x = 5;
 	float y = 15.0;
+
+	// Pitch, volume & bass volume
+	Wdgt::Potentiometer *pitch  = new Wdgt::Potentiometer(x, y, -1.0, 1.0);
+	pitch->setName("pitch");
+	x += 72.0 + pitch_x_longest;
+
+	Wdgt::Potentiometer *volume = new Wdgt::Potentiometer(x, y, 0.0, 1.0);
+	volume->setName("volume");
+	x += 72.0 + pitch_x_longest;
+
+	Wdgt::Potentiometer *bass_v = new Wdgt::Potentiometer(x, y, 0.0, 1.0);
+	bass_v->setName("bass volume");
+	x += 72.0 + pitch_x_longest + pitch_x_long;
+
+	wdgts.push_back(pitch);
+	wdgts.push_back(volume);
+	wdgts.push_back(bass_v);
 
 	// Vibrato
 	Wdgt::SwitchBlack *touch    = new Wdgt::SwitchBlack(x, y);
@@ -338,15 +357,24 @@ YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min,
 	processorValuePerLabel[name] = zone;
 
 	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
-                Wdgt::Lever *obj = dynamic_cast<Wdgt::Lever *>(*i);
-		if (obj != NULL && obj->getName() == name) {
-			obj->setValue( init);
+                Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(*i);
+		if (lever != NULL && lever->getName() == name) {
+			lever->setValue(init);
 		
-			break;
+			return;
+		}
+
+		Wdgt::Potentiometer *pot = dynamic_cast<Wdgt::Potentiometer *>(*i);
+		if (pot != NULL && pot->getName() == name) {
+			pot->setValue(init);
+
+			return;
 		}
 
                 ++i;
         }
+
+	std::cerr << "No control for '" << label << "'" << std::endl;
 }
 
 void
@@ -358,7 +386,7 @@ YC20UI::addHorizontalSlider(const char* label, float* zone, float init, float mi
 void
 YC20UI::size_request(Gtk::Requisition *req)
 {
-	req->width  = 1024;
+	req->width  = 1280;
 	req->height = 15.0 + 85.0 + 15.0;
 }
 
@@ -378,23 +406,16 @@ YC20UI::identifyWdgt(GdkEventMotion *evt)
 }
 
 void
-YC20UI::controlChanged(Wdgt::Object *control)
+YC20UI::controlChanged(Wdgt::Draggable *control)
 {
-	Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(_dragWdgt);
-	if (lever == NULL) {
-		return;
-	}
-
-	std::map<std::string, float *>::iterator i = processorValuePerLabel.find(lever->getName());
+	std::map<std::string, float *>::iterator i = processorValuePerLabel.find(control->getName());
 
 	if (i == processorValuePerLabel.end()) {
-		std::cerr << "ERROR: could not find processor for control " << lever->getName() << std::endl;
+		std::cerr << "ERROR: could not find processor for control " << control->getName() << std::endl;
 		return;
 	}
 
-	*(i->second) = lever->getValue();
-
-	//std::cerr << lever->getName() << ", zone: " << i->second << std::endl;
+	*(i->second) = control->getValue();
 }
 
 bool 
@@ -403,17 +424,13 @@ YC20UI::motion_notify_event(GdkEventMotion *evt)
 	//IDENTIFY_THREAD("motion_notify_event");
 
 	if (_dragWdgt != NULL) {
-		Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(_dragWdgt);
-		if (lever == NULL) {
-			return true;
-		}
 
-		if (!lever->setValueFromDrag(_predrag_value, _dragStartY, evt->y)) {
+		if (!_dragWdgt->setValueFromDrag(_predrag_value, _dragStartY, evt->y)) {
 			return true;
 		}
-		controlChanged(lever);
+		controlChanged(_dragWdgt);
 	
-		exposeWdgt(lever);
+		exposeWdgt(_dragWdgt);
 		return true;
 	}
 
@@ -457,16 +474,16 @@ YC20UI::button_press_event(GdkEventButton *evt)
 	//std::cerr << "button press" << std::endl;
 
 	_buttonPressWdgt = _hoverWdgt;
-	Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(_buttonPressWdgt);
+	Wdgt::Draggable *obj = dynamic_cast<Wdgt::Draggable *>(_buttonPressWdgt);
 
-	if (lever == NULL) {
+	if (obj == NULL) {
 		return true;
 	}
 
 
-	_predrag_value = lever->getValue();
+	_predrag_value = obj->getValue();
 
-	_dragWdgt = lever;
+	_dragWdgt = obj;
 	_dragStartX = evt->x;
 	_dragStartY = evt->y;
 
@@ -681,6 +698,10 @@ void disconnect_from_jack(void *arg)
 	jack_client = NULL;
 	midi_input_port = NULL;
 	audio_output_port = NULL;
+
+	// TODO: we don't have to quit.. but it's a good idea while
+	// there is no way to reconnect
+	exit(1);
 }
 
 

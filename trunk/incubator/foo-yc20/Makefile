@@ -21,9 +21,9 @@ all: foo-yc20
 # jackd -R -P30 -t5000 -dalsa -dhw:0 -r48000 -p128 -n3 -Xseq
 # 37-39% DSP Load (CFLAGS #1)
 # 35% DSP Load (CFLAGS #3)
-foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
-	faust -vec -vs 32 -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
-	$(CXX) -I. $(CFLAGS3) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
+#foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
+#	faust -vec -vs 32 -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
+#	$(CXX) -I. $(CFLAGS3) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
 
 # jackd -R -P30 -t5000 -dalsa -dhw:0 -r48000 -p128 -n3 -Xseq
 # 99% DSP Load
@@ -33,9 +33,9 @@ foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
 
 # jackd -R -P30 -t5000 -dalsa -dhw:0 -r48000 -p128 -n3 -Xseq
 # 48-50% DSP Load - but fast to compile unlike the others
-#foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
-#	faust -svg -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
-#	$(CXX) -I. $(CFLAGS) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
+foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
+	faust -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
+	$(CXX) -I. $(CFLAGS) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
 
 foo-yc20-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
 	rm -rf yc20-svg
