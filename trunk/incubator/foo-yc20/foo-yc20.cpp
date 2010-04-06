@@ -40,6 +40,18 @@
 #include "wdgt.h"
 #include "yc20_wdgts.h"
 
+#ifdef __SSE__
+    #include <xmmintrin.h>
+    #ifdef __SSE2__
+        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); std::cerr << "Denormals off" << std::endl; }
+    #else
+        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); std::cerr << "Denormals off" << std::endl; }
+    #endif
+#else
+    #define AVOIDDENORMALS 
+#endif
+
+
 // initialize statics
 namespace Wdgt {
 	cairo_surface_t *DrawbarWhite::images[] = {
@@ -720,6 +732,8 @@ bool connect_to_jack()
 
 int main(int argc, char **argv)
 {
+
+	AVOIDDENORMALS;
 
         Gtk::Main mymain(argc, argv);
 
