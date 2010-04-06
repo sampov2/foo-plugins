@@ -49,7 +49,15 @@ load_png(std::string file)
         return ret;
 }
 
-class Lever : public Wdgt::Object
+class Draggable : public Wdgt::Object
+{
+	public:
+		virtual bool setValue(float v) = 0;
+		virtual float getValue() const = 0;
+		virtual bool setValueFromDrag(float prevValue, float startY, float y) = 0;
+};
+
+class Lever : public Draggable
 {
 	public:
 		Lever(bool notches)
@@ -110,7 +118,6 @@ class Lever : public Wdgt::Object
 				cairo_rectangle(cr, x1, y1, x2, y2);
 				cairo_fill(cr);
 			}
-
 		}
 
 	protected:
@@ -138,10 +145,9 @@ class DrawbarWhite : public Lever
 		}
 	
 	private:
-
 		static cairo_surface_t *images[];
-
 };
+
 class DrawbarBlack : public Lever
 {
 	public:
@@ -160,10 +166,9 @@ class DrawbarBlack : public Lever
 		}
 	
 	private:
-
 		static cairo_surface_t *images[];
-
 };
+
 class DrawbarGreen : public Lever
 {
 	public:
@@ -182,9 +187,7 @@ class DrawbarGreen : public Lever
 		}
 	
 	private:
-
 		static cairo_surface_t *images[];
-
 };
 
 
@@ -207,6 +210,110 @@ class SwitchBlack : public DrawbarBlack
 		}
 };
 
+
+class Potentiometer : public Draggable
+{
+	public:
+		Potentiometer(float posX, float posY, float min, float max)
+		{
+			minValue = min;
+			maxValue = max;
+
+			setValue( (min+max)/2.0 );
+
+			setPosition(posX, posY);
+		}
+		
+		virtual bool setValue(float v)
+		{
+			if (v > maxValue) {
+				v = maxValue;
+			} else if (v < minValue) {
+				v = minValue;
+			}
+
+			if (v == value) {
+				return false;
+			}
+
+			value = v;
+			//std::cerr << "value: " << value << std::endl;
+
+			return true;
+		}
+
+
+		float getValue() const 
+		{
+			return value;
+		}
+
+		void setPosition(float posX, float posY)
+		{
+			x1 = posX;
+			y1 = posY;
+			x2 = x1 + 72;
+			y2 = y1 + 83;
+
+			origoX = x1 + 72.0/2.0;
+			origoY = y1 + 37.5;
+		}
+
+		bool setValueFromDrag(float prevValue, float startY, float y)
+		{
+			float v = prevValue + (startY - y)/100.0;
+
+			return setValue(v);
+
+		}
+
+		virtual void drawWidget(bool hover, cairo_t *cr) const
+		{
+			cairo_set_source_surface(cr, image, x1, y1);
+			cairo_paint(cr);
+
+			cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+			cairo_set_line_width(cr, 2.5);
+
+			float relativeValue = -(maxValue - value) / (maxValue - minValue);
+			relativeValue *= (5.0/6.0);
+			relativeValue += 1.0/6.0;
+
+			float x2offt = 32.0 * cos(M_PI * 2.0 * relativeValue);
+			float y2offt = 32.0 * sin(M_PI * 2.0 * relativeValue);
+
+			float x1offt = 8.0  * cos(M_PI * 2.0 * relativeValue);
+			float y1offt = 8.0  * sin(M_PI * 2.0 * relativeValue);
+
+			cairo_move_to(cr, origoX + x1offt, origoY + y1offt);
+
+			cairo_line_to(cr, origoX + x2offt, origoY + y2offt);
+
+			cairo_stroke(cr);
+
+			drawEmphasis(hover, cr);
+		}
+
+		void drawEmphasis(bool hover, cairo_t *cr) const
+		{
+			if (hover) {
+				cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.1);
+				cairo_rectangle(cr, x1, y1, x2, y2);
+				cairo_fill(cr);
+			}
+		}
+
+	private:
+		float value;
+		float minValue;
+		float maxValue;
+
+		float origoX;
+		float origoY;
+
+		static cairo_surface_t *image;
+		
+};
 
 };
 
