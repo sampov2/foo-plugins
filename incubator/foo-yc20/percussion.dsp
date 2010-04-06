@@ -17,7 +17,7 @@ with {
 	//rms_detect_speed = int(max(22050,min(192000,SR)) * 0.035);
 	rms_detect_speed = int(max(22050,min(192000,SR)) * 0.010);
 
-	threshold = 0.3;
+	threshold = 0.2;
 
 	detect = rms(rms_detect_speed) : detect_rise;
 
