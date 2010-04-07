@@ -28,7 +28,8 @@ manual_bass_16  = hgroup("bass", vslider("[1]16' b", 1.0,  0.0, 1.0, 0.25)) : ga
 manual_bass_vol = hgroup("bass", vslider("[3]bass volume", 1.0,  0.0, 1.0, 0.25));
 
 
-mixer = mixer_normal, mixer_bass :> +(_) : *(0.001 + 0.09 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
+// The volume slider must be declicked!
+mixer = mixer_normal + mixer_bass : *(0.001 + 0.05 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
 
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
 	= balance(manual_i, manual_ii) + percussion
