@@ -246,12 +246,12 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="326.35716"
-     inkscape:cy="468.68108"
+     inkscape:cx="293.32145"
+     inkscape:cy="393.32394"
      inkscape:document-units="px"
-     inkscape:current-layer="layer3"
+     inkscape:current-layer="layer1"
      showgrid="false"
-     showguides="false"
+     showguides="true"
      inkscape:guide-bbox="true"
      inkscape:window-width="1920"
      inkscape:window-height="1126"
@@ -317,6 +317,10 @@
        orientation="0,1"
        position="382.5,436.223"
        id="guide4109" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="155,360"
+       id="guide2934" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -326,7 +330,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -339,7 +343,7 @@
        style="fill:#e4080a;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.55652173;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect2816"
        width="874.50671"
-       height="151.68497"
+       height="211.68498"
        x="23.639481"
        y="198.96628" />
   </g>
@@ -659,6 +663,28 @@
        sodipodi:nodetypes="ccccc"
        clip-path="url(#clipPath3740)"
        transform="matrix(0.90310078,0,0,0.90310078,20.348836,330.22453)" />
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="75.714287"
+       y="384.09448"
+       id="text2926"
+       transform="translate(0,308.2677)"><tspan
+         sodipodi:role="line"
+         id="tspan2928"
+         x="75.714287"
+         y="384.09448">PITCH</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="132.14284"
+       y="384.09448"
+       id="text2930"
+       transform="translate(0,308.2677)"><tspan
+         sodipodi:role="line"
+         id="tspan2932"
+         x="132.14284"
+         y="384.09448">VOLUME</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
