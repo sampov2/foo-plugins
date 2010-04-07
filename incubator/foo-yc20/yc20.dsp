@@ -50,7 +50,10 @@ entropy = noise : biquad_lp(3.0) : *(log(1.0005));
 
 //oscillator_bias = (1 + vibrato + ac_noise + entropy);
 //oscillator_bias = (1 + vibrato + ac_noise);
-oscillator_bias = (1 + vibrato);
+
+pitch_control = hslider("pitch", 0.0, -1.0, 1.0, 0.05);
+
+oscillator_bias = (1 + vibrato + pitch_control * 0.03);
 
 gain = par(i, 12*8, *(0.5));
 
