@@ -141,6 +141,7 @@ class YC20UI :  public UI
 
 		std::map<std::string, float *> processorValuePerLabel;
 
+		cairo_surface_t *_image_background;
 
 		bool _ready_to_draw;
 
@@ -149,6 +150,8 @@ class YC20UI :  public UI
 
 YC20UI::YC20UI()
 {
+	_image_background = Wdgt::load_png("background.png");
+
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &YC20UI::size_request));
 	_drawingArea.signal_expose_event().connect( sigc::mem_fun (*this, &YC20UI::expose));
 
@@ -451,17 +454,7 @@ YC20UI::motion_notify_event(GdkEventMotion *evt)
 	// Redraw new hover-widget
 	if (_hoverWdgt != NULL) {
 		exposeWdgt(_hoverWdgt);
-/*
-		hover_label->setLabel(_hoverWdgt->getName());
-	} else {
-		hover_label->setLabel("");
-*/
 	}
-
-//	exposeWdgt(hover_label);
-
-
-
 
 	return true;
 }
@@ -542,8 +535,7 @@ YC20UI::~YC20UI()
                 ++i;
         }
 
-
-
+	cairo_surface_destroy(_image_background);
 }
 
 bool 
@@ -587,9 +579,9 @@ YC20UI::expose(GdkEventExpose *evt)
 	cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
 
 	// background
-	//cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
+	cairo_set_source_surface(cr, _image_background, 0.0, 0.0);
 	// e4080a
-	cairo_set_source_rgb(cr, 228.0/255.0, 8.0/255.0, 10.0/255.0);
+	//cairo_set_source_rgb(cr, 228.0/255.0, 8.0/255.0, 10.0/255.0);
 	cairo_paint(cr);
 
 	// wdgts
