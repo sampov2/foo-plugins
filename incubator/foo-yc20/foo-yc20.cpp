@@ -49,9 +49,11 @@
 #ifdef __SSE__
     #include <xmmintrin.h>
     #ifdef __SSE2__
-        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); std::cerr << "Denormals off" << std::endl; }
+        //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); std::cerr << "Denormals off" << std::endl; }
+        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); }
     #else
-        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); std::cerr << "Denormals off" << std::endl; }
+        //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); std::cerr << "Denormals off" << std::endl; }
+        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); }
     #endif
 #else
     #define AVOIDDENORMALS 
@@ -1017,8 +1019,14 @@ int main(int argc, char **argv)
 	yc20->init(jack_get_sample_rate (jack_client));
 	yc20->buildUserInterface(yc20ui);
 
+	if (argc > 1) {
+		std::string conf(argv[1]);
+		std::cerr << "using configuration file '" << conf << "'" << std::endl;
+		yc20ui->loadConfiguration(conf);
+	} else {
+		yc20ui->loadConfiguration();
+	}
 
-	yc20ui->loadConfiguration();
 
         if (jack_activate (jack_client)) {
                 std::cerr << "cannot activate client" << std::endl;
