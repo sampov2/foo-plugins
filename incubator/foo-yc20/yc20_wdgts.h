@@ -219,6 +219,8 @@ class Potentiometer : public Draggable
 			minValue = min;
 			maxValue = max;
 
+			value = maxValue / (maxValue - minValue);
+
 			setValue( (min+max)/2.0 );
 
 			setPosition(posX, posY);
@@ -237,7 +239,6 @@ class Potentiometer : public Draggable
 			}
 
 			value = v;
-			//std::cerr << "value: " << value << std::endl;
 
 			return true;
 		}
