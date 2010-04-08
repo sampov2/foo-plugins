@@ -25,11 +25,18 @@ manual_ii_16   = hgroup("ii", vslider("[2]16' ii",   1.0,  0.0, 1.0, 0.25)) : ga
 
 manual_bass_8   = hgroup("bass", vslider("[2]8' b",  1.0,  0.0, 1.0, 0.25)) : gain_transfer;
 manual_bass_16  = hgroup("bass", vslider("[1]16' b", 1.0,  0.0, 1.0, 0.25)) : gain_transfer;
-manual_bass_vol = hgroup("bass", vslider("[3]bass volume", 1.0,  0.0, 1.0, 0.25));
+manual_bass_slider = hgroup("bass", vslider("[3]bass volume", 1.0,  0.0, 1.0, 0.25));
 
+volume_slider = hslider("volume", 0.1, 0.0, 1.0, 0.01);
+
+// declick function where n = declick strength, higher = safer & slower
+declick(n) = (_ * (n-1) / n)  + (_ /n);
+
+manual_bass_vol = manual_bass_slider : (declick(50) ~ _);
+volume          = volume_slider : (declick(50) ~ _);
 
 // The volume slider must be declicked!
-mixer = mixer_normal + mixer_bass : *(0.001 + 0.05 * hslider("volume", 0.1, 0.0, 1.0, 0.01));
+mixer = mixer_normal + mixer_bass : *(0.001 + 0.05 * volume);
 
 mixer_normal (bus_1, bus_1_3p5, bus_2, bus_2_2p3, bus_4, bus_8, bus_16) 
 	= balance(manual_i, manual_ii) + percussion
