@@ -208,15 +208,6 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
-    <filter
-       inkscape:collect="always"
-       id="filter3706"
-       color-interpolation-filters="sRGB">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="2.3148126"
-         id="feGaussianBlur3708" />
-    </filter>
     <inkscape:perspective
        id="perspective3718"
        inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
@@ -308,6 +299,83 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2964"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2989"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3016"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3814"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3814-4"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3850"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3875"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3904"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3931"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3956"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3981"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -317,8 +385,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="81.820667"
-     inkscape:cy="247.07605"
+     inkscape:cx="621.28749"
+     inkscape:cy="209.48772"
      inkscape:document-units="px"
      inkscape:current-layer="layer3"
      showgrid="false"
@@ -469,6 +537,10 @@
        orientation="0,1"
        position="430,120.71429"
        id="guide3955" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="523.57143,290.995"
+       id="guide3998" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -478,7 +550,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -486,22 +558,22 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Background"
-     style="display:inline">
+     style="display:inline"
+     sodipodi:insensitive="true">
     <rect
-       transform="translate(0,-308.2677)"
        style="fill:#e4080a;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.55652173;stroke-dasharray:none;stroke-dashoffset:0;display:inline"
        id="rect2816-6-2"
        width="1279.9387"
-       height="199.97339"
-       x="-124.72949"
-       y="761.39349" />
+       height="202.96701"
+       x="-123.43523"
+       y="453.09949" />
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer5"
      inkscape:label="Screenshot"
-     sodipodi:insensitive="true"
-     style="display:none">
+     style="display:none"
+     sodipodi:insensitive="true">
     <image
        style="display:inline"
        y="453.09921"
@@ -577,26 +649,6 @@
          id="tspan3814"
          x="674.28571"
          y="585.52307">2'</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
-       x="627.85712"
-       y="585.52307"
-       id="text3816"><tspan
-         sodipodi:role="line"
-         id="tspan3818"
-         x="627.85712"
-         y="585.52307">2½'</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
-       x="720"
-       y="585.52307"
-       id="text3820"><tspan
-         sodipodi:role="line"
-         id="tspan3822"
-         x="720"
-         y="585.52307">1½'</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
@@ -757,6 +809,99 @@
          id="tspan3806-7"
          x="536.07141"
          y="631.38019">FOOYC20</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="720"
+       y="585.52307"
+       id="text3820-0"><tspan
+         sodipodi:role="line"
+         id="tspan3822-4"
+         x="720"
+         y="585.52307">1½'</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="627.85712"
+       y="585.52307"
+       id="text3820-0-7"><tspan
+         sodipodi:role="line"
+         id="tspan3822-4-0"
+         x="627.85712"
+         y="585.52307">2½'</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer9"
+     inkscape:label="FixedOverlay"
+     style="display:inline"
+     sodipodi:insensitive="true">
+    <path
+       style="fill:#e4080a;fill-opacity:1;stroke:none"
+       d="m 625.71429,581.5052 3.35821,-1.92353 1.6415,-7.93917 -5.87152,0.0631 0.87181,9.79956 z"
+       id="path3802"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#e4080a;fill-opacity:1;stroke:none"
+       d="m 636.45924,586.60539 0.88388,-7.19734 -5.68211,-2.30441 -3.15672,9.65958 7.95495,-0.15787 0,4e-5 z"
+       id="path3804"
+       sodipodi:nodetypes="cccccc" />
+    <path
+       style="fill:#e4080a;fill-opacity:1;stroke:none;display:inline"
+       d="M 716.26298,581.30675 720,579.41479 l 1.26269,-7.97074 -5.18973,0.30484 0.19002,9.55786 z"
+       id="path3802-4"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#e4080a;fill-opacity:1;stroke:none;display:inline"
+       d="m 727.00793,586.40694 0.88388,-7.19734 -5.2086,-2.24128 -3.59866,9.47018 7.92338,-0.0316 z"
+       id="path3804-4" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="FixedNumbers"
+     style="display:inline"
+     sodipodi:insensitive="true">
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="724.07526"
+       y="585.52307"
+       id="text3820-4-2"><tspan
+         sodipodi:role="line"
+         id="tspan3822-7-8"
+         x="724.07526"
+         y="585.52307">5</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="718.64154"
+       y="579.27356"
+       id="text3820-4-2-6"><tspan
+         sodipodi:role="line"
+         id="tspan3822-7-8-4"
+         x="718.64154"
+         y="579.27356">3</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="633.04547"
+       y="585.52307"
+       id="text3820-4-2-6-7"><tspan
+         sodipodi:role="line"
+         id="tspan3822-7-8-4-3"
+         x="633.04547"
+         y="585.52307">3</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#c3c3c5;fill-opacity:1;stroke:none;display:inline;font-family:Impact;-inkscape-font-specification:Impact Bold"
+       x="627.41766"
+       y="579.39948"
+       id="text3820-4-2-6-7-0"><tspan
+         sodipodi:role="line"
+         id="tspan3822-7-8-4-3-4"
+         x="627.41766"
+         y="579.39948">2</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -851,7 +996,7 @@
      inkscape:label="export"
      style="display:inline">
     <rect
-       style="fill:none;fill-opacity:1;stroke:none;opacity:1"
+       style="fill:none;stroke:none"
        id="background"
        width="1279.939"
        height="199.97301"
