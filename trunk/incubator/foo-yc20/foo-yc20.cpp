@@ -18,6 +18,13 @@
 */
 
 #include <iostream>
+#include <cstring>
+#include <cerrno>
+#include <list>
+#include <set>
+#include <deque>
+
+#include <semaphore.h>
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -25,11 +32,6 @@
 #include <gtkmm/main.h>
 #include <gtkmm/window.h>
 #include <gtkmm/drawingarea.h>
-
-#include <cstring>
-#include <cerrno>
-#include <list>
-#include <set>
 
 
 #define max(x,y) (((x)>(y)) ? (x) : (y))
@@ -75,6 +77,17 @@ namespace Wdgt {
 		load_png("potentiometer.png");
 };
 
+class MidiCC 
+{
+public:
+        MidiCC(int a, int b) { cc = a; value = b;}
+
+        int cc;
+        int value;
+};
+
+class YC20UI;
+
 mydsp         *yc20 = NULL;
 
 jack_port_t   *audio_output_port = NULL;
@@ -82,6 +95,12 @@ jack_port_t   *midi_input_port = NULL;
 jack_client_t *jack_client = NULL;
 
 float         *yc20_keys[61];
+
+// Idle timeout stuff
+std::deque<MidiCC *> controlChangeQueue;
+YC20UI *idleTimeoutUI;
+sem_t controlChangeQueueSem;
+
 
 
 class YC20UI :  public UI
@@ -111,6 +130,7 @@ class YC20UI :  public UI
 
 		void controlChanged(Wdgt::Draggable *);
 	
+		void doControlChange(MidiCC *);
 
 	private:
 
@@ -140,6 +160,7 @@ class YC20UI :  public UI
 		std::list<Wdgt::Object *> wdgts;
 
 		std::map<std::string, float *> processorValuePerLabel;
+		Wdgt::Draggable *draggablePerCC[127];
 
 		cairo_surface_t *_image_background;
 
@@ -150,6 +171,7 @@ class YC20UI :  public UI
 
 YC20UI::YC20UI()
 {
+	memset(draggablePerCC, 0, sizeof(Wdgt::Draggable *)*127);
 	_image_background = Wdgt::load_png("background.png");
 
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &YC20UI::size_request));
@@ -181,6 +203,7 @@ YC20UI::YC20UI()
 	// Pitch, volume & bass volume
 	Wdgt::Potentiometer *pitch  = new Wdgt::Potentiometer(x, y, -1.0, 1.0);
 	pitch->setName("pitch");
+	pitch->setValue(0.0);
 	x += 72.0 + pitch_x_longest;
 
 	Wdgt::Potentiometer *volume = new Wdgt::Potentiometer(x, y, 0.0, 1.0);
@@ -202,10 +225,12 @@ YC20UI::YC20UI()
 
 	Wdgt::DrawbarBlack *vibrato = new Wdgt::DrawbarBlack(x, y, true);
 	vibrato->setName("depth");
+	draggablePerCC[12] = vibrato;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarBlack *v_speed = new Wdgt::DrawbarBlack(x, y, true);
 	v_speed->setName("speed");
+	draggablePerCC[13] = v_speed;
 	x += 40.0 + pitch_x_longest;
 
 	wdgts.push_back(touch);
@@ -215,14 +240,17 @@ YC20UI::YC20UI()
 	// Bass
 	Wdgt::DrawbarWhite *bass_16  = new Wdgt::DrawbarWhite(x, y);
 	bass_16->setName("16' b");
+	draggablePerCC[14] = bass_16;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *bass_8   = new Wdgt::DrawbarWhite(x, y);
 	bass_8->setName("8' b");
+	draggablePerCC[15] = bass_8;
 	x += 40.0 + pitch_x;
 
 	Wdgt::SwitchBlack *bass_man = new Wdgt::SwitchBlack(x, y);
 	bass_man->setName("bass manual");
+	draggablePerCC[23] = bass_man;
 	x += 40.0 + pitch_x_longest;
 
 	wdgts.push_back(bass_16);
@@ -232,30 +260,37 @@ YC20UI::YC20UI()
 	// Section I
 	Wdgt::DrawbarWhite *sect1_16    = new Wdgt::DrawbarWhite(x, y);
 	sect1_16->setName("16' i");
+	draggablePerCC[2] = sect1_16;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_8     = new Wdgt::DrawbarWhite(x, y);
 	sect1_8->setName("8' i");
+	draggablePerCC[3] = sect1_8;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_4     = new Wdgt::DrawbarWhite(x, y);
 	sect1_4->setName("4' i");
+	draggablePerCC[4] = sect1_4;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_2_2p3 = new Wdgt::DrawbarWhite(x, y);
 	sect1_2_2p3->setName("2 2/3' i");
+	draggablePerCC[5] = sect1_2_2p3;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_2     = new Wdgt::DrawbarWhite(x, y);
 	sect1_2->setName("2' i");
+	draggablePerCC[6] = sect1_2;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_1_3p5 = new Wdgt::DrawbarWhite(x, y);
 	sect1_1_3p5->setName("1 3/5' i");
+	draggablePerCC[8] = sect1_1_3p5;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect1_1     = new Wdgt::DrawbarWhite(x, y);
 	sect1_1->setName("1' i");
+	draggablePerCC[9] = sect1_1;
 	x += 40.0 + pitch_x_long;
 
 	wdgts.push_back(sect1_16);
@@ -269,10 +304,12 @@ YC20UI::YC20UI()
 	// Balance & Brightness
 	Wdgt::DrawbarBlack *balance    = new Wdgt::DrawbarBlack(x, y, false);
 	balance->setName("balance");
+	draggablePerCC[16] = balance;
 	x += 40.0 + pitch_x_long;
 
 	Wdgt::DrawbarBlack *brightness = new Wdgt::DrawbarBlack(x, y, false);
 	brightness->setName("bright");
+	draggablePerCC[17] = brightness;
 	x += 40.0 + pitch_x_long;
 
 	wdgts.push_back(balance);
@@ -281,18 +318,22 @@ YC20UI::YC20UI()
 	// Section II
 	Wdgt::DrawbarWhite *sect2_16 = new Wdgt::DrawbarWhite(x, y);
 	sect2_16->setName("16' ii");
+	draggablePerCC[18] = sect2_16;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect2_8  = new Wdgt::DrawbarWhite(x, y);
 	sect2_8->setName("8' ii");
+	draggablePerCC[19] = sect2_8;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect2_4  = new Wdgt::DrawbarWhite(x, y);
 	sect2_4->setName("4' ii");
+	draggablePerCC[20] = sect2_4;
 	x += 40.0 + pitch_x;
 
 	Wdgt::DrawbarWhite *sect2_2  = new Wdgt::DrawbarWhite(x, y);
 	sect2_2->setName("2' ii");
+	draggablePerCC[21] = sect2_2;
 	x += 40.0 + pitch_x_long;
 
 	sect2_16->setValue(1.0);
@@ -308,8 +349,21 @@ YC20UI::YC20UI()
 	// Percussion
 	Wdgt::DrawbarGreen *percussion = new Wdgt::DrawbarGreen(x, y);
 	percussion->setName("percussion");
+	draggablePerCC[22] = percussion;
 
 	wdgts.push_back(percussion);
+
+
+/*
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i !=  wdgts.end(); ) {
+		Wdgt::Draggable *d = dynamic_cast<Wdgt::Draggable *>(*i);
+		if (d != NULL) {
+			draggablePerLabel[d->getName()] = d;
+		}
+
+		++i;
+	}
+*/
 }
 
 void
@@ -362,6 +416,7 @@ YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min,
 	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
                 Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(*i);
 		if (lever != NULL && lever->getName() == name) {
+			std::cerr << "Setting Lever " << lever->getName() << " to " << init << std::endl;
 			lever->setValue(init);
 		
 			return;
@@ -369,6 +424,7 @@ YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min,
 
 		Wdgt::Potentiometer *pot = dynamic_cast<Wdgt::Potentiometer *>(*i);
 		if (pot != NULL && pot->getName() == name) {
+			std::cerr << "Setting Pot " << pot->getName() << " to " << init << std::endl;
 			pot->setValue(init);
 
 			return;
@@ -505,26 +561,30 @@ YC20UI::button_release_event(GdkEventButton *evt)
 	return true;
 	
 }
-/*
-bool
-YC20UI::draw_queue()
+
+gboolean 
+idleTimeout(gpointer data)
 {
-	IDENTIFY_THREAD("draw_queue");
+        // lock
+        sem_wait(&controlChangeQueueSem);
+        while (!controlChangeQueue.empty()) {
+                // pop list
+                MidiCC *evt = controlChangeQueue.front();
+                controlChangeQueue.pop_front();
+                // unlock
+                sem_post(&controlChangeQueueSem);
 
-	if (!_ready_to_draw || redraw_queue.empty()) {
-		return TRUE;
-	}
+                // do the slow things
+		idleTimeoutUI->doControlChange(evt);
+                delete evt;
 
-	// TODO: this is in desperate need of synchronization
-	for (std::set<Wdgt::Object *>::iterator i = redraw_queue.begin(); i != redraw_queue.end(); ++i)
-	{
-		exposeWdgt(*i);
-	}
-	redraw_queue.erase( redraw_queue.begin(), redraw_queue.end() );
-
-	return TRUE;
+                // lock again
+                sem_wait(&controlChangeQueueSem);
+        }
+        // unlock
+        sem_post(&controlChangeQueueSem);
+        return true;
 }
-*/
 
 YC20UI::~YC20UI()
 {
@@ -536,6 +596,32 @@ YC20UI::~YC20UI()
         }
 
 	cairo_surface_destroy(_image_background);
+}
+
+void
+YC20UI::doControlChange(MidiCC *evt)
+{
+	Wdgt::Draggable *control = draggablePerCC[evt->cc];
+	
+	if (control == NULL) {
+		std::cerr << "No control for CC " << evt->cc << std::endl;
+		return;
+	}
+
+
+	float newValue = ((float)evt->value)/127.0;
+	
+	// TODO: the special cases: pitch, bass manual switch, flipped sliders, lever positions
+
+	if (evt->cc >=2 && evt->cc <= 13) {
+		newValue = 1.0 - newValue;
+	}
+	
+	control->setValue(newValue);
+	controlChanged(control);
+	exposeWdgt(control);
+
+
 }
 
 bool 
@@ -642,14 +728,11 @@ process (jack_nframes_t nframes, void *arg)
                 int note = -1;
                 float value = 0.0;
 
-                if( ((*(event.buffer) & 0xf0)) == 0x90 )
-                {
+                if( ((*(event.buffer) & 0xf0)) == 0x90 ) {
                         /* note on */
                         note = *(event.buffer + 1) - 36;
                         value = 1.0;
-                }
-                else if( ((*(event.buffer)) & 0xf0) == 0x80 )
-                {
+                } else if( ((*(event.buffer)) & 0xf0) == 0x80 ) {
                         /* note off */
                         note = *(event.buffer + 1) - 36;
                         value = 0.0;
@@ -661,12 +744,11 @@ process (jack_nframes_t nframes, void *arg)
                         // other party aquiring this lock is always O(1) in the
                         // locked state
 
-			/* TODO: CC's, CC's, CC's
                         sem_wait(&controlChangeQueueSem);
+			// TODO: this 'new' might cause issues
                         controlChangeQueue.push_back( new MidiCC(cc, value));
                         sem_post(&controlChangeQueueSem);
-			*/
-                }
+		}
 
                 if (note >= 0 && note < 61) {
                         *yc20_keys[note] = value;
@@ -729,6 +811,7 @@ bool connect_to_jack()
         jack_on_shutdown (jack_client, disconnect_from_jack, 0);
 
 
+/*
         if (jack_activate (jack_client)) {
                 std::cerr << "cannot activate client" << std::endl;
 		jack_client_close(jack_client);
@@ -737,7 +820,7 @@ bool connect_to_jack()
 		audio_output_port = NULL;
 		return false;
         }
-
+*/
 	return true;
 }
 
@@ -759,6 +842,7 @@ int main(int argc, char **argv)
 	main_window->set_title("Foo YC20");
 
 	yc20ui = new YC20UI();
+	idleTimeoutUI = yc20ui;
 
 
 
@@ -767,6 +851,11 @@ int main(int argc, char **argv)
 	main_window->show();
 	yc20ui->getWidget()->show();
 
+	// Create a semaphore for controlChangeQueue locking
+	if (sem_init(&controlChangeQueueSem, 0, 1)) {
+		perror("sem_init");
+		return 1;
+	}
 
 	if (!connect_to_jack()) {
 		return 1;
@@ -776,7 +865,27 @@ int main(int argc, char **argv)
 	yc20->init(jack_get_sample_rate (jack_client));
 	yc20->buildUserInterface(yc20ui);
 
+        if (jack_activate (jack_client)) {
+                std::cerr << "cannot activate client" << std::endl;
+		jack_client_close(jack_client);
+		jack_client = NULL;
+		midi_input_port = NULL;
+		audio_output_port = NULL;
+		return 1;
+        }
+
+	gint idleSignalTag = g_timeout_add(50, idleTimeout, 0);
+
+	// RUN!
         Gtk::Main::run(*main_window);
+
+
+	// Cleanup
+	g_source_remove(idleSignalTag);
+
+	jack_deactivate(jack_client);
+
+	sem_destroy(&controlChangeQueueSem); 
 
 	delete main_window;
 	delete yc20ui;
