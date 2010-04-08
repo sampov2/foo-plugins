@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <cerrno>
 #include <list>
@@ -25,6 +26,9 @@
 #include <deque>
 
 #include <semaphore.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -132,8 +136,13 @@ class YC20UI :  public UI
 	
 		void doControlChange(MidiCC *);
 
+		void loadConfiguration(std::string file);
+		void loadConfiguration();
+		void saveConfiguration();
+
 	private:
 
+		std::string configFile;
 
 		// Gtk essentials
 		void size_request(Gtk::Requisition *);
@@ -159,6 +168,7 @@ class YC20UI :  public UI
 
 		std::list<Wdgt::Object *> wdgts;
 
+		std::map<std::string, Wdgt::Object *> wdgtPerLabel;
 		std::map<std::string, float *> processorValuePerLabel;
 		Wdgt::Draggable *draggablePerCC[127];
 
@@ -171,6 +181,10 @@ class YC20UI :  public UI
 
 YC20UI::YC20UI()
 {
+	_hoverWdgt       = NULL;
+	_dragWdgt        = NULL;
+	_buttonPressWdgt = NULL;
+
 	memset(draggablePerCC, 0, sizeof(Wdgt::Draggable *)*127);
 	_image_background = Wdgt::load_png("background.png");
 
@@ -354,16 +368,13 @@ YC20UI::YC20UI()
 	wdgts.push_back(percussion);
 
 
-/*
+	// Make the map
 	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i !=  wdgts.end(); ) {
-		Wdgt::Draggable *d = dynamic_cast<Wdgt::Draggable *>(*i);
-		if (d != NULL) {
-			draggablePerLabel[d->getName()] = d;
-		}
+		Wdgt::Object *o = (*i);
+		wdgtPerLabel[o->getName()] = o;
 
 		++i;
 	}
-*/
 }
 
 void
@@ -416,7 +427,7 @@ YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min,
 	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
                 Wdgt::Lever *lever = dynamic_cast<Wdgt::Lever *>(*i);
 		if (lever != NULL && lever->getName() == name) {
-			std::cerr << "Setting Lever " << lever->getName() << " to " << init << std::endl;
+			//std::cerr << "Setting Lever " << lever->getName() << " to " << init << std::endl;
 			lever->setValue(init);
 		
 			return;
@@ -424,7 +435,7 @@ YC20UI::addVerticalSlider(const char* label, float* zone, float init, float min,
 
 		Wdgt::Potentiometer *pot = dynamic_cast<Wdgt::Potentiometer *>(*i);
 		if (pot != NULL && pot->getName() == name) {
-			std::cerr << "Setting Pot " << pot->getName() << " to " << init << std::endl;
+			//std::cerr << "Setting Pot " << pot->getName() << " to " << init << std::endl;
 			pot->setValue(init);
 
 			return;
@@ -709,6 +720,147 @@ YC20UI::expose(GdkEventExpose *evt)
 	return true;
 }
 
+void 
+YC20UI::loadConfiguration(std::string fileName)
+{
+	configFile = fileName;
+	loadConfiguration();
+}
+
+template<class T>
+T fromString(const std::string& s)
+{
+     std::istringstream stream (s);
+     T t;
+     stream >> t;
+     return t;
+}
+
+bool
+makeDirIfNotExists(std::string dir)
+{
+	struct stat s;
+	
+	if (stat(dir.c_str(), &s) == 0) {
+		if (S_ISDIR(s.st_mode)) {
+			return true;
+		}
+
+		std::cerr << dir << ": already exists but is not a directory" << std::endl;
+		return false;
+	}
+
+	if (mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
+		std::cerr << dir << ": could not create the directory" << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+void
+YC20UI::loadConfiguration()
+{
+	if (configFile == "") {
+		configFile  = getenv("HOME");
+		configFile += "/.foo-yc20";
+	
+		std::string dirName(configFile);
+		configFile += "/default";
+
+		if (!makeDirIfNotExists(dirName)) {
+			std::cerr << dirName << ": not saving or loading default configuration" << std::endl;
+			return;
+		}
+
+	}
+
+	std::ifstream in(configFile.c_str(), std::ifstream::in);
+
+	if (!in.is_open()) {
+		std::cerr << "No config file, yet" << std::endl;
+		return;
+	}
+
+	std::string line;
+	
+	while (!in.eof()) {
+		getline (in, line);
+
+		int i = line.find('=');
+
+		if (i == std::string::npos) {
+			continue;
+		}
+
+		int a = i-1;
+		while (a > 0 && (line[a] == ' ' || line[a] == '\t')) --a;
+		
+		if (a == -1) {
+			std::cerr << "ERROR: config line '" << line << "' malformatted" << std::endl;
+			continue;
+		}
+
+		int b = i+1;
+		while (b < line.length() && (line[b] == ' ' || line[b] == '\t')) ++b;
+
+		if (b == line.length()) {
+			std::cerr << "ERROR: config line '" << line << "' malformatted" << std::endl;
+			continue;
+		}
+
+		std::string label = line.substr(0, a+1);
+		std::string valueStr = line.substr(b);
+
+		float value = fromString<float>(valueStr);
+
+		Wdgt::Object *obj = wdgtPerLabel[label];
+		if (obj == NULL) {
+			std::cerr << "ERROR: no Wdgt for label '" << label << "' found in config file" << std::endl;
+			continue;
+		}
+
+		Wdgt::Draggable *drg = dynamic_cast<Wdgt::Draggable *>(obj);
+		if (drg == NULL) {
+			std::cerr << "ERROR: Wdgt for label '" << label << "' found in config file is not a Draggable" << std::endl;
+			continue;
+
+		}
+		
+		drg->setValue(value);
+		controlChanged(drg);
+	}
+
+	in.close();
+}
+
+void
+YC20UI::saveConfiguration()
+{
+	std::ofstream out(configFile.c_str(), std::ofstream::trunc);
+
+	if (!out.is_open()) {
+		std::cerr << "can't write config file " << configFile << std::endl;
+		return;
+	}
+
+	for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
+		Wdgt::Draggable *obj = dynamic_cast<Wdgt::Draggable *>(*i);
+
+		++i;
+
+		// the special case
+		if (obj->getName() == "touch vibrato") {
+			continue;
+		}
+
+		out << obj->getName() << " = " << obj->getValue() << std::endl;
+
+	}
+
+	out.close();
+}
+
 int
 process (jack_nframes_t nframes, void *arg)
 {
@@ -865,6 +1017,9 @@ int main(int argc, char **argv)
 	yc20->init(jack_get_sample_rate (jack_client));
 	yc20->buildUserInterface(yc20ui);
 
+
+	yc20ui->loadConfiguration();
+
         if (jack_activate (jack_client)) {
                 std::cerr << "cannot activate client" << std::endl;
 		jack_client_close(jack_client);
@@ -886,6 +1041,8 @@ int main(int argc, char **argv)
 	jack_deactivate(jack_client);
 
 	sem_destroy(&controlChangeQueueSem); 
+
+	yc20ui->saveConfiguration();
 
 	delete main_window;
 	delete yc20ui;

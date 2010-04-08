@@ -63,6 +63,8 @@ class Lever : public Draggable
 		Lever(bool notches)
 		{
 			notched = notches;
+
+			value = -1.0;
 			setValue(0);
 		}
 

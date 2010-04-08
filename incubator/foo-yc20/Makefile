@@ -7,6 +7,8 @@ MYGCCFLAGS := -O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ft
 #MYGCCFLAGS := -O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize
 VSIZE := 256
 
+DEBUG_CFLAGS=-g
+
 CFLAGS=-O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize
 
 CFLAGS2=-O3 -march=native -mfpmath=sse -msse -msse2 -msse3 -ffast-math -ftree-vectorize -fgcse-sm
@@ -34,8 +36,13 @@ all: foo-yc20
 # jackd -R -P30 -t5000 -dalsa -dhw:0 -r48000 -p128 -n3 -Xseq
 # 48-50% DSP Load - but fast to compile unlike the others
 foo-yc20: *.dsp polyblep.cpp foo-yc20.cpp yc20_wdgts.h
-	faust -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
+	rm -rf yc20-svg
+	faust -svg -a minimal.cpp yc20.dsp > gen/foo-yc20-minimal.cpp
 	$(CXX) -I. $(CFLAGS) foo-yc20.cpp `pkg-config --cflags --libs gtkmm-2.4 jack` -o foo-yc20
+# faust param			DSP %
+#   nada			43
+#   -vec			30
+#   -vec -dfs			30
 
 foo-yc20-jack: *.dsp jack-midi-gtk.cpp polyblep.cpp
 	rm -rf yc20-svg
