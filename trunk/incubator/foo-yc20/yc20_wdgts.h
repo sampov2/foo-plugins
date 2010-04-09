@@ -22,7 +22,7 @@
 
 #include "wdgt.h"
 
-#define YC20_PNG_DIR "/home/v2/dev/foo/foo-plugins/incubator/foo-yc20/paper/"
+#define YC20_PNG_DIR "graphics/"
 
 namespace Wdgt
 {
