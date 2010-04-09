@@ -50,13 +50,13 @@
     #include <xmmintrin.h>
     #ifdef __SSE2__
         //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); std::cerr << "Denormals off" << std::endl; }
-        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); }
+        #define TURNOFFDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); }
     #else
         //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); std::cerr << "Denormals off" << std::endl; }
-        #define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); }
+        #define TURNOFFDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); }
     #endif
 #else
-    #define AVOIDDENORMALS 
+    #define TURNOFFDENORMALS 
 #endif
 
 
@@ -885,7 +885,12 @@ process (jack_nframes_t nframes, void *arg)
                 if( ((*(event.buffer) & 0xf0)) == 0x90 ) {
                         /* note on */
                         note = *(event.buffer + 1) - 36;
-                        value = 1.0;
+                        //value = 1.0;
+			if ( *(event.buffer + 2) == 0) {
+				value = 0.0;
+			} else {
+				value = 1.0;
+			}
                 } else if( ((*(event.buffer)) & 0xf0) == 0x80 ) {
                         /* note off */
                         note = *(event.buffer + 1) - 36;
@@ -983,7 +988,7 @@ bool connect_to_jack()
 int main(int argc, char **argv)
 {
 
-	AVOIDDENORMALS;
+	TURNOFFDENORMALS;
 
         Gtk::Main mymain(argc, argv);
 
