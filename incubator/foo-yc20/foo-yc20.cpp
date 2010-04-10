@@ -23,15 +23,13 @@
 #include <cerrno>
 #include <list>
 #include <set>
-#include <deque>
-
-#include <semaphore.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
+#include <jack/ringbuffer.h>
 
 #include <gtkmm/main.h>
 #include <gtkmm/window.h>
@@ -103,9 +101,8 @@ jack_client_t *jack_client = NULL;
 float         *yc20_keys[61];
 
 // Idle timeout stuff
-std::deque<MidiCC *> controlChangeQueue;
+jack_ringbuffer_t *controlChangeRingbuffer;
 YC20UI *idleTimeoutUI;
-sem_t controlChangeQueueSem;
 
 
 
@@ -578,24 +575,12 @@ YC20UI::button_release_event(GdkEventButton *evt)
 gboolean 
 idleTimeout(gpointer data)
 {
-        // lock
-        sem_wait(&controlChangeQueueSem);
-        while (!controlChangeQueue.empty()) {
-                // pop list
-                MidiCC *evt = controlChangeQueue.front();
-                controlChangeQueue.pop_front();
-                // unlock
-                sem_post(&controlChangeQueueSem);
+	MidiCC evt(0,0);
 
-                // do the slow things
-		idleTimeoutUI->doControlChange(evt);
-                delete evt;
+	while ( jack_ringbuffer_read(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC)) == sizeof(MidiCC)) {
+		idleTimeoutUI->doControlChange(&evt);
+	}
 
-                // lock again
-                sem_wait(&controlChangeQueueSem);
-        }
-        // unlock
-        sem_post(&controlChangeQueueSem);
         return true;
 }
 
@@ -903,10 +888,11 @@ process (jack_nframes_t nframes, void *arg)
                         // other party aquiring this lock is always O(1) in the
                         // locked state
 
-                        sem_wait(&controlChangeQueueSem);
-			// TODO: this 'new' might cause issues
-                        controlChangeQueue.push_back( new MidiCC(cc, value));
-                        sem_post(&controlChangeQueueSem);
+			MidiCC evt(cc, value);
+			int i = jack_ringbuffer_write(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC));
+			if (i != sizeof(MidiCC)) {
+				std::cerr << "Ringbuffer full!" << std::endl;
+			}
 		}
 
                 if (note >= 0 && note < 61) {
@@ -969,17 +955,6 @@ bool connect_to_jack()
 
         jack_on_shutdown (jack_client, disconnect_from_jack, 0);
 
-
-/*
-        if (jack_activate (jack_client)) {
-                std::cerr << "cannot activate client" << std::endl;
-		jack_client_close(jack_client);
-		jack_client = NULL;
-		midi_input_port = NULL;
-		audio_output_port = NULL;
-		return false;
-        }
-*/
 	return true;
 }
 
@@ -987,7 +962,6 @@ bool connect_to_jack()
 
 int main(int argc, char **argv)
 {
-
 	TURNOFFDENORMALS;
 
         Gtk::Main mymain(argc, argv);
@@ -1010,12 +984,6 @@ int main(int argc, char **argv)
 	main_window->show();
 	yc20ui->getWidget()->show();
 
-	// Create a semaphore for controlChangeQueue locking
-	if (sem_init(&controlChangeQueueSem, 0, 1)) {
-		perror("sem_init");
-		return 1;
-	}
-
 	if (!connect_to_jack()) {
 		return 1;
 	}
@@ -1032,6 +1000,11 @@ int main(int argc, char **argv)
 		yc20ui->loadConfiguration();
 	}
 
+	controlChangeRingbuffer = jack_ringbuffer_create(sizeof(MidiCC)*1000);
+	if (controlChangeRingbuffer == NULL) {
+		std::cerr << "Could not create ringbuffer, aborting" << std::endl;
+		return 1;
+	}
 
         if (jack_activate (jack_client)) {
                 std::cerr << "cannot activate client" << std::endl;
@@ -1042,7 +1015,7 @@ int main(int argc, char **argv)
 		return 1;
         }
 
-	gint idleSignalTag = g_timeout_add(50, idleTimeout, 0);
+	gint idleSignalTag = g_timeout_add(10, idleTimeout, 0);
 
 	// RUN!
         Gtk::Main::run(*main_window);
@@ -1053,7 +1026,7 @@ int main(int argc, char **argv)
 
 	jack_deactivate(jack_client);
 
-	sem_destroy(&controlChangeQueueSem); 
+	jack_ringbuffer_free(controlChangeRingbuffer);
 
 	yc20ui->saveConfiguration();
 
