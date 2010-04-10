@@ -36,6 +36,7 @@
 #include <gtkmm/drawingarea.h>
 
 
+
 #define max(x,y) (((x)>(y)) ? (x) : (y))
 #define min(x,y) (((x)<(y)) ? (x) : (y))
 
@@ -44,19 +45,7 @@
 #include "wdgt.h"
 #include "yc20_wdgts.h"
 
-#ifdef __SSE__
-    #include <xmmintrin.h>
-    #ifdef __SSE2__
-        //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); std::cerr << "Denormals off" << std::endl; }
-        #define TURNOFFDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8040); }
-    #else
-        //#define AVOIDDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); std::cerr << "Denormals off" << std::endl; }
-        #define TURNOFFDENORMALS { _mm_setcsr(_mm_getcsr() | 0x8000); }
-    #endif
-#else
-    #define TURNOFFDENORMALS 
-#endif
-
+#include "foo-yc20.h"
 
 // initialize statics
 namespace Wdgt {
@@ -80,106 +69,6 @@ namespace Wdgt {
 	cairo_surface_t *Potentiometer::image =
 		load_png("potentiometer.png");
 };
-
-class MidiCC 
-{
-public:
-        MidiCC(int a, int b) { cc = a; value = b;}
-
-        int cc;
-        int value;
-};
-
-class YC20UI;
-
-
-class YC20UI :  public UI
-{
-	public:
-		YC20UI();
-
-		~YC20UI();
-
-		void setProcessor(mydsp *);
-
-		Gtk::Widget *getWidget() { return &_drawingArea; }
-
-		// from Faust UI
-		void addButton(const char* label, float* zone);
-		void addToggleButton(const char* label, float* zone) {};
-		void addCheckButton(const char* label, float* zone) {};
-		void addVerticalSlider(const char* label, float* zone, float init, float min, float max, float step);
-		void addHorizontalSlider(const char* label, float* zone, float init, float min, float max, float step);
-		void addNumEntry(const char* label, float* zone, float init, float min, float max, float step) {};
-
-		void openFrameBox(const char* label) {};
-		void openTabBox(const char* label) {};
-		void openHorizontalBox(const char* label) {};
-		void openVerticalBox(const char* label) {};
-		void closeBox() {};
-
-		void declare(float* zone, const char* key, const char* value) {};
-
-		// Other things
-		void controlChanged(Wdgt::Draggable *);
-
-		void queueControlChange(int cc, int value);
-
-		void loadConfiguration(std::string file);
-		void loadConfiguration();
-		void saveConfiguration();
-
-		float *yc20_keys[61];
-		mydsp *processor;
-	private:
-
-		std::string configFile;
-
-		// Gtk essentials
-		void size_request(Gtk::Requisition *);
-		bool exposeWdgt(Wdgt::Object *);
-		bool expose(GdkEventExpose *);
-
-		Gtk::DrawingArea _drawingArea;
-		bool motion_notify_event(GdkEventMotion *);
-		bool button_press_event(GdkEventButton *);
-		bool button_release_event(GdkEventButton *);
-
-		bool draw_queue();
-
-		Wdgt::Object *identifyWdgt(GdkEventMotion *);
-
-		Wdgt::Object *_hoverWdgt;
-		Wdgt::Draggable *_dragWdgt;
-		Wdgt::Object *_buttonPressWdgt;
-
-		int _dragStartX;
-		int _dragStartY;
-		float _predrag_value;
-
-		std::list<Wdgt::Object *> wdgts;
-
-		std::map<std::string, Wdgt::Object *> wdgtPerLabel;
-		std::map<std::string, float *> processorValuePerLabel;
-		Wdgt::Draggable *draggablePerCC[127];
-
-		cairo_surface_t *_image_background;
-
-		bool _ready_to_draw;
-
-		// Idle-timeout redraw things
-
-		jack_ringbuffer_t *controlChangeRingbuffer;
-		static gboolean idleTimeout(gpointer );
-		void handleControlChanges();
-		gint idleSignalTag;
-
-		void doControlChange(MidiCC *);
-};
-
-jack_port_t   *audio_output_port = NULL;
-jack_port_t   *midi_input_port = NULL;
-jack_client_t *jack_client = NULL;
 
 YC20UI::YC20UI()
 {
