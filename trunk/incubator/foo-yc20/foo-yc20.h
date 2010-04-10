@@ -124,8 +124,33 @@ class YC20UI : public UI
 		void doControlChange(MidiCC *);
 };
 
-jack_port_t   *audio_output_port = NULL;
-jack_port_t   *midi_input_port = NULL;
-jack_client_t *jack_client = NULL;
+class YC20Jack;
+
+class YC20Jack
+{
+	public:
+		YC20Jack(YC20UI *);
+		~YC20Jack();
+
+		void connect();
+		void activate();
+		void shutdown();
+
+		jack_nframes_t getSamplerate();		
+
+		int process(jack_nframes_t);
+
+	private:
+
+		static void shutdown_callback(void *);
+		static void process_callback(void *);
+
+		static int process_callback(jack_nframes_t, void *);
+		YC20UI *thisui;
+
+		jack_port_t   *audio_output_port;
+		jack_port_t   *midi_input_port;
+		jack_client_t *jack_client;
+};
 
 #endif /* _FOO_YC20_H */
