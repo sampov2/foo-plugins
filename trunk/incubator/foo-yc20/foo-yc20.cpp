@@ -71,15 +71,16 @@ namespace Wdgt {
 };
 
 YC20UI::YC20UI()
+	: _hoverWdgt(NULL)
+	, _dragWdgt(NULL)
+	, _buttonPressWdgt(NULL)
+	, ui_scale(1)
 {
-	_hoverWdgt       = NULL;
-	_dragWdgt        = NULL;
-	_buttonPressWdgt = NULL;
-
 	memset(draggablePerCC, 0, sizeof(Wdgt::Draggable *)*127);
 	_image_background = Wdgt::load_png("background.png");
 
 	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &YC20UI::size_request));
+	_drawingArea.signal_size_allocate().connect( sigc::mem_fun(*this, &YC20UI::size_allocate));
 	_drawingArea.signal_expose_event().connect( sigc::mem_fun (*this, &YC20UI::expose));
 
 	_drawingArea.signal_motion_notify_event().connect ( sigc::mem_fun (*this, &YC20UI::motion_notify_event) );
@@ -361,8 +362,34 @@ YC20UI::addHorizontalSlider(const char* label, float* zone, float init, float mi
 void
 YC20UI::size_request(Gtk::Requisition *req)
 {
-	req->width  = 1280;
-	req->height = 15.0 + 85.0 + 15.0;
+	std::cerr << "size_request: " << req->width << " x " << req->height << std::endl;
+
+	if (req->width > 1280) {
+		req->width = 1280;
+	} else if (req->width < 768) {
+		req->width = 768;
+	}
+
+	ui_scale = (float)req->width/1280.0;
+
+	req->height = 200.0 * ui_scale;
+}
+
+
+void 
+YC20UI::size_allocate(Gtk::Allocation &alloc)
+{
+	//std::cerr << "size_allocate: " << alloc.get_x() << " x " << alloc.get_y() << "  :  " << alloc.get_width() << " x " << alloc.get_height() << std::endl;
+
+	if (alloc.get_width() > 1280) {
+		alloc.set_width(1280);
+	} else if (alloc.get_width() < 768) {
+		alloc.set_width(768);
+	}
+
+	ui_scale = (float)alloc.get_width()/1280.0;
+
+	alloc.set_height(200.0 * ui_scale);
 }
 
 Wdgt::Object *
@@ -397,6 +424,9 @@ bool
 YC20UI::motion_notify_event(GdkEventMotion *evt)
 {
 	//IDENTIFY_THREAD("motion_notify_event");
+
+	evt->x /= ui_scale;
+	evt->y /= ui_scale;
 
 	if (_dragWdgt != NULL) {
 
@@ -436,6 +466,8 @@ YC20UI::button_press_event(GdkEventButton *evt)
 {
 	//IDENTIFY_THREAD("button_press_event");
 
+	evt->x /= ui_scale;
+	evt->y /= ui_scale;
 	//std::cerr << "button press" << std::endl;
 
 	_buttonPressWdgt = _hoverWdgt;
@@ -459,6 +491,9 @@ bool
 YC20UI::button_release_event(GdkEventButton *evt)
 {
 	//IDENTIFY_THREAD("button_release_event");
+
+	evt->x /= ui_scale;
+	evt->y /= ui_scale;
 
 	Wdgt::Object *exposeObj = NULL;
 
@@ -554,10 +589,15 @@ bool
 YC20UI::exposeWdgt(Wdgt::Object *obj)
 {
 	GdkEventExpose evt;
-	evt.area.x = obj->x1;
-	evt.area.y = obj->y1;
-	evt.area.width = obj->x2 - evt.area.x;
+	evt.area.x      = obj->x1;
+	evt.area.y      = obj->y1;
+	evt.area.width  = obj->x2 - evt.area.x;
 	evt.area.height = obj->y2 - evt.area.y;
+
+	evt.area.x      *= ui_scale;
+	evt.area.y      *= ui_scale;
+	evt.area.width  *= ui_scale;
+	evt.area.height *= ui_scale;
 
 	expose(&evt);
 
@@ -573,6 +613,7 @@ YC20UI::exposeWdgt(Wdgt::Object *obj)
 	return true;
 }
 
+
 bool 
 YC20UI::expose(GdkEventExpose *evt)
 {
@@ -580,12 +621,20 @@ YC20UI::expose(GdkEventExpose *evt)
 
 	//std::cerr << "expose()" << std::endl;
 
+	GdkRectangle physicalArea = evt->area;
+
+	evt->area.x /= ui_scale;
+	evt->area.y /= ui_scale;
+	evt->area.width  /= ui_scale;
+	evt->area.height /= ui_scale;
+
 	_ready_to_draw = true;
 
 	cairo_t *cr;
 
 	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
 
+	cairo_scale(cr, ui_scale, ui_scale);
 
 	// double-buffer
 	cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
@@ -614,8 +663,10 @@ YC20UI::expose(GdkEventExpose *evt)
 
 	if (clip) {
 		cairo_rectangle(cr,
-				evt->area.x, evt->area.y, 
+				evt->area.x,     evt->area.y, 
 				evt->area.width, evt->area.height);
+				//physicalArea.x,     physicalArea.y, 
+				//physicalArea.width, physicalArea.height);
 		cairo_clip(cr);
 	}
 

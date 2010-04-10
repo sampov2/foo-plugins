@@ -80,10 +80,14 @@ class YC20UI : public UI
 		mydsp *processor;
 	private:
 
+
+		float ui_scale;
+
 		std::string configFile;
 
 		// Gtk essentials
 		void size_request(Gtk::Requisition *);
+		void size_allocate(Gtk::Allocation &);
 		bool exposeWdgt(Wdgt::Object *);
 		bool expose(GdkEventExpose *);
 
