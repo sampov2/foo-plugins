@@ -101,8 +101,6 @@ jack_client_t *jack_client = NULL;
 float         *yc20_keys[61];
 
 // Idle timeout stuff
-jack_ringbuffer_t *controlChangeRingbuffer;
-YC20UI *idleTimeoutUI;
 
 
 
@@ -133,7 +131,7 @@ class YC20UI :  public UI
 
 		void controlChanged(Wdgt::Draggable *);
 	
-		void doControlChange(MidiCC *);
+		void queueControlChange(int cc, int value);
 
 		void loadConfiguration(std::string file);
 		void loadConfiguration();
@@ -175,6 +173,14 @@ class YC20UI :  public UI
 
 		bool _ready_to_draw;
 
+		// Idle-timeout redraw things
+
+		jack_ringbuffer_t *controlChangeRingbuffer;
+		static gboolean idleTimeout(gpointer );
+		void handleControlChanges();
+		gint idleSignalTag;
+
+		void doControlChange(MidiCC *);
 };
 
 
@@ -374,6 +380,13 @@ YC20UI::YC20UI()
 
 		++i;
 	}
+
+	// Create the ringbuffer and start the timeout thread
+	controlChangeRingbuffer = jack_ringbuffer_create(sizeof(MidiCC)*1000);
+	if (controlChangeRingbuffer == NULL) {
+		throw "Could not create ringbuffer";
+	}
+	idleSignalTag = g_timeout_add(10, idleTimeout, this);
 }
 
 void
@@ -573,19 +586,40 @@ YC20UI::button_release_event(GdkEventButton *evt)
 }
 
 gboolean 
-idleTimeout(gpointer data)
+YC20UI::idleTimeout(gpointer data)
+{
+	YC20UI *obj = (YC20UI *)data;
+	obj->handleControlChanges();
+
+	return true;
+}
+
+void
+YC20UI::handleControlChanges()
 {
 	MidiCC evt(0,0);
 
 	while ( jack_ringbuffer_read(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC)) == sizeof(MidiCC)) {
-		idleTimeoutUI->doControlChange(&evt);
+		doControlChange(&evt);
 	}
+}
 
-        return true;
+void
+YC20UI::queueControlChange(int cc, int value)
+{
+	MidiCC evt(cc, value);
+	int i = jack_ringbuffer_write(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC));
+	if (i != sizeof(MidiCC)) {
+		std::cerr << "Ringbuffer full!" << std::endl;
+	}
 }
 
 YC20UI::~YC20UI()
 {
+	g_source_remove(idleSignalTag);
+
+	jack_ringbuffer_free(controlChangeRingbuffer);
+
         for (std::list<Wdgt::Object *>::iterator i = wdgts.begin(); i != wdgts.end(); ) {
                 Wdgt::Object *obj = *i;
                 delete obj;
@@ -888,11 +922,8 @@ process (jack_nframes_t nframes, void *arg)
                         // other party aquiring this lock is always O(1) in the
                         // locked state
 
-			MidiCC evt(cc, value);
-			int i = jack_ringbuffer_write(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC));
-			if (i != sizeof(MidiCC)) {
-				std::cerr << "Ringbuffer full!" << std::endl;
-			}
+			((YC20UI *)arg)->queueControlChange(cc, value);
+
 		}
 
                 if (note >= 0 && note < 61) {
@@ -924,7 +955,7 @@ void disconnect_from_jack(void *arg)
 }
 
 
-bool connect_to_jack()
+bool connect_to_jack(YC20UI *ui)
 {
         jack_options_t options = JackNullOption;
         jack_status_t status;
@@ -946,7 +977,7 @@ bool connect_to_jack()
                                                 JACK_DEFAULT_AUDIO_TYPE,
                                                 JackPortIsOutput, 0);
 
-        jack_set_process_callback (jack_client, process, 0);
+        jack_set_process_callback (jack_client, process, ui);
 
         /* tell the JACK server to call `jack_shutdown()' if
            it ever shuts down, either entirely, or if it
@@ -975,16 +1006,13 @@ int main(int argc, char **argv)
 	main_window->set_title("Foo YC20");
 
 	yc20ui = new YC20UI();
-	idleTimeoutUI = yc20ui;
-
-
 
 	main_window->add(*yc20ui->getWidget());
 
 	main_window->show();
 	yc20ui->getWidget()->show();
 
-	if (!connect_to_jack()) {
+	if (!connect_to_jack(yc20ui)) {
 		return 1;
 	}
 
@@ -1000,11 +1028,6 @@ int main(int argc, char **argv)
 		yc20ui->loadConfiguration();
 	}
 
-	controlChangeRingbuffer = jack_ringbuffer_create(sizeof(MidiCC)*1000);
-	if (controlChangeRingbuffer == NULL) {
-		std::cerr << "Could not create ringbuffer, aborting" << std::endl;
-		return 1;
-	}
 
         if (jack_activate (jack_client)) {
                 std::cerr << "cannot activate client" << std::endl;
@@ -1015,18 +1038,16 @@ int main(int argc, char **argv)
 		return 1;
         }
 
-	gint idleSignalTag = g_timeout_add(10, idleTimeout, 0);
+	//gint idleSignalTag = g_timeout_add(10, idleTimeout, 0);
+
 
 	// RUN!
         Gtk::Main::run(*main_window);
 
 
 	// Cleanup
-	g_source_remove(idleSignalTag);
 
 	jack_deactivate(jack_client);
-
-	jack_ringbuffer_free(controlChangeRingbuffer);
 
 	yc20ui->saveConfiguration();
 
