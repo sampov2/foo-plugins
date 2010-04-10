@@ -493,6 +493,7 @@ YC20UI::handleControlChanges()
 	MidiCC evt(0,0);
 
 	while ( jack_ringbuffer_read(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC)) == sizeof(MidiCC)) {
+		std::cerr << "CC #" << evt.cc << " = " << evt.value << std::endl;
 		doControlChange(&evt);
 	}
 }
@@ -776,15 +777,13 @@ YC20UI::saveConfiguration()
 }
 
 int
-process (jack_nframes_t nframes, void *arg)
+YC20Jack::process (jack_nframes_t nframes)
 {
 	float * output_buffer = (float *)jack_port_get_buffer(audio_output_port, nframes);
 
         void *midi = jack_port_get_buffer(midi_input_port, nframes);
         jack_midi_event_t event;
         jack_nframes_t n = jack_midi_get_event_count(midi);
-
-	YC20UI *ui = (YC20UI *)arg;
 
         if (n > 0) {
 
@@ -817,20 +816,20 @@ process (jack_nframes_t nframes, void *arg)
                         // other party aquiring this lock is always O(1) in the
                         // locked state
 
-			ui->queueControlChange(cc, value);
+			thisui->queueControlChange(cc, value);
 
 		}
 
                 if (note >= 0 && note < 61) {
-                        *ui->yc20_keys[note] = value;
+                        *thisui->yc20_keys[note] = value;
                 }
 
             }
 
         }
 
-	if (ui->processor != NULL) {
-	        ui->processor->compute(nframes, NULL, &output_buffer);
+	if (thisui->processor != NULL) {
+	        thisui->processor->compute(nframes, NULL, &output_buffer);
 	}
 
 
@@ -839,7 +838,8 @@ process (jack_nframes_t nframes, void *arg)
 
 
 
-void disconnect_from_jack(void *arg)
+void
+YC20Jack::shutdown()
 {
 	std::cerr << "Disconnected from jack.. bummer" << std::endl;
 	jack_client = NULL;
@@ -851,49 +851,95 @@ void disconnect_from_jack(void *arg)
 	exit(1);
 }
 
-
-bool connect_to_jack(YC20UI *ui)
+void
+YC20Jack::shutdown_callback(void *arg)
 {
-        jack_options_t options = JackNullOption;
-        jack_status_t status;
+	YC20Jack *obj = (YC20Jack *)arg;
+	obj->shutdown();
+}
 
-        jack_client = jack_client_open ("Foo YC20", options, &status, NULL);
+YC20Jack::YC20Jack(YC20UI *obj)
+	: audio_output_port(NULL)
+	, midi_input_port(NULL)
+	, jack_client(NULL)
+	, thisui(obj)
+{
+}
+
+void
+YC20Jack::connect()
+{
+	jack_options_t options = JackNullOption;
+	jack_status_t status;
+
+	jack_client = jack_client_open ("Foo YC20", options, &status, NULL);
 	if (jack_client == NULL) {
-		std::cerr << "jack_client_open() failed" << std::endl;
 
 		midi_input_port = NULL;
 		audio_output_port = NULL;
-		return false;
+		throw "jack_client_open() failed";
 	}
 
 
-        midi_input_port = jack_port_register (jack_client, "midi in",
-                                              JACK_DEFAULT_MIDI_TYPE,
-                                              JackPortIsInput, 0);
-        audio_output_port = jack_port_register (jack_client, "output",
-                                                JACK_DEFAULT_AUDIO_TYPE,
-                                                JackPortIsOutput, 0);
+	midi_input_port = jack_port_register (jack_client, "midi in",
+			JACK_DEFAULT_MIDI_TYPE,
+			JackPortIsInput, 0);
+	audio_output_port = jack_port_register (jack_client, "output",
+			JACK_DEFAULT_AUDIO_TYPE,
+			JackPortIsOutput, 0);
 
-        jack_set_process_callback (jack_client, process, ui);
+	jack_set_process_callback (jack_client, process_callback, this);
 
-        /* tell the JACK server to call `jack_shutdown()' if
-           it ever shuts down, either entirely, or if it
-           just decides to stop calling us.
-        */
+	/* tell the JACK server to call `jack_shutdown()' if
+	   it ever shuts down, either entirely, or if it
+	   just decides to stop calling us.
+	 */
 
-        jack_on_shutdown (jack_client, disconnect_from_jack, 0);
-
-	return true;
+	jack_on_shutdown (jack_client, shutdown_callback, this);
 }
 
+void
+YC20Jack::activate()
+{
+        if (jack_activate (jack_client)) {
+		jack_client_close(jack_client);
+		jack_client = NULL;
+		midi_input_port = NULL;
+		audio_output_port = NULL;
 
+                throw "cannot activate client";
+        }
+}
+
+int
+YC20Jack::process_callback(jack_nframes_t nframes, void *ptr)
+{
+	YC20Jack *obj = (YC20Jack *)ptr;
+	return obj->process(nframes);
+}
+
+jack_nframes_t
+YC20Jack::getSamplerate()
+{
+	if (jack_client == NULL) {
+		throw "getSamplerate() called at the wrong time";
+	}
+	return jack_get_sample_rate (jack_client);
+}
+
+YC20Jack::~YC20Jack()
+{
+	if (jack_client != NULL) {
+		jack_deactivate(jack_client);
+
+	}
+}
 
 int main(int argc, char **argv)
 {
 	TURNOFFDENORMALS;
 
         Gtk::Main mymain(argc, argv);
-
 
 	Gtk::Window *main_window;
 	YC20UI      *yc20ui;
@@ -909,12 +955,11 @@ int main(int argc, char **argv)
 	main_window->show();
 	yc20ui->getWidget()->show();
 
-	if (!connect_to_jack(yc20ui)) {
-		return 1;
-	}
+	YC20Jack jack(yc20ui);
+	jack.connect();
 
-	mydsp yc20;
-	yc20.init(jack_get_sample_rate (jack_client));
+	mydsp yc20;	
+	yc20.init(jack.getSamplerate());
 
 	yc20ui->setProcessor(&yc20);
 
@@ -926,15 +971,7 @@ int main(int argc, char **argv)
 		yc20ui->loadConfiguration();
 	}
 
-
-        if (jack_activate (jack_client)) {
-                std::cerr << "cannot activate client" << std::endl;
-		jack_client_close(jack_client);
-		jack_client = NULL;
-		midi_input_port = NULL;
-		audio_output_port = NULL;
-		return 1;
-        }
+	jack.activate();
 
 	// RUN!
         Gtk::Main::run(*main_window);
@@ -942,8 +979,6 @@ int main(int argc, char **argv)
 	yc20ui->processor = NULL;
 
 	// Cleanup
-	jack_deactivate(jack_client);
-
 	yc20ui->saveConfiguration();
 
 	delete main_window;
