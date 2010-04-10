@@ -92,13 +92,10 @@ public:
 
 class YC20UI;
 
-mydsp         *yc20 = NULL;
-
 jack_port_t   *audio_output_port = NULL;
 jack_port_t   *midi_input_port = NULL;
 jack_client_t *jack_client = NULL;
 
-float         *yc20_keys[61];
 
 // Idle timeout stuff
 
@@ -110,6 +107,8 @@ class YC20UI :  public UI
 		YC20UI();
 
 		~YC20UI();
+
+		void setProcessor(mydsp *);
 
 		Gtk::Widget *getWidget() { return &_drawingArea; }
 
@@ -129,14 +128,17 @@ class YC20UI :  public UI
 
 		void declare(float* zone, const char* key, const char* value) {};
 
+		// Other things
 		void controlChanged(Wdgt::Draggable *);
-	
+
 		void queueControlChange(int cc, int value);
 
 		void loadConfiguration(std::string file);
 		void loadConfiguration();
 		void saveConfiguration();
 
+		float *yc20_keys[61];
+		mydsp *processor;
 	private:
 
 		std::string configFile;
@@ -387,6 +389,13 @@ YC20UI::YC20UI()
 		throw "Could not create ringbuffer";
 	}
 	idleSignalTag = g_timeout_add(10, idleTimeout, this);
+}
+
+void
+YC20UI::setProcessor(mydsp *p)
+{
+	processor = p;
+	processor->buildUserInterface(this);
 }
 
 void
@@ -891,6 +900,8 @@ process (jack_nframes_t nframes, void *arg)
         jack_midi_event_t event;
         jack_nframes_t n = jack_midi_get_event_count(midi);
 
+	YC20UI *ui = (YC20UI *)arg;
+
         if (n > 0) {
 
             // TODO: frame accuracy
@@ -922,19 +933,19 @@ process (jack_nframes_t nframes, void *arg)
                         // other party aquiring this lock is always O(1) in the
                         // locked state
 
-			((YC20UI *)arg)->queueControlChange(cc, value);
+			ui->queueControlChange(cc, value);
 
 		}
 
                 if (note >= 0 && note < 61) {
-                        *yc20_keys[note] = value;
+                        *ui->yc20_keys[note] = value;
                 }
 
             }
 
         }
 
-        yc20->compute(nframes, NULL, &output_buffer);
+        ui->processor->compute(nframes, NULL, &output_buffer);
 
 
 	return 0;
@@ -1016,9 +1027,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	yc20 = new mydsp();
-	yc20->init(jack_get_sample_rate (jack_client));
-	yc20->buildUserInterface(yc20ui);
+	mydsp yc20;
+	yc20.init(jack_get_sample_rate (jack_client));
+
+	yc20ui->setProcessor(&yc20);
 
 	if (argc > 1) {
 		std::string conf(argv[1]);
@@ -1038,12 +1050,8 @@ int main(int argc, char **argv)
 		return 1;
         }
 
-	//gint idleSignalTag = g_timeout_add(10, idleTimeout, 0);
-
-
 	// RUN!
         Gtk::Main::run(*main_window);
-
 
 	// Cleanup
 
@@ -1053,7 +1061,6 @@ int main(int argc, char **argv)
 
 	delete main_window;
 	delete yc20ui;
-	delete yc20;
 
 	return 0;
 }
