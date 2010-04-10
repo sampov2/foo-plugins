@@ -49,7 +49,7 @@ class YC20UI : public UI
 
 		void setProcessor(mydsp *);
 
-		Gtk::Widget *getWidget() { return &_drawingArea; }
+		Gtk::Widget *getWidget() { return &drawingArea; }
 
 		// from Faust UI
 		void addButton(const char* label, float* zone);
@@ -85,13 +85,17 @@ class YC20UI : public UI
 
 		std::string configFile;
 
+		Gtk::DrawingArea drawingArea;
+
 		// Gtk essentials
 		void size_request(Gtk::Requisition *);
 		void size_allocate(Gtk::Allocation &);
 		bool exposeWdgt(Wdgt::Object *);
 		bool expose(GdkEventExpose *);
 
-		Gtk::DrawingArea _drawingArea;
+		void realize();
+
+
 		bool motion_notify_event(GdkEventMotion *);
 		bool button_press_event(GdkEventButton *);
 		bool button_release_event(GdkEventButton *);

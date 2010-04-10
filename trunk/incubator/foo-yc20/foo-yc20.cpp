@@ -79,21 +79,24 @@ YC20UI::YC20UI()
 	memset(draggablePerCC, 0, sizeof(Wdgt::Draggable *)*127);
 	_image_background = Wdgt::load_png("background.png");
 
-	_drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &YC20UI::size_request));
-	_drawingArea.signal_size_allocate().connect( sigc::mem_fun(*this, &YC20UI::size_allocate));
-	_drawingArea.signal_expose_event().connect( sigc::mem_fun (*this, &YC20UI::expose));
+	drawingArea.signal_size_request().connect( sigc::mem_fun(*this, &YC20UI::size_request));
+	drawingArea.signal_size_allocate().connect( sigc::mem_fun(*this, &YC20UI::size_allocate));
+	drawingArea.signal_expose_event().connect( sigc::mem_fun (*this, &YC20UI::expose));
 
-	_drawingArea.signal_motion_notify_event().connect ( sigc::mem_fun (*this, &YC20UI::motion_notify_event) );
-	_drawingArea.signal_button_press_event().connect  ( sigc::mem_fun (*this, &YC20UI::button_press_event));
-	_drawingArea.signal_button_release_event().connect( sigc::mem_fun (*this, &YC20UI::button_release_event));
+	drawingArea.signal_realize().connect( sigc::mem_fun (*this, &YC20UI::realize));
 
 
+	drawingArea.signal_motion_notify_event().connect ( sigc::mem_fun (*this, &YC20UI::motion_notify_event) );
+	drawingArea.signal_button_press_event().connect  ( sigc::mem_fun (*this, &YC20UI::button_press_event));
+	drawingArea.signal_button_release_event().connect( sigc::mem_fun (*this, &YC20UI::button_release_event));
 
-	Gdk::EventMask mask = _drawingArea.get_events();
+
+
+	Gdk::EventMask mask = drawingArea.get_events();
 
 	mask |= Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK;
 
-	_drawingArea.set_events(mask);
+	drawingArea.set_events(mask);
 
 
 	_dragWdgt = NULL;
@@ -362,7 +365,7 @@ YC20UI::addHorizontalSlider(const char* label, float* zone, float init, float mi
 void
 YC20UI::size_request(Gtk::Requisition *req)
 {
-	std::cerr << "size_request: " << req->width << " x " << req->height << std::endl;
+	//std::cerr << "size_request: " << req->width << " x " << req->height << std::endl;
 
 	if (req->width > 1280) {
 		req->width = 1280;
@@ -390,6 +393,33 @@ YC20UI::size_allocate(Gtk::Allocation &alloc)
 	ui_scale = (float)alloc.get_width()/1280.0;
 
 	alloc.set_height(200.0 * ui_scale);
+}
+
+void
+YC20UI::realize()
+{
+	Gdk::Geometry geom;
+	geom.min_width  = 768;
+	geom.min_height = 120; // 200.0 * (768.0 / 1280.0);
+	geom.max_width  = 1280;
+	geom.max_height = 200;
+
+	geom.min_aspect = 1280.0/200.0;
+	geom.max_aspect = 1280.0/200.0;
+
+	geom.width_inc  = 64;
+	geom.height_inc = 10;
+
+	Gtk::Container *cont = drawingArea.get_toplevel();
+
+	Gtk::Window *window = dynamic_cast<Gtk::Window *>(cont);
+
+	if (window == NULL) {
+		std::cerr << "could not find the toplevel window. weird." << std::endl;
+		return;
+	}
+
+	window->set_geometry_hints(drawingArea, geom, Gdk::HINT_MIN_SIZE | Gdk::HINT_MAX_SIZE | Gdk::HINT_ASPECT | Gdk::HINT_RESIZE_INC);
 }
 
 Wdgt::Object *
@@ -527,8 +557,10 @@ YC20UI::handleControlChanges()
 {
 	MidiCC evt(0,0);
 
-	while ( jack_ringbuffer_read(controlChangeRingbuffer, (char *)&evt, sizeof(MidiCC)) == sizeof(MidiCC)) {
-		std::cerr << "CC #" << evt.cc << " = " << evt.value << std::endl;
+	while ( jack_ringbuffer_read(controlChangeRingbuffer, 
+	                             (char *)&evt,
+	                             sizeof(MidiCC)) == sizeof(MidiCC)) {
+		//std::cerr << "CC #" << evt.cc << " = " << evt.value << std::endl;
 		doControlChange(&evt);
 	}
 }
@@ -632,7 +664,7 @@ YC20UI::expose(GdkEventExpose *evt)
 
 	cairo_t *cr;
 
-	cr = gdk_cairo_create(GDK_DRAWABLE(_drawingArea.get_window()->gobj()));
+	cr = gdk_cairo_create(GDK_DRAWABLE(drawingArea.get_window()->gobj()));
 
 	cairo_scale(cr, ui_scale, ui_scale);
 
@@ -998,6 +1030,7 @@ int main(int argc, char **argv)
 
 	main_window = new Gtk::Window();
 	main_window->set_title("Foo YC20");
+	main_window->set_default_size(1280, 200);
 
 	yc20ui = new YC20UI();
 
