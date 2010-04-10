@@ -92,14 +92,6 @@ public:
 
 class YC20UI;
 
-jack_port_t   *audio_output_port = NULL;
-jack_port_t   *midi_input_port = NULL;
-jack_client_t *jack_client = NULL;
-
-
-// Idle timeout stuff
-
-
 
 class YC20UI :  public UI
 {
@@ -185,6 +177,9 @@ class YC20UI :  public UI
 		void doControlChange(MidiCC *);
 };
 
+jack_port_t   *audio_output_port = NULL;
+jack_port_t   *midi_input_port = NULL;
+jack_client_t *jack_client = NULL;
 
 YC20UI::YC20UI()
 {
@@ -945,7 +940,9 @@ process (jack_nframes_t nframes, void *arg)
 
         }
 
-        ui->processor->compute(nframes, NULL, &output_buffer);
+	if (ui->processor != NULL) {
+	        ui->processor->compute(nframes, NULL, &output_buffer);
+	}
 
 
 	return 0;
@@ -1053,8 +1050,9 @@ int main(int argc, char **argv)
 	// RUN!
         Gtk::Main::run(*main_window);
 
-	// Cleanup
+	yc20ui->processor = NULL;
 
+	// Cleanup
 	jack_deactivate(jack_client);
 
 	yc20ui->saveConfiguration();
